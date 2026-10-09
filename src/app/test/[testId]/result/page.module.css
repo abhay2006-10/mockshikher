@@ -1,0 +1,270 @@
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4) var(--space-20);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-2);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* ============ SCORE HERO ============ */
+.scoreHero {
+  background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-8);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 15px 30px -10px rgba(30, 58, 138, 0.4);
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.scoreLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.trophyIconWrap {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-xl);
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trophyIcon {
+  color: #fbbf24;
+}
+
+.scoreNumbers {
+  display: flex;
+  flex-direction: column;
+}
+
+.scoreLabel {
+  font-size: var(--text-xs);
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.scoreValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.bigScore {
+  font-family: var(--font-heading);
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+}
+
+.totalScore {
+  font-size: var(--text-base);
+  color: #cbd5e1;
+}
+
+.scorePercentages {
+  display: flex;
+  gap: 0.75rem;
+  font-size: var(--text-sm);
+  color: #94a3b8;
+  margin-top: 0.25rem;
+}
+
+.scoreRight {
+  display: flex;
+  align-items: center;
+}
+
+.gradeBadge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-6);
+  min-width: 140px;
+  text-align: center;
+}
+
+.gradeLabel {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.gradeVal {
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  color: #fbbf24;
+}
+
+/* ============ METRICS GRID (5 stat cards) ============ */
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-4);
+}
+
+.metricCard {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast);
+}
+
+.metricCard:hover {
+  border-color: var(--color-border-hover);
+}
+
+.metricIconWrap {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.metricDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.metricNum {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  color: var(--color-text-primary);
+  line-height: 1;
+}
+
+.metricLabel {
+  font-size: 0.7rem;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+/* ============ ACTIONS ROW ============ */
+.actionRow {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ============ UPGRADE PROMO ============ */
+.upgradeBox {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+}
+
+.upgradeContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 520px;
+}
+
+.upgradeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(245, 179, 1, 0.15);
+  color: #fbbf24;
+  font-size: 0.725rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  width: fit-content;
+}
+
+.upgradeTitle {
+  font-family: var(--font-heading);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.upgradeDesc {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.upgradeLink {
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .scoreHero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .metricsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .upgradeBox {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+

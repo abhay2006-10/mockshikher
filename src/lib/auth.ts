@@ -1,0 +1,90 @@
+import NextAuth from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
+import Google from 'next-auth/providers/google';
+import bcrypt from 'bcryptjs';
+import prisma from '@/lib/prisma';
+import { rateLimit } from '@/lib/rate-limit';
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'mockshikhar_super_secret_jwt_key_2026_dev',
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  pages: {
+    signIn: '/auth/login',
+    error: '/auth/login',
+  },
+  providers: [
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          Google({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          }),
+        ]
+      : []),
+    Credentials({
+      name: 'Credentials',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error('Invalid email or password');
+        }
+
+        const email = String(credentials.email).toLowerCase().trim();
+        const password = String(credentials.password);
+
+        // Rate limit: max 5 login attempts per 15 minutes per email
+        const { success } = rateLimit(`login:${email}`, 5, 15 * 60 * 1000);
+        if (!success) {
+          throw new Error('Too many login attempts. Please try again in 15 minutes.');
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { email },
+        });
+
+        if (!user || !user.passwordHash) {
+          throw new Error('Invalid email or password');
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+        if (!isPasswordValid) {
+          throw new Error('Invalid email or password');
+        }
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          role: user.role,
+        };
+      },
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, user, trigger, session }) {
+      if (user) {
+        token.id = user.id;
+        token.role = (user as unknown as { role?: string }).role || 'USER';
+      }
+      if (trigger === 'update' && session?.name) {
+        token.name = session.name;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token) {
+        session.user.id = token.id as string;
+        // @ts-expect-error role is added to custom session
+        session.user.role = token.role as 'USER' | 'ADMIN';
+      }
+      return session;
+    },
+  },
+});

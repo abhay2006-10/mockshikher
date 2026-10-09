@@ -1,0 +1,413 @@
+// Prisma Schema for Mock Test Platform
+// All 14 entities from the data model specification
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ Enums ============
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum CorrectOption {
+  A
+  B
+  C
+  D
+}
+
+enum OptionLabel {
+  A
+  B
+  C
+  D
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  AUTO_SUBMITTED
+}
+
+enum AnswerStatus {
+  NOT_VISITED
+  NOT_ANSWERED
+  ANSWERED
+  MARKED
+  ANSWERED_MARKED
+}
+
+enum PaymentStatus {
+  CREATED
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentSource {
+  CHECKOUT
+  WEBHOOK
+}
+
+// ============ Models ============
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  image         String?
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts     Account[]
+  sessions     Session[]
+  attempts     TestAttempt[]
+  bookmarks    Bookmark[]
+  mistakes     MistakeBook[]
+  purchases    Purchase[]
+  payments     Payment[]
+
+  @@map("users")
+}
+
+// NextAuth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============ Core Business Models ============
+
+model Exam {
+  id              String     @id @default(cuid())
+  name            String
+  nameHi          String?
+  slug            String     @unique
+  description     String     @db.Text
+  descriptionHi   String?    @db.Text
+  totalQuestions   Int
+  durationMinutes Int
+  difficulty      Difficulty
+  price           Float      @default(149)
+  isPopular       Boolean    @default(false)
+  category        String     @default("HP Exams")
+  negativeMarking Float      @default(0.25)
+  marksPerQuestion Float     @default(1)
+  isArchived      Boolean    @default(false)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Relations
+  subjects   Subject[]
+  mockTests  MockTest[]
+  purchases  Purchase[]
+
+  @@index([slug])
+  @@index([category])
+  @@index([isArchived])
+  @@map("exams")
+}
+
+model Subject {
+  id        String  @id @default(cuid())
+  examId    String
+  name      String
+  nameHi    String?
+  sortOrder Int     @default(0)
+
+  // Relations
+  exam      Exam       @relation(fields: [examId], references: [id], onDelete: Cascade)
+  topics    Topic[]
+  questions Question[]
+
+  @@unique([examId, name])
+  @@index([examId])
+  @@map("subjects")
+}
+
+model Topic {
+  id        String  @id @default(cuid())
+  subjectId String
+  name      String
+  nameHi    String?
+  sortOrder Int     @default(0)
+
+  // Relations
+  subject   Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  questions Question[]
+
+  @@unique([subjectId, name])
+  @@index([subjectId])
+  @@map("topics")
+}
+
+model MockTest {
+  id                      String  @id @default(cuid())
+  examId                  String
+  name                    String
+  testNumber              Int
+  isFree                  Boolean @default(false)
+  isPublished             Boolean @default(false)
+  totalQuestions           Int
+  durationMinutes         Int
+  totalMarks              Float
+  marksPerQuestion        Float   @default(1)
+  negativeMarksPerQuestion Float  @default(0.25)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  // Relations
+  exam      Exam          @relation(fields: [examId], references: [id], onDelete: Cascade)
+  questions Question[]
+  attempts  TestAttempt[]
+
+  @@unique([examId, testNumber])
+  @@index([examId])
+  @@index([isPublished])
+  @@map("mock_tests")
+}
+
+model Question {
+  id              String       @id @default(cuid())
+  mockTestId      String
+  subjectId       String
+  topicId         String
+  questionNumber  Int
+  questionText    String       @db.Text
+  questionTextHi  String?      @db.Text
+  questionImage   String?
+  correctOption   CorrectOption
+  marks           Float        @default(1)
+  negativeMarks   Float        @default(0.25)
+  difficulty      Difficulty   @default(MEDIUM)
+  explanation     String?      @db.Text
+  explanationHi   String?      @db.Text
+  solutionImage   String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  mockTest    MockTest        @relation(fields: [mockTestId], references: [id], onDelete: Cascade)
+  subject     Subject         @relation(fields: [subjectId], references: [id])
+  topic       Topic           @relation(fields: [topicId], references: [id])
+  options     QuestionOption[]
+  userAnswers UserAnswer[]
+  bookmarks   Bookmark[]
+  mistakes    MistakeBook[]
+
+  @@unique([mockTestId, questionNumber])
+  @@index([mockTestId])
+  @@index([subjectId])
+  @@index([topicId])
+  @@map("questions")
+}
+
+model QuestionOption {
+  id          String      @id @default(cuid())
+  questionId  String
+  optionLabel OptionLabel
+  optionText  String      @db.Text
+  optionTextHi String?    @db.Text
+
+  // Relations
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, optionLabel])
+  @@index([questionId])
+  @@map("question_options")
+}
+
+// ============ Test Attempt Models ============
+
+model TestAttempt {
+  id              String        @id @default(cuid())
+  userId          String
+  mockTestId      String
+  startedAt       DateTime      @default(now())
+  deadline        DateTime
+  submittedAt     DateTime?
+  status          AttemptStatus @default(IN_PROGRESS)
+  
+  // Denormalized scores (computed at submission)
+  score           Float?
+  totalMarks      Float?
+  correctCount    Int?
+  wrongCount      Int?
+  unansweredCount Int?
+  accuracy        Float?
+  percentage      Float?
+  timeTakenSeconds Int?
+
+  // Relations
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mockTest   MockTest     @relation(fields: [mockTestId], references: [id], onDelete: Cascade)
+  answers    UserAnswer[]
+  mistakes   MistakeBook[]
+
+  @@index([userId])
+  @@index([mockTestId])
+  @@index([userId, mockTestId])
+  @@index([status])
+  @@map("test_attempts")
+}
+
+model UserAnswer {
+  id               String       @id @default(cuid())
+  attemptId        String
+  questionId       String
+  selectedOption   CorrectOption?
+  isMarkedForReview Boolean     @default(false)
+  timeSpentSeconds  Int         @default(0)
+  status           AnswerStatus @default(NOT_VISITED)
+
+  // Snapshot fields at time of attempt (immutable score history)
+  questionTextSnapshot   String?        @db.Text
+  correctOptionSnapshot  CorrectOption?
+  marksSnapshot          Float?
+  negativeMarksSnapshot  Float?
+  isCorrect              Boolean?
+
+  // Relations
+  attempt  TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question   @relation(fields: [questionId], references: [id])
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
+  @@map("user_answers")
+}
+
+// ============ User Feature Models ============
+
+model Bookmark {
+  id         String   @id @default(cuid())
+  userId     String
+  questionId String
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+  @@index([userId])
+  @@map("bookmarks")
+}
+
+model MistakeBook {
+  id         String   @id @default(cuid())
+  userId     String
+  questionId String
+  attemptId  String
+  isMastered Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  attempt  TestAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId, attemptId])
+  @@index([userId])
+  @@index([userId, isMastered])
+  @@map("mistake_book")
+}
+
+// ============ Payment Models ============
+
+model Purchase {
+  id         String   @id @default(cuid())
+  userId     String
+  examId     String
+  paymentId  String   @unique
+  isTestMode Boolean  @default(false)
+  purchasedAt DateTime @default(now())
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam    Exam    @relation(fields: [examId], references: [id])
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@unique([userId, examId])
+  @@index([userId])
+  @@index([examId])
+  @@map("purchases")
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  userId            String
+  amount            Float
+  currency          String        @default("INR")
+  gatewayOrderId    String        @unique
+  gatewayPaymentId  String?       @unique
+  gatewaySignature  String?
+  status            PaymentStatus @default(CREATED)
+  source            PaymentSource @default(CHECKOUT)
+  isTestMode        Boolean       @default(false)
+  gatewayResponse   Json?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relations
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purchase Purchase?
+
+  @@index([userId])
+  @@index([gatewayOrderId])
+  @@index([status])
+  @@map("payments")
+}

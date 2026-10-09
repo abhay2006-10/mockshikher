@@ -1,0 +1,238 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2, 0.5rem);
+  font-family: var(--font-body, var(--font-inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif));
+  font-weight: 700;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.18s ease-in-out;
+  user-select: none;
+  position: relative;
+  line-height: 1.25;
+}
+
+.button:focus-visible {
+  outline: 2px solid #F5B301;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(245, 179, 1, 0.35);
+}
+
+.button:disabled,
+.button[disabled] {
+  background-color: #374151 !important;
+  background-image: none !important;
+  color: #9CA3AF !important;
+  border-color: #4B5563 !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+}
+
+.button:disabled *,
+.button[disabled] * {
+  color: #9CA3AF !important;
+}
+
+/* Sizes */
+.sm {
+  padding: 0.4rem 0.85rem;
+  font-size: var(--text-xs, 0.75rem);
+  min-height: 32px;
+}
+
+.md {
+  padding: 0.6rem 1.25rem;
+  font-size: var(--text-sm, 0.875rem);
+  min-height: 42px;
+}
+
+.lg {
+  padding: 0.8rem 1.75rem;
+  font-size: var(--text-base, 1rem);
+  min-height: 50px;
+}
+
+/* =========================================================================
+   Primary & Accent Variant (Brand Amber/Gold CTA with WCAG AA/AAA Contrast)
+   ========================================================================= */
+.primary,
+.accent {
+  background-color: #F5B301;
+  background-image: linear-gradient(135deg, #FCD34D 0%, #F5B301 50%, #D97706 100%);
+  color: #111827 !important;
+  border: 1px solid #D97706;
+  box-shadow: 0 4px 14px rgba(245, 179, 1, 0.35);
+}
+
+.primary *,
+.accent * {
+  color: inherit !important;
+  fill: currentColor;
+}
+
+.primary:hover:not(:disabled),
+.accent:hover:not(:disabled) {
+  background-color: #FCD34D;
+  background-image: linear-gradient(135deg, #FDE68A 0%, #FCD34D 50%, #F5B301 100%);
+  color: #000000 !important;
+  border-color: #B45309;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 179, 1, 0.5);
+}
+
+.primary:active:not(:disabled),
+.accent:active:not(:disabled) {
+  background-color: #D97706;
+  background-image: linear-gradient(135deg, #F5B301 0%, #D97706 100%);
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(245, 179, 1, 0.3);
+}
+
+/* =========================================================================
+   Secondary Variant (High Contrast Dark Slate)
+   ========================================================================= */
+.secondary {
+  background-color: #1E293B;
+  background-image: linear-gradient(135deg, #334155 0%, #1E293B 100%);
+  color: #F8FAFC !important;
+  border: 1px solid #475569;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.secondary * {
+  color: inherit !important;
+}
+
+.secondary:hover:not(:disabled) {
+  background-color: #334155;
+  background-image: linear-gradient(135deg, #475569 0%, #334155 100%);
+  border-color: #64748B;
+  color: #FFFFFF !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.secondary:active:not(:disabled) {
+  background-color: #0F172A;
+  transform: translateY(0);
+}
+
+/* =========================================================================
+   Outline Variant (Visible Amber Border & Crisp Contrast)
+   ========================================================================= */
+.outline {
+  background-color: transparent;
+  color: #F5B301 !important;
+  border: 1.5px solid #F5B301;
+}
+
+.outline * {
+  color: inherit !important;
+}
+
+.outline:hover:not(:disabled) {
+  background-color: rgba(245, 179, 1, 0.12);
+  color: #FCD34D !important;
+  border-color: #FCD34D;
+  transform: translateY(-1px);
+}
+
+.outline:active:not(:disabled) {
+  background-color: rgba(245, 179, 1, 0.2);
+  transform: translateY(0);
+}
+
+/* =========================================================================
+   Ghost Variant
+   ========================================================================= */
+.ghost {
+  background-color: transparent;
+  color: #E2E8F0 !important;
+  border-color: transparent;
+}
+
+.ghost * {
+  color: inherit !important;
+}
+
+.ghost:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF !important;
+}
+
+/* =========================================================================
+   Danger Variant
+   ========================================================================= */
+.danger {
+  background-color: #DC2626;
+  background-image: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: #FFFFFF !important;
+  border: 1px solid #B91C1C;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);
+}
+
+.danger * {
+  color: inherit !important;
+}
+
+.danger:hover:not(:disabled) {
+  background-color: #EF4444;
+  background-image: linear-gradient(135deg, #F87171 0%, #EF4444 100%);
+  color: #FFFFFF !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.content {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  color: inherit;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.icon svg {
+  color: inherit;
+  fill: none;
+  stroke: currentColor;
+}
+
+.loading {
+  cursor: wait;
+}
+
+.spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 9999px;
+  animation: spin 0.65s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

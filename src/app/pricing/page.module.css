@@ -1,0 +1,323 @@
+.container {
+  max-width: var(--max-w-6xl);
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-4) var(--space-20);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto;
+  gap: var(--space-3);
+}
+
+.badgeWrapper {
+  margin-bottom: var(--space-1);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.highlight {
+  color: var(--color-primary-600);
+}
+
+.subtitle {
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.pricingGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-8);
+  max-width: 920px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.pricingCard {
+  background: #151528;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-6);
+  position: relative;
+  transition: all var(--transition-base);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.pricingCard:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.featuredCard {
+  background: linear-gradient(180deg, #1C1938 0%, #151528 100%);
+  border: 2px solid #F5B301;
+  box-shadow: 0 0 35px rgba(245, 179, 1, 0.18), 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+.featuredCard:hover {
+  border-color: #FBBF24;
+  box-shadow: 0 0 45px rgba(245, 179, 1, 0.28), 0 16px 36px rgba(0, 0, 0, 0.5);
+}
+
+.popularBadge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #FCD34D 0%, #F5B301 50%, #D97706 100%);
+  color: #111827 !important;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.3rem 0.95rem;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  box-shadow: 0 4px 12px rgba(245, 179, 1, 0.4);
+  letter-spacing: 0.02em;
+}
+
+.cardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.tierName {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #FFFFFF !important;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.tierDesc {
+  font-size: var(--text-xs);
+  color: #94A3B8 !important;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-top: var(--space-2);
+}
+
+.freePrice {
+  font-family: var(--font-heading);
+  font-size: var(--text-4xl);
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.freePeriod {
+  font-size: var(--text-xs);
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+.currPrice {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #38BDF8;
+}
+
+.featuredCard .currPrice {
+  color: #F5B301 !important;
+}
+
+.oldPrice {
+  font-size: var(--text-lg);
+  color: #64748B !important;
+  text-decoration: line-through;
+}
+
+.discountPill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #34D399 !important;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-full);
+}
+
+.validityLabel {
+  font-size: 0.75rem;
+  color: #94A3B8 !important;
+  font-weight: 500;
+}
+
+.featureList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: var(--space-4) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: var(--text-sm);
+  color: #E2E8F0 !important;
+  line-height: 1.4;
+}
+
+.featuredCard .featureItem {
+  color: #F8FAFC !important;
+  font-weight: 500;
+}
+
+.featureDisabled {
+  color: #64748B !important;
+}
+
+.checkIcon {
+  color: #10B981 !important;
+  flex-shrink: 0;
+}
+
+.crossIcon {
+  color: #475569 !important;
+  flex-shrink: 0;
+}
+
+.fullWidthLink {
+  width: 100%;
+  text-decoration: none;
+}
+
+.guaranteeBox {
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.guaranteeIcon {
+  color: var(--color-primary-600);
+  flex-shrink: 0;
+}
+
+.guaranteeTitle {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 0.25rem 0;
+}
+
+.guaranteeDesc {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.faqSection {
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.faqHeader {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  gap: var(--space-2);
+}
+
+.faqTitle {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.faqSubtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.faqGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.faqCard {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.faqQuestion {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.faqQIcon {
+  color: var(--color-primary-600);
+  flex-shrink: 0;
+}
+
+.faqAnswer {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 1.65rem;
+}
+
+@media (max-width: 768px) {
+  .pricingGrid {
+    grid-template-columns: 1fr;
+  }
+}

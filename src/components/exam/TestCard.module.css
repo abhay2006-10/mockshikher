@@ -1,0 +1,107 @@
+.card {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-4);
+  transition: all var(--transition-fast);
+}
+
+.card:hover {
+  border-color: var(--color-primary-400);
+  box-shadow: var(--shadow-md);
+}
+
+.lockedCard {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.badgeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.negMarkIcon {
+  color: var(--color-error);
+}
+
+.previousResult {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-primary-50);
+  border: 1px solid var(--color-primary-200);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  font-size: var(--text-xs);
+}
+
+.prevResultLabel {
+  color: var(--color-text-secondary);
+}
+
+.prevScoreVal {
+  font-weight: 700;
+  color: var(--color-primary-800);
+}
+
+.viewResultLink {
+  color: var(--color-primary-600);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.viewResultLink:hover {
+  text-decoration: underline;
+}
+
+.footer {
+  margin-top: auto;
+}
+
+.btnGroup {
+  display: flex;
+  width: 100%;
+}
+
+.startLink {
+  width: 100%;
+  text-decoration: none;
+}
