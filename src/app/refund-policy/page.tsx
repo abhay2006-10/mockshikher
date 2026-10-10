@@ -2,7 +2,12 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Cancellation & Refund Policy',
-  description: 'Cancellation and refund policies for Mockshikhar mock test series.',
+  description:
+    'Mockshikhar cancellation and refund policy — understand our digital product refund terms, payment failure resolution, and money-back guarantee for mock test purchases.',
+  openGraph: {
+    title: 'Cancellation & Refund Policy — Mockshikhar',
+    description: 'Our transparent refund and cancellation policy for mock test series purchases on Mockshikhar.',
+  },
 };
 
 export default function RefundPolicyPage() {

@@ -2,7 +2,12 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'Privacy policy and data protection terms for Mockshikhar.',
+  description:
+    'Read Mockshikhar\'s privacy policy — how we collect, use, and protect your personal data, test scores, and payment information on our mock test platform.',
+  openGraph: {
+    title: 'Privacy Policy — Mockshikhar',
+    description: 'Our commitment to protecting your data and privacy on the Mockshikhar exam preparation platform.',
+  },
 };
 
 export default function PrivacyPolicyPage() {

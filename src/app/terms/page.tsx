@@ -4,7 +4,12 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Terms of service and usage conditions for Mockshikhar preparatory platform.',
+  description:
+    'Terms of service and usage conditions for Mockshikhar — our mock test platform for HP Police Constable and government exam preparation.',
+  openGraph: {
+    title: 'Terms of Service — Mockshikhar',
+    description: 'Read the terms governing usage of Mockshikhar mock test series and exam preparation platform.',
+  },
 };
 
 export default function TermsOfServicePage() {

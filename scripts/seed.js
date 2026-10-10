@@ -1,5 +1,4 @@
 const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
@@ -239,21 +238,7 @@ const SAMPLE_QUESTIONS_MOCK_1 = [
 async function seed() {
   console.log('--- SEEDING DATABASE ---');
 
-  // 1. Create default admin user
-  const hashedPassword = await bcrypt.hash('admin123', 10);
-  await prisma.user.upsert({
-    where: { email: 'admin@mockprep.com' },
-    update: { role: 'ADMIN' },
-    create: {
-      email: 'admin@mockprep.com',
-      name: 'Super Admin',
-      passwordHash: hashedPassword,
-      role: 'ADMIN',
-    },
-  });
-  console.log('✓ Admin user verified (admin@mockprep.com / admin123)');
-
-  // 2. Create Exams
+  // 1. Create / Upsert Exams
   const hpPolice = await prisma.exam.upsert({
     where: { slug: 'hp-police-constable' },
     update: { name: 'HP Police Constable 2026', totalQuestions: 90, durationMinutes: 60 },
@@ -287,9 +272,9 @@ async function seed() {
       category: 'Revenue',
     },
   });
-  console.log('✓ Exams created');
+  console.log('✓ Exams upserted (HP Police Constable 2026, HP Patwari)');
 
-  // 3. Create Subjects & Topics for HP Police
+  // 2. Create / Upsert Subjects for HP Police
   const subjectsData = [
     { id: 'sub-gk', name: 'General Awareness & HP GK', nameHi: 'सामान्य ज्ञान व हिमाचल ज्ञान' },
     { id: 'sub-hi', name: 'Hindi Language', nameHi: 'हिन्दी भाषा' },
@@ -310,9 +295,9 @@ async function seed() {
       },
     });
   }
-  console.log('✓ Subjects created');
+  console.log('✓ 5 Subjects upserted for HP Police');
 
-  // 4. Create Mock Tests 1 through 10 for HP Police (configured for 10 mocks)
+  // 3. Create / Upsert Mock Tests 1 through 10 for HP Police
   const mocks = [
     { id: 'hp-police-mock-1', testNumber: 1, name: 'HP Police Constable Full Mock 1 (Free Diagnostic)', isFree: true, isPublished: true },
     { id: 'hp-police-mock-2', testNumber: 2, name: 'HP Police Constable Full Mock 2 (High-Yield GS Special)', isFree: false, isPublished: true },
@@ -347,38 +332,56 @@ async function seed() {
       },
     });
   }
-  console.log('✓ Mock Tests 1-10 created');
+  console.log('✓ 10 Mock Tests upserted for HP Police');
 
-  // 5. Seed questions ONLY into Mock 1
+  // 4. Seed questions idempotently into Mock 1
   const mock1 = await prisma.mockTest.findUnique({
     where: { examId_testNumber: { examId: hpPolice.id, testNumber: 1 } },
   });
-
-  // Clear existing questions in mock 1 to ensure clean seed
-  await prisma.question.deleteMany({ where: { mockTestId: mock1.id } });
 
   for (const q of SAMPLE_QUESTIONS_MOCK_1) {
     const subject = await prisma.subject.findFirst({
       where: { examId: hpPolice.id, name: q.subjectName },
     });
 
-    let topic = await prisma.topic.findFirst({
-      where: { subjectId: subject.id, name: q.topicName },
-    });
-
-    if (!topic) {
-      topic = await prisma.topic.create({
-        data: {
-          id: q.topicId,
+    const topic = await prisma.topic.upsert({
+      where: {
+        subjectId_name: {
           subjectId: subject.id,
           name: q.topicName,
-          nameHi: q.topicNameHi,
         },
-      });
-    }
+      },
+      update: {
+        nameHi: q.topicNameHi,
+      },
+      create: {
+        id: q.topicId,
+        subjectId: subject.id,
+        name: q.topicName,
+        nameHi: q.topicNameHi,
+      },
+    });
 
-    await prisma.question.create({
-      data: {
+    const question = await prisma.question.upsert({
+      where: {
+        mockTestId_questionNumber: {
+          mockTestId: mock1.id,
+          questionNumber: q.questionNumber,
+        },
+      },
+      update: {
+        subjectId: subject.id,
+        topicId: topic.id,
+        questionText: q.questionText,
+        questionTextHi: q.questionTextHi,
+        correctOption: q.correctOption,
+        marks: q.marks,
+        negativeMarks: q.negativeMarks,
+        difficulty: q.difficulty,
+        explanation: q.explanation,
+        explanationHi: q.explanationHi,
+      },
+      create: {
         mockTestId: mock1.id,
         subjectId: subject.id,
         topicId: topic.id,
@@ -391,15 +394,29 @@ async function seed() {
         difficulty: q.difficulty,
         explanation: q.explanation,
         explanationHi: q.explanationHi,
-        options: {
-          create: q.options.map((opt) => ({
-            optionLabel: opt.label,
-            optionText: opt.text,
-            optionTextHi: opt.textHi,
-          })),
-        },
       },
     });
+
+    for (const opt of q.options) {
+      await prisma.questionOption.upsert({
+        where: {
+          questionId_optionLabel: {
+            questionId: question.id,
+            optionLabel: opt.label,
+          },
+        },
+        update: {
+          optionText: opt.text,
+          optionTextHi: opt.textHi,
+        },
+        create: {
+          questionId: question.id,
+          optionLabel: opt.label,
+          optionText: opt.text,
+          optionTextHi: opt.textHi,
+        },
+      });
+    }
   }
 
   // Update Mock 1 question count and marks
@@ -411,8 +428,8 @@ async function seed() {
     },
   });
 
-  console.log(`✓ Seeded ${SAMPLE_QUESTIONS_MOCK_1.length} questions into Mock 1 ONLY`);
-  console.log('✓ Mock 2, 3, 4, 5 currently have 0 questions');
+  console.log(`✓ Seeded/upserted ${SAMPLE_QUESTIONS_MOCK_1.length} questions & options into Mock 1`);
+  console.log('✓ Mock Tests 2 to 10 ready for additional questions');
 }
 
 seed()

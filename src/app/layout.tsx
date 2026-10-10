@@ -17,30 +17,49 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://mockshikhar.com'),
   title: {
-    default: 'Mockshikhar — Affordable Mock Tests for Government Exams',
+    default: 'Mockshikhar — HP Police Constable Mock Test Series 2026 | Affordable Online Practice',
     template: '%s | Mockshikhar',
   },
   description:
-    'Practice with realistic full-length mock tests for HP Police and other government exams. Get detailed performance analysis, track your progress, and improve your score. Starting at just ₹149.',
+    'Practice HP Police Constable 2026 mock tests online at ₹149. Bilingual (Hindi & English) full-length tests with real exam pattern, negative marking, instant scorecard, mistake book & detailed solutions. Free Mock 1 available.',
   keywords: [
     'Mockshikhar',
-    'mock test',
-    'government exam',
-    'HP Police',
-    'online test',
-    'exam preparation',
-    'practice test',
-    'competitive exam',
+    'HP Police mock test',
+    'HP Police Constable 2026',
+    'HP Police Constable mock test series',
+    'HP Police online test',
+    'Himachal Pradesh Police exam preparation',
+    'HP Police practice test',
+    'HP Police Constable syllabus 2026',
+    'HP GK questions',
+    'HP Police bilingual mock test',
+    'government exam mock test',
+    'HP Patwari mock test',
+    'HP Police Constable free mock test',
+    'competitive exam preparation India',
+    'online mock test Hindi English',
   ],
   authors: [{ name: 'Mockshikhar' }],
   openGraph: {
     type: 'website',
     locale: 'en_IN',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://mockshikhar.com',
     siteName: 'Mockshikhar',
-    title: 'Mockshikhar — Affordable Mock Tests for Government Exams',
+    title: 'Mockshikhar — HP Police Constable Mock Test Series 2026',
     description:
-      'Practice with realistic full-length mock tests. Get detailed analysis and improve your score.',
+      'Practice with realistic full-length bilingual mock tests for HP Police Constable 2026. Instant scorecard, deep analysis, auto mistake book — starting at just ₹149.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Mockshikhar — HP Police Constable Mock Tests 2026',
+    description:
+      'Affordable bilingual mock test series for HP Police Constable exam. Free Mock 1 available. Start practicing now!',
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
   Check,
@@ -15,6 +16,17 @@ import {
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import styles from './page.module.css';
+
+export const metadata: Metadata = {
+  title: 'Pricing — HP Police Constable Mock Test Series at ₹149',
+  description:
+    'Get 10 full-length HP Police Constable 2026 bilingual mock tests at just ₹149. Free Mock 1 included. Detailed solutions, mistake book, subject-wise analysis — one-time payment, 1 year access.',
+  openGraph: {
+    title: 'Mockshikhar Pricing — Complete HP Police Mock Tests at ₹149',
+    description:
+      'Affordable mock test series for HP Police Constable 2026. 10 full-length tests, bilingual questions, step-by-step solutions. Try Mock 1 free.',
+  },
+};
 
 export default function PricingPage() {
   const faqs = [
