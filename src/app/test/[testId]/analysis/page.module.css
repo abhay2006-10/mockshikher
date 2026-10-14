@@ -573,7 +573,61 @@
 }
 
 @media (max-width: 768px) {
+  .container {
+    padding: var(--space-4) var(--space-3) var(--space-16);
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tabPills {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabBtn {
+    flex: 1;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .insightsGrid {
     grid-template-columns: 1fr;
   }
+
+  .subjectCardsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .subjectCard {
+    padding: var(--space-4);
+  }
+
+  .topicBarRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .topicBarContainer {
+    width: 100%;
+  }
+
+  .questionReviewHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .filterPills {
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 4px;
+  }
 }
+

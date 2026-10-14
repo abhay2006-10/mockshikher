@@ -13,11 +13,15 @@ import {
   Sparkles,
   Lock,
   Zap,
+  Tag,
+  X,
 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import TestCard from '@/components/exam/TestCard';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
+import AuthModal from '@/components/ui/AuthModal';
 import { POPULAR_EXAMS, HP_POLICE_MOCKS } from '@/lib/mock-data';
 import styles from './page.module.css';
 
@@ -25,10 +29,27 @@ export default function ExamDetailPage() {
   const params = useParams();
   const router = useRouter();
   const slug = params?.slug as string;
+  const { status } = useSession();
+  const isLoggedIn = status === 'authenticated';
 
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [unlockedExam, setUnlockedExam] = useState(false);
+
+  // Promo code state
+  const [promoInput, setPromoInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<{
+    code: string;
+    discount: number;
+    finalPrice: number;
+  } | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [isCheckingPromo, setIsCheckingPromo] = useState(false);
+
+  // Baseline price is ₹200 for all eligible exams
+  const basePrice = 200;
+  const payablePrice = appliedPromo ? appliedPromo.finalPrice : basePrice;
 
   const baseExam = POPULAR_EXAMS.find((e) => e.slug === slug) || POPULAR_EXAMS[0];
   const [examData, setExamData] = useState<any>(null);
@@ -57,13 +78,94 @@ export default function ExamDetailPage() {
 
   const exam = examData || baseExam;
 
-  const handleSimulatePurchase = () => {
+  // Free mock is always placed first with prominent FREE tag
+  const sortedTests = React.useMemo(() => {
+    return [...tests].sort((a, b) => {
+      if (a.isFree && !b.isFree) return -1;
+      if (!a.isFree && b.isFree) return 1;
+      return (a.testNumber || 0) - (b.testNumber || 0);
+    });
+  }, [tests]);
+
+  const handleBuyClick = () => {
+    if (!isLoggedIn) {
+      setAuthModalOpen(true);
+      return;
+    }
+    setIsPurchaseModalOpen(true);
+  };
+
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setIsCheckingPromo(true);
+    setPromoError(null);
+    try {
+      const res = await fetch('/api/promo/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: promoInput.trim().toUpperCase(),
+          basePrice,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Invalid promo code');
+      }
+      setAppliedPromo({
+        code: data.code,
+        discount: data.discount,
+        finalPrice: data.finalPrice,
+      });
+    } catch (err: any) {
+      setPromoError(err.message || 'Invalid promo code');
+    } finally {
+      setIsCheckingPromo(false);
+    }
+  };
+
+  const handleExecutePurchase = async () => {
     setIsProcessingPayment(true);
-    setTimeout(() => {
+    try {
+      // 1. Create payment order with optional promo code
+      const res = await fetch('/api/payments/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          examId: exam.id,
+          promoCode: appliedPromo?.code || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create payment order');
+
+      // 2. Verify payment (simulated or live webhook)
+      const verifyRes = await fetch('/api/payments/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          examId: exam.id,
+          isMock: true,
+          amount: data.finalPrice || payablePrice,
+          promoCode: appliedPromo?.code || undefined,
+          razorpay_order_id: data.orderId,
+          razorpay_payment_id: `pay_${Date.now()}`,
+          razorpay_signature: 'mock_signature',
+        }),
+      });
+
+      if (verifyRes.ok) {
+        setUnlockedExam(true);
+        setIsPurchaseModalOpen(false);
+      } else {
+        const verifyData = await verifyRes.json();
+        throw new Error(verifyData.error || 'Payment verification failed');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Payment failed. Please try again.');
+    } finally {
       setIsProcessingPayment(false);
-      setUnlockedExam(true);
-      setIsPurchaseModalOpen(false);
-    }, 1200);
+    }
   };
 
   return (
@@ -167,9 +269,9 @@ export default function ExamDetailPage() {
               size="lg"
               fullWidth
               leftIcon={<Zap size={18} />}
-              onClick={() => setIsPurchaseModalOpen(true)}
+              onClick={handleBuyClick}
             >
-              Unlock All Mocks for ₹{exam.price}
+              Buy Test Series • ₹{exam.price}
             </Button>
           )}
         </div>
@@ -187,12 +289,12 @@ export default function ExamDetailPage() {
           </div>
 
           <div className={styles.testsGrid}>
-            {tests.map((test) => (
+            {sortedTests.map((test) => (
               <TestCard
                 key={test.id}
                 test={test}
                 isUnlocked={unlockedExam}
-                onUnlockClick={() => setIsPurchaseModalOpen(true)}
+                onUnlockClick={handleBuyClick}
               />
             ))}
           </div>
@@ -250,12 +352,118 @@ export default function ExamDetailPage() {
         <div className={styles.modalBody}>
           <div className={styles.modalExamHeader}>
             <h3 className={styles.modalExamTitle}>{exam.name}</h3>
-            <div className={styles.modalPricePill}>₹{exam.price}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {appliedPromo && (
+                <span style={{ textDecoration: 'line-through', color: 'var(--color-text-muted)', fontSize: '0.95rem' }}>
+                  ₹{basePrice}
+                </span>
+              )}
+              <div className={styles.modalPricePill}>₹{payablePrice}</div>
+            </div>
           </div>
           <p className={styles.modalSubtext}>
-            Get immediate access to all {exam.totalMocks} full-length tests, detailed solutions,
-            and personal Mistake Book.
+            Get immediate access to all 10 full-length tests, detailed solutions, and personal Mistake Book.
           </p>
+
+          {/* Promo Code Box */}
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid var(--color-border)',
+              borderRadius: '10px',
+              padding: '0.85rem 1rem',
+              marginBottom: '1rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <Tag size={15} color="#818CF8" />
+              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Have a Promo Code?</span>
+            </div>
+
+            {appliedPromo ? (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  borderRadius: '8px',
+                  padding: '0.5rem 0.75rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <CheckCircle2 size={16} color="#10B981" />
+                  <span style={{ fontWeight: 700, fontFamily: 'monospace', color: '#10B981' }}>
+                    {appliedPromo.code}
+                  </span>
+                  <span style={{ fontSize: '0.8rem', color: '#10B981' }}>
+                    (₹{appliedPromo.discount} Discount Applied)
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAppliedPromo(null);
+                    setPromoInput('');
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--color-text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                  title="Remove promo code"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    type="text"
+                    placeholder="e.g. PATWARI51"
+                    value={promoInput}
+                    onChange={(e) => {
+                      setPromoInput(e.target.value.toUpperCase());
+                      setPromoError(null);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '0.45rem 0.75rem',
+                      borderRadius: '6px',
+                      background: 'var(--color-bg)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text)',
+                      fontFamily: 'monospace',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleApplyPromo}
+                    isLoading={isCheckingPromo}
+                  >
+                    Apply
+                  </Button>
+                </div>
+                {promoError && (
+                  <span style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.35rem', display: 'block' }}>
+                    {promoError}
+                  </span>
+                )}
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.35rem', display: 'block' }}>
+                  Tip: Use promo code <strong>PATWARI51</strong> or <strong>MOCK149</strong> for ₹51 discount!
+                </span>
+              </div>
+            )}
+          </div>
 
           <div className={styles.checkoutFeatures}>
             <div className={styles.checkoutItem}>
@@ -268,7 +476,7 @@ export default function ExamDetailPage() {
             </div>
             <div className={styles.checkoutItem}>
               <CheckCircle2 size={16} className={styles.checkIcon} />
-              <span>1 Year unrestricted validity</span>
+              <span>Includes 10 Full-Length Mock Tests + Mistake Book</span>
             </div>
           </div>
 
@@ -278,9 +486,9 @@ export default function ExamDetailPage() {
               size="lg"
               fullWidth
               isLoading={isProcessingPayment}
-              onClick={handleSimulatePurchase}
+              onClick={handleExecutePurchase}
             >
-              Pay ₹{exam.price} & Unlock All Mocks
+              Pay ₹{payablePrice} &amp; Unlock All 10 Mocks
             </Button>
             <p className={styles.modalSecurityNote}>
               🔒 Razorpay 256-Bit SSL Secured Payment
@@ -288,6 +496,14 @@ export default function ExamDetailPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Guest Login/Signup Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialTab="login"
+        callbackUrl={`/exams/${slug}`}
+      />
     </div>
   );
 }

@@ -17,10 +17,16 @@ html {
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+#app-root {
+  width: 100%;
+  min-width: 0;
+  overflow-x: clip;
 }
 
 img, picture, video, canvas, svg {
@@ -198,6 +204,8 @@ ul, ol {
   --font-heading: var(--font-display);
   --font-body: var(--font-sans);
   --max-w-6xl: 1200px;
+  --max-w-4xl: 900px;
+  --max-w-2xl: 672px;
 }
 
 /* ---------- Base Styles ---------- */

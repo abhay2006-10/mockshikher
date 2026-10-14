@@ -65,6 +65,28 @@ export interface MockExam {
 
 export const POPULAR_EXAMS: MockExam[] = [
   {
+    id: 'exam-hp-patwari',
+    name: 'HP Patwari Examination',
+    slug: 'hp-patwari',
+    description:
+      'Targeted test series for HP Revenue Department Patwari recruitment with arithmetic, general knowledge, and language sections.',
+    totalQuestions: 100,
+    durationMinutes: 90,
+    difficulty: 'MEDIUM',
+    price: 200,
+    originalPrice: 499,
+    isPopular: true,
+    category: 'State Revenue',
+    totalMocks: 10,
+    freeMocks: 1,
+    subjects: [
+      { id: 'sub-pt-hi', name: 'General Hindi', nameHi: 'सामान्य हिन्दी', questionCount: 25 },
+      { id: 'sub-pt-en', name: 'General English', nameHi: 'सामान्य अंग्रेजी', questionCount: 25 },
+      { id: 'sub-pt-ma', name: 'Mathematics', nameHi: 'गणित', questionCount: 25 },
+      { id: 'sub-pt-gk', name: 'General Knowledge', nameHi: 'सामान्य ज्ञान', questionCount: 25 },
+    ],
+  },
+  {
     id: 'exam-hp-police',
     name: 'HP Police Constable 2026',
     slug: 'hp-police-constable',
@@ -73,7 +95,7 @@ export const POPULAR_EXAMS: MockExam[] = [
     totalQuestions: 90,
     durationMinutes: 60,
     difficulty: 'MEDIUM',
-    price: 149,
+    price: 200,
     originalPrice: 499,
     isPopular: true,
     category: 'Police Exams',
@@ -85,28 +107,6 @@ export const POPULAR_EXAMS: MockExam[] = [
       { id: 'sub-gk', name: 'General Awareness & HP GK', nameHi: 'सामान्य ज्ञान व हिमाचल ज्ञान', questionCount: 16 },
       { id: 'sub-ms', name: 'Maths & Science', nameHi: 'गणित एवं विज्ञान', questionCount: 20 },
       { id: 'sub-re', name: 'Reasoning Aptitude', nameHi: 'तर्कशक्ति क्षमता', questionCount: 22 },
-    ],
-  },
-  {
-    id: 'exam-hp-patwari',
-    name: 'HP Patwari Examination',
-    slug: 'hp-patwari',
-    description:
-      'Targeted test series for HP Revenue Department Patwari recruitment with arithmetic, general knowledge, and language sections.',
-    totalQuestions: 100,
-    durationMinutes: 90,
-    difficulty: 'MEDIUM',
-    price: 149,
-    originalPrice: 399,
-    isPopular: true,
-    category: 'State Revenue',
-    totalMocks: 10,
-    freeMocks: 1,
-    subjects: [
-      { id: 'sub-pt-hi', name: 'General Hindi', nameHi: 'सामान्य हिन्दी', questionCount: 25 },
-      { id: 'sub-pt-en', name: 'General English', nameHi: 'सामान्य अंग्रेजी', questionCount: 25 },
-      { id: 'sub-pt-ma', name: 'Mathematics', nameHi: 'गणित', questionCount: 25 },
-      { id: 'sub-pt-gk', name: 'General Knowledge', nameHi: 'सामान्य ज्ञान', questionCount: 25 },
     ],
   },
   {

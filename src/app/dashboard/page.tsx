@@ -23,19 +23,29 @@ import styles from './dashboard.module.css';
 export default function DashboardPage() {
   const [stats, setStats] = React.useState<any>(null);
   const [recentAttempts, setRecentAttempts] = React.useState<any[]>([]);
+  const [payments, setPayments] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
     async function loadStats() {
       try {
-        const res = await fetch('/api/user/dashboard-stats', { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
+        const [statsRes, paymentsRes] = await Promise.all([
+          fetch('/api/user/dashboard-stats', { cache: 'no-store' }),
+          fetch('/api/user/payments', { cache: 'no-store' }),
+        ]);
+
+        if (statsRes.ok) {
+          const data = await statsRes.json();
           setStats(data.stats);
           setRecentAttempts(data.recentAttempts || []);
         }
+
+        if (paymentsRes.ok) {
+          const payData = await paymentsRes.json();
+          setPayments(payData.payments || []);
+        }
       } catch (err) {
-        console.error('Failed to load dashboard stats:', err);
+        console.error('Failed to load dashboard data:', err);
       } finally {
         setIsLoading(false);
       }
@@ -52,9 +62,6 @@ export default function DashboardPage() {
             <Badge variant="accent" size="sm">
               <Sparkles size={12} />
               <span>Aspirant Portal</span>
-            </Badge>
-            <Badge variant="neutral" size="sm">
-              Target: HP Police Constable
             </Badge>
           </div>
           <h1 className={styles.welcomeTitle}>Welcome Back, Aspirant!</h1>
@@ -224,6 +231,77 @@ export default function DashboardPage() {
                           </Button>
                         </Link>
                       </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Student Payment History */}
+      <section className={styles.historySection}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2 className={styles.sectionTitle}>Payment & Subscription History</h2>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: '0.25rem 0 0' }}>
+              Verified purchases and unlocked mock test bundles for your account.
+            </p>
+          </div>
+          <Link href="/exams" className={styles.viewMoreLink}>
+            Explore Test Series →
+          </Link>
+        </div>
+
+        <div className={styles.historyTableWrapper}>
+          <table className={styles.historyTable}>
+            <thead>
+              <tr>
+                <th>Purchased Series</th>
+                <th>Payment Date</th>
+                <th>Amount Paid</th>
+                <th>Mocks Included</th>
+                <th>Status</th>
+                <th>Transaction ID</th>
+              </tr>
+            </thead>
+            <tbody>
+              {payments.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--color-text-secondary)' }}>
+                    No payment records found. All free mock tests can be accessed without payment.
+                  </td>
+                </tr>
+              ) : (
+                payments.map((p) => (
+                  <tr key={p.id}>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <strong style={{ color: 'var(--color-text-primary)' }}>{p.examName}</strong>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)' }}>Full Exam Bundle</span>
+                      </div>
+                    </td>
+                    <td>{p.date}</td>
+                    <td>
+                      <span className={styles.scoreHighlight} style={{ fontSize: '1rem' }}>
+                        ₹{p.amount}
+                      </span>
+                    </td>
+                    <td>
+                      <Badge variant="accent" size="sm">
+                        {p.mockCount} Mock Tests
+                      </Badge>
+                    </td>
+                    <td>
+                      <Badge variant="success" size="sm">
+                        Verified
+                      </Badge>
+                    </td>
+                    <td>
+                      <code style={{ fontSize: '0.8rem', background: 'var(--color-bg-secondary)', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
+                        {p.transactionId}
+                      </code>
                     </td>
                   </tr>
                 ))

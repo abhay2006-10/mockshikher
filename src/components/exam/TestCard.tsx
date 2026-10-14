@@ -31,7 +31,7 @@ export function TestCard({
         <div className={styles.badgeRow}>
           {test.isFree ? (
             <Badge variant="success" size="sm">
-              FREE MOCK TEST
+              FREE
             </Badge>
           ) : (
             <Badge variant="neutral" size="sm" icon={<Lock size={12} />}>

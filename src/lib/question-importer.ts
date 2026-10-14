@@ -21,6 +21,13 @@ export interface ImportRow {
   negative_marks?: number | string;
   explanation?: string;
   hindi_explanation?: string;
+  [key: string]: any;
+}
+
+export interface RowErrorItem {
+  rowNumber: number;
+  column: string;
+  message: string;
 }
 
 export interface RowValidationResult {
@@ -29,6 +36,7 @@ export interface RowValidationResult {
   isValid: boolean;
   errors: string[];
   warnings: string[];
+  columnErrors: RowErrorItem[];
 }
 
 export interface ValidationSummary {
@@ -37,6 +45,7 @@ export interface ValidationSummary {
   invalidRows: number;
   duplicateRows: number;
   results: RowValidationResult[];
+  rowErrors: RowErrorItem[];
 }
 
 export const TEMPLATE_COLUMNS = [
@@ -62,9 +71,10 @@ export const TEMPLATE_COLUMNS = [
   'hindi_explanation',
 ] as const;
 
+// Exactly ONE clean sample row conforming strictly to the specification
 export const SAMPLE_IMPORT_ROWS: ImportRow[] = [
   {
-    exam: 'hp-police-constable',
+    exam: 'hp-patwari',
     mock_test_number: 1,
     question: 'Which is the highest mountain peak in Himachal Pradesh?',
     hindi_question: 'हिमाचल प्रदेश की सबसे ऊंची पर्वत चोटी कौन सी है?',
@@ -82,96 +92,8 @@ export const SAMPLE_IMPORT_ROWS: ImportRow[] = [
     difficulty: 'MEDIUM',
     marks: 1.0,
     negative_marks: 0.25,
-    explanation: 'Reo Purgyil is the highest peak in Himachal Pradesh at an elevation of 6,816 metres in the Kinnaur district.',
+    explanation: 'Reo Purgyil is the highest peak in Himachal Pradesh at 6,816 metres in Kinnaur district.',
     hindi_explanation: 'रियो पुर्गिल किन्नौर जिले में 6,816 मीटर की ऊंचाई पर हिमाचल प्रदेश की सबसे ऊंची चोटी है।',
-  },
-  {
-    exam: 'hp-police-constable',
-    mock_test_number: 1,
-    question: 'What is the sum of angles in a triangle in Euclidean geometry?',
-    hindi_question: 'यूक्लिडियन ज्यामिति में त्रिभुज के तीनों कोणों का योग कितना होता है?',
-    option_a: '90°',
-    option_b: '180°',
-    option_c: '270°',
-    option_d: '360°',
-    hindi_option_a: '90°',
-    hindi_option_b: '180°',
-    hindi_option_c: '270°',
-    hindi_option_d: '360°',
-    correct_answer: 'B',
-    subject: 'Mathematics & Reasoning',
-    topic: 'Geometry',
-    difficulty: 'EASY',
-    marks: 1.0,
-    negative_marks: 0.25,
-    explanation: 'The interior angles of any triangle on a Euclidean plane always sum up to 180 degrees.',
-    hindi_explanation: 'यूक्लिडियन समतल पर किसी भी त्रिभुज के आंतरिक कोणों का योग हमेशा 180 अंश होता है।',
-  },
-  {
-    exam: 'hp-police-constable',
-    mock_test_number: 1,
-    question: 'Identify the antonym of the word "ABUNDANT":',
-    hindi_question: '"ABUNDANT" (प्रचुर) शब्द का विलोम शब्द पहचानिए:',
-    option_a: 'Plentiful',
-    option_b: 'Scarce',
-    option_c: 'Copious',
-    option_d: 'Ample',
-    hindi_option_a: 'Plentiful (भरपूर)',
-    hindi_option_b: 'Scarce (दुर्लभ/अल्प)',
-    hindi_option_c: 'Copious (प्रचुर)',
-    hindi_option_d: 'Ample (पर्याप्त)',
-    correct_answer: 'B',
-    subject: 'English Language',
-    topic: 'Vocabulary & Antonyms',
-    difficulty: 'EASY',
-    marks: 1.0,
-    negative_marks: 0.25,
-    explanation: 'Abundant means existing in large quantities. Scarce means insufficient for the demand.',
-    hindi_explanation: 'Abundant का अर्थ बहुत अधिक मात्रा में होना है। इसका विलोम Scarce (अल्प/दुर्लभ) है।',
-  },
-  {
-    exam: 'hp-police-constable',
-    mock_test_number: 1,
-    question: 'निम्न में से कौन सा शब्द "सूर्य" का पर्यायवाची नहीं है?',
-    hindi_question: 'निम्न में से कौन सा शब्द "सूर्य" का पर्यायवाची नहीं है?',
-    option_a: 'दिनकर',
-    option_b: 'भास्कर',
-    option_c: 'निशाकर',
-    option_d: 'रवि',
-    hindi_option_a: 'दिनकर',
-    hindi_option_b: 'भास्कर',
-    hindi_option_c: 'निशाकर',
-    hindi_option_d: 'रवि',
-    correct_answer: 'C',
-    subject: 'Hindi Language',
-    topic: 'पर्यायवाची शब्द',
-    difficulty: 'EASY',
-    marks: 1.0,
-    negative_marks: 0.25,
-    explanation: '"निशाकर" चंद्रमा का पर्यायवाची है, सूर्य का नहीं। दिनकर, भास्कर और रवि सूर्य के पर्यायवाची हैं।',
-    hindi_explanation: '"निशाकर" चंद्रमा का पर्यायवाची है, सूर्य का नहीं। दिनकर, भास्कर और रवि सूर्य के पर्यायवाची हैं।',
-  },
-  {
-    exam: 'hp-police-constable',
-    mock_test_number: 1,
-    question: 'What is the chemical symbol for Gold in the periodic table?',
-    hindi_question: 'आवर्त सारणी में सोने (Gold) का रासायनिक प्रतीक क्या है?',
-    option_a: 'Ag',
-    option_b: 'Au',
-    option_c: 'Fe',
-    option_d: 'Pb',
-    hindi_option_a: 'Ag',
-    hindi_option_b: 'Au',
-    hindi_option_c: 'Fe',
-    hindi_option_d: 'Pb',
-    correct_answer: 'B',
-    subject: 'General Science',
-    topic: 'Chemistry',
-    difficulty: 'EASY',
-    marks: 1.0,
-    negative_marks: 0.25,
-    explanation: 'Au comes from the Latin word "Aurum", which means shining dawn and is the symbol for gold.',
-    hindi_explanation: 'Au लैटिन शब्द "Aurum" से आया है, जिसका अर्थ चमकदार भोर है और यह सोने का प्रतीक है।',
   },
 ];
 
@@ -195,10 +117,10 @@ export function parseImportFile(buffer: Buffer, filename: string): ImportRow[] {
 }
 
 /**
- * Robust CSV parser supporting quotes, commas, and multiline text
+ * Robust RFC-4180 compliant CSV parser supporting quotes, commas, CRLF/LF, and multiline Hindi text
  */
 export function parseCsvText(csvText: string): ImportRow[] {
-  // Normalize newlines and strip BOM
+  // Strip UTF-8 BOM if present
   const cleanText = csvText.replace(/^\uFEFF/, '').trim();
   if (!cleanText) return [];
 
@@ -251,14 +173,16 @@ export function parseCsvText(csvText: string): ImportRow[] {
 
   if (rows.length < 2) return [];
 
-  // Normalize header mapping
-  const headers = rows[0].map((h) => h.toLowerCase().replace(/[\s-]+/g, '_').trim());
+  // Normalize headers
+  const headers = rows[0].map((h) =>
+    h.toLowerCase().replace(/[\s-]+/g, '_').replace(/[^a-z0-9_]/g, '').trim()
+  );
   const dataRows = rows.slice(1);
 
   return dataRows.map((cols) => {
     const rowObj: Record<string, string> = {};
     headers.forEach((header, index) => {
-      rowObj[header] = cols[index] || '';
+      rowObj[header] = cols[index] !== undefined ? cols[index] : '';
     });
     return normalizeRow(rowObj);
   });
@@ -266,9 +190,19 @@ export function parseCsvText(csvText: string): ImportRow[] {
 
 function normalizeRow(raw: Record<string, unknown>): ImportRow {
   const get = (key: string) => {
-    const val = raw[key] ?? raw[key.toLowerCase()] ?? raw[key.replace(/_/g, ' ')];
-    return val !== undefined && val !== null ? String(val).trim() : '';
+    const normalizedKey = key.toLowerCase().replace(/[\s-]+/g, '_');
+    for (const k of Object.keys(raw)) {
+      const cleanK = k.toLowerCase().replace(/[\s-]+/g, '_').replace(/[^a-z0-9_]/g, '');
+      if (cleanK === normalizedKey) {
+        const val = raw[k];
+        return val !== undefined && val !== null ? String(val).trim() : '';
+      }
+    }
+    return '';
   };
+
+  const marksVal = get('marks');
+  const negMarksVal = get('negative_marks');
 
   return {
     exam: get('exam'),
@@ -283,49 +217,90 @@ function normalizeRow(raw: Record<string, unknown>): ImportRow {
     hindi_option_b: get('hindi_option_b'),
     hindi_option_c: get('hindi_option_c'),
     hindi_option_d: get('hindi_option_d'),
-    correct_answer: get('correct_answer').toUpperCase(),
+    correct_answer: get('correct_answer').toUpperCase().trim(),
     subject: get('subject'),
     topic: get('topic'),
-    difficulty: (get('difficulty') || 'MEDIUM').toUpperCase(),
-    marks: get('marks') ? Number(get('marks')) : 1.0,
-    negative_marks: get('negative_marks') !== '' ? Number(get('negative_marks')) : 0.25,
+    difficulty: (get('difficulty') || 'MEDIUM').toUpperCase().trim(),
+    marks: marksVal !== '' ? Number(marksVal) : 1.0,
+    negative_marks: negMarksVal !== '' ? Number(negMarksVal) : 0.25,
     explanation: get('explanation'),
     hindi_explanation: get('hindi_explanation'),
   };
 }
 
 /**
- * Validates import rows against business rules & duplicate detection
+ * Validates import rows against strict business rules & generates row-level error details
  */
 export function validateImportRows(
   rows: ImportRow[],
-  existingQuestionsSet: Set<string> = new Set()
+  existingQuestionsSet: Set<string> = new Set(),
+  options: {
+    createMissingMockTests?: boolean;
+    createMissingSubjects?: boolean;
+    existingExams?: Set<string>;
+    existingMockNumbers?: Map<string, Set<number>>;
+    existingExamSubjects?: Map<string, Set<string>>;
+  } = {}
 ): ValidationSummary {
   const results: RowValidationResult[] = [];
+  const allRowErrors: RowErrorItem[] = [];
   const fileSeenQuestions = new Set<string>();
   let duplicateCount = 0;
+
+  const {
+    createMissingMockTests = false,
+    createMissingSubjects = false,
+    existingExams,
+    existingMockNumbers,
+    existingExamSubjects,
+  } = options;
 
   rows.forEach((row, index) => {
     const rowNumber = index + 2; // Accounting for 1-based index + header row
     const errors: string[] = [];
     const warnings: string[] = [];
+    const columnErrors: RowErrorItem[] = [];
+
+    const addError = (column: string, message: string) => {
+      errors.push(message);
+      const item: RowErrorItem = { rowNumber, column, message };
+      columnErrors.push(item);
+      allRowErrors.push(item);
+    };
 
     // 1. Validate Exam
-    if (!row.exam) {
-      errors.push('Exam slug or name is required (e.g. hp-police-constable).');
+    const cleanExamSlug = (row.exam || '').toLowerCase().trim();
+    if (!cleanExamSlug) {
+      addError('exam', 'Exam slug is required.');
+    } else if (existingExams && !existingExams.has(cleanExamSlug)) {
+      addError('exam', `Exam slug "${cleanExamSlug}" does not exist in the database.`);
     }
 
     // 2. Validate Mock Test Number
     const testNum = Number(row.mock_test_number);
-    if (!row.mock_test_number || isNaN(testNum) || testNum < 1) {
-      errors.push('mock_test_number must be a positive integer (e.g. 1, 2, 3).');
+    if (!row.mock_test_number || isNaN(testNum) || testNum < 1 || !Number.isInteger(testNum)) {
+      addError('mock_test_number', `mock_test_number must be a positive integer (received: '${row.mock_test_number}').`);
+    } else if (
+      !createMissingMockTests &&
+      existingMockNumbers &&
+      cleanExamSlug &&
+      existingMockNumbers.has(cleanExamSlug)
+    ) {
+      const mockSet = existingMockNumbers.get(cleanExamSlug);
+      if (mockSet && !mockSet.has(testNum)) {
+        addError(
+          'mock_test_number',
+          `Mock test #${testNum} does not exist for exam "${cleanExamSlug}". Tick "Create missing mock tests" to auto-create.`
+        );
+      }
     }
 
     // 3. Validate Question Text (English or Hindi must be present)
-    if (!row.question && !row.hindi_question) {
-      errors.push('Question text is required (at least English or Hindi).');
-    } else if (row.question && row.question.length < 3) {
-      errors.push('English question text is too short (min 3 characters).');
+    const hasEnglish = !!row.question && row.question.trim().length > 0;
+    const hasHindi = !!row.hindi_question && row.hindi_question.trim().length > 0;
+
+    if (!hasEnglish && !hasHindi) {
+      addError('question', 'Question text is required (at least English or Hindi).');
     }
 
     // 4. Validate Options A-D
@@ -334,54 +309,65 @@ export function validateImportRows(
     const optC = row.option_c || row.hindi_option_c;
     const optD = row.option_d || row.hindi_option_d;
 
-    if (!optA) errors.push('Option A text is missing.');
-    if (!optB) errors.push('Option B text is missing.');
-    if (!optC) errors.push('Option C text is missing.');
-    if (!optD) errors.push('Option D text is missing.');
+    if (!optA) addError('option_a', 'Option A text is missing (English or Hindi required).');
+    if (!optB) addError('option_b', 'Option B text is missing (English or Hindi required).');
+    if (!optC) addError('option_c', 'Option C text is missing (English or Hindi required).');
+    if (!optD) addError('option_d', 'Option D text is missing (English or Hindi required).');
 
     // 5. Validate Correct Answer
     const correct = (row.correct_answer || '').toUpperCase().trim();
     if (!['A', 'B', 'C', 'D'].includes(correct)) {
-      errors.push(`correct_answer must be one of 'A', 'B', 'C', or 'D'. Received: '${row.correct_answer}'`);
+      addError('correct_answer', `correct_answer must be one of 'A', 'B', 'C', or 'D' (received: '${row.correct_answer}').`);
     }
 
-    // 6. Validate Subject & Topic
-    if (!row.subject) {
-      errors.push('Subject name is required.');
-    }
-    if (!row.topic) {
-      warnings.push('Topic is empty. Will be assigned to General.');
+    // 6. Validate Subject
+    const cleanSubject = (row.subject || '').trim();
+    if (!cleanSubject) {
+      addError('subject', 'Subject name is required.');
+    } else if (
+      !createMissingSubjects &&
+      existingExamSubjects &&
+      cleanExamSlug &&
+      existingExamSubjects.has(cleanExamSlug)
+    ) {
+      const subjSet = existingExamSubjects.get(cleanExamSlug);
+      if (subjSet && !subjSet.has(cleanSubject.toLowerCase())) {
+        addError(
+          'subject',
+          `Subject "${cleanSubject}" does not exist for exam "${cleanExamSlug}". Tick "Create missing subjects/topics" to auto-create.`
+        );
+      }
     }
 
     // 7. Validate Difficulty
     const diff = (row.difficulty || 'MEDIUM').toUpperCase().trim();
     if (!['EASY', 'MEDIUM', 'HARD'].includes(diff)) {
-      errors.push(`difficulty must be 'EASY', 'MEDIUM', or 'HARD'. Received: '${row.difficulty}'`);
+      addError('difficulty', `difficulty must be 'EASY', 'MEDIUM', or 'HARD' (received: '${row.difficulty}').`);
     }
 
     // 8. Validate Marks & Negative Marks
     const marks = Number(row.marks);
-    if (row.marks !== undefined && (isNaN(marks) || marks <= 0)) {
-      errors.push('marks must be a positive number (e.g. 1.0).');
+    if (row.marks !== undefined && row.marks !== '' && (isNaN(marks) || marks <= 0)) {
+      addError('marks', `marks must be a positive number greater than 0 (received: '${row.marks}').`);
     }
 
     const negMarks = Number(row.negative_marks);
-    if (row.negative_marks !== undefined && (isNaN(negMarks) || negMarks < 0)) {
-      errors.push('negative_marks must be a non-negative number (e.g. 0.25).');
+    if (row.negative_marks !== undefined && row.negative_marks !== '' && (isNaN(negMarks) || negMarks < 0)) {
+      addError('negative_marks', `negative_marks must be 0 or a positive number (received: '${row.negative_marks}').`);
     }
 
-    // 9. Duplicate detection within file
-    const questionFingerprint = `${row.exam}_${testNum}_${(row.question || row.hindi_question || '').toLowerCase().trim()}`;
+    // 9. In-file duplicate detection
+    const questionFingerprint = `${cleanExamSlug}_${testNum}_${(row.question || row.hindi_question || '').toLowerCase().trim()}`;
     if (fileSeenQuestions.has(questionFingerprint)) {
-      errors.push('Duplicate question found within this upload file.');
+      warnings.push('Duplicate question found within this upload file.');
       duplicateCount++;
     } else {
       fileSeenQuestions.add(questionFingerprint);
     }
 
-    // 10. Duplicate detection against existing DB questions
+    // 10. Database duplicate detection warning
     if (existingQuestionsSet.has(questionFingerprint)) {
-      warnings.push('Question with identical text already exists in database for this mock test (will update or skip).');
+      warnings.push('Question already exists in database for this mock test (will be updated).');
     }
 
     results.push({
@@ -390,6 +376,7 @@ export function validateImportRows(
       isValid: errors.length === 0,
       errors,
       warnings,
+      columnErrors,
     });
   });
 
@@ -402,11 +389,12 @@ export function validateImportRows(
     invalidRows,
     duplicateRows: duplicateCount,
     results,
+    rowErrors: allRowErrors,
   };
 }
 
 /**
- * Generates downloadable CSV string with template columns and sample rows
+ * Generates downloadable CSV string matching template columns with UTF-8 BOM and one sample row
  */
 export function generateTemplateCsv(): string {
   const header = TEMPLATE_COLUMNS.join(',');
@@ -429,13 +417,14 @@ export function generateTemplateCsv(): string {
       escapeCsv(r.topic),
       r.difficulty || 'MEDIUM',
       r.marks || 1.0,
-      r.negative_marks || 0.25,
+      r.negative_marks !== undefined ? r.negative_marks : 0.25,
       escapeCsv(r.explanation || ''),
       escapeCsv(r.hindi_explanation || ''),
     ].join(',');
   });
 
-  return [header, ...sampleLines].join('\r\n');
+  // Prepend UTF-8 BOM so Excel and spreadsheet applications open Devanagari Hindi text cleanly
+  return '\uFEFF' + [header, ...sampleLines].join('\r\n');
 }
 
 /**
@@ -458,11 +447,11 @@ export function generateErrorReportCsv(results: RowValidationResult[]): string {
     ].join(',');
   });
 
-  return [header, ...errorLines].join('\r\n');
+  return '\uFEFF' + [header, ...errorLines].join('\r\n');
 }
 
 function escapeCsv(val: string): string {
-  if (!val) return '""';
+  if (val === undefined || val === null || val === '') return '""';
   const clean = String(val).replace(/"/g, '""');
   return `"${clean}"`;
 }

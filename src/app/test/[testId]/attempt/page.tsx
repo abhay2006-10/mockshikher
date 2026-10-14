@@ -92,6 +92,17 @@ function TestAttemptInner() {
   const [answers, setAnswers] = useState<Record<string, UserAnswerState>>({});
   const [attemptId, setAttemptId] = useState<string | null>(null);
 
+  // Accidental back/refresh prevention warning
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = 'You have a test attempt in progress. Leaving will submit or pause your timer. Are you sure?';
+      return e.returnValue;
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
   // Fetch questions and start/resume server-owned attempt
   useEffect(() => {
     const loadQuestionsAndAttempt = async () => {
@@ -449,20 +460,24 @@ function TestAttemptInner() {
         </div>
 
         <div className={styles.topBarRight}>
+          <span className={styles.mobileQBadge}>
+            Q {currentIndex + 1}/{questions.length}
+          </span>
+
           <button
             type="button"
             className={styles.langToggle}
             onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
             title="Toggle Question Language (English / हिन्दी)"
           >
-            <Languages size={16} />
+            <Languages size={15} />
             <span>{lang === 'en' ? 'हिन्दी' : 'English'}</span>
           </button>
 
           <div className={`${styles.timerBox} ${isLowTime ? styles.timerLowTime : ''}`}>
-            <Clock size={18} className={styles.timerIcon} />
+            <Clock size={16} className={styles.timerIcon} />
             <span className={styles.timeVal}>{formatTime(timeLeft)}</span>
-            {isLowTime && <span className={styles.timeWarning}>Hurry!</span>}
+            {isLowTime && <span className={styles.timeWarning}>!</span>}
           </div>
 
           <button
@@ -471,13 +486,14 @@ function TestAttemptInner() {
             onClick={() => setIsMobilePaletteOpen(true)}
             aria-label="Open Question Palette"
           >
-            <Menu size={18} />
+            <Menu size={16} />
             <span>Palette</span>
           </button>
 
           <Button
             variant="danger"
             size="md"
+            className={styles.desktopSubmitBtn}
             leftIcon={<Send size={15} />}
             onClick={() => setIsSubmitModalOpen(true)}
           >
@@ -559,7 +575,7 @@ function TestAttemptInner() {
             </div>
           </div>
 
-          {/* Bottom Navigation Toolbar */}
+          {/* Bottom Navigation Toolbar (Sticky bar with Previous, Mark for Review, Save & Next, Submit) */}
           <footer className={styles.navToolbar}>
             <div className={styles.navLeft}>
               <Button
@@ -578,8 +594,9 @@ function TestAttemptInner() {
                 leftIcon={<RotateCcw size={16} />}
                 onClick={handleClearResponse}
                 disabled={currentAnswer.selectedOption === null}
+                className={styles.clearBtn}
               >
-                Clear Response
+                Clear
               </Button>
             </div>
 
@@ -590,7 +607,7 @@ function TestAttemptInner() {
                 leftIcon={<Flag size={16} />}
                 onClick={handleMarkForReviewAndNext}
               >
-                Mark for Review & Next
+                Mark for Review
               </Button>
 
               <Button
@@ -601,16 +618,36 @@ function TestAttemptInner() {
               >
                 Save & Next
               </Button>
+
+              <Button
+                variant="danger"
+                size="md"
+                leftIcon={<Send size={15} />}
+                onClick={() => setIsSubmitModalOpen(true)}
+                className={styles.mobileToolbarSubmitBtn}
+              >
+                Submit
+              </Button>
             </div>
           </footer>
         </main>
 
-        {/* Right: Question Palette Drawer / Sidebar */}
+        {/* Backdrop for Mobile Bottom Sheet Palette */}
+        {isMobilePaletteOpen && (
+          <div
+            className={styles.paletteBackdrop}
+            onClick={() => setIsMobilePaletteOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
+        {/* Right / Bottom Sheet: Question Palette */}
         <aside
           className={`${styles.paletteSidebar} ${
             isMobilePaletteOpen ? styles.mobilePaletteVisible : ''
           }`}
         >
+          <div className={styles.bottomSheetHandle} />
           <div className={styles.paletteHeader}>
             <h3 className={styles.paletteTitle}>Question Palette</h3>
             {isMobilePaletteOpen && (
@@ -618,11 +655,13 @@ function TestAttemptInner() {
                 type="button"
                 className={styles.closeDrawerBtn}
                 onClick={() => setIsMobilePaletteOpen(false)}
+                aria-label="Close Question Palette"
               >
                 <X size={20} />
               </button>
             )}
           </div>
+
 
           {/* Real-time Status Counters */}
           <div className={styles.statusLegendGrid}>

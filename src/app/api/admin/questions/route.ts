@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
 import prisma from '@/lib/prisma';
 import { resolveOrCreateMockTest, recalculateMockStats } from '@/lib/mock-resolver';
+import { recordAuditLog } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,13 @@ export async function GET(req: NextRequest) {
 
   try {
     const whereClause: any = {};
+    if (examSlug && examSlug !== 'ALL') {
+      whereClause.mockTest = {
+        exam: {
+          OR: [{ slug: examSlug }, { id: examSlug }],
+        },
+      };
+    }
 
     if (mockTestId && mockTestId !== 'ALL') {
       whereClause.mockTestId = mockTestId;
@@ -156,6 +164,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const numMarks = Number(marks);
+    if (isNaN(numMarks) || numMarks <= 0) {
+      return NextResponse.json(
+        { error: 'Marks must be greater than 0.' },
+        { status: 400 }
+      );
+    }
+
+    const numNegMarks = Number(negativeMarks);
+    if (isNaN(numNegMarks) || numNegMarks < 0 || numNegMarks > 5) {
+      return NextResponse.json(
+        { error: 'Negative marking must be between 0 and 5.' },
+        { status: 400 }
+      );
+    }
+
     // 1. Resolve or create mock test in database
     const mockTest = await resolveOrCreateMockTest({
       mockTestId: mockTestId || 'hp-police-mock-1',
@@ -209,8 +233,8 @@ export async function POST(req: NextRequest) {
         questionTextHi: questionTextHi || questionText,
         questionImage: questionImage || null,
         correctOption: normCorrect as 'A' | 'B' | 'C' | 'D',
-        marks: Number(marks) || 1.0,
-        negativeMarks: Number(negativeMarks) || 0.25,
+        marks: numMarks,
+        negativeMarks: numNegMarks,
         difficulty: (difficulty.toUpperCase() as any) || 'MEDIUM',
         explanation: explanation || '',
         explanationHi: explanationHi || explanation || '',
@@ -235,6 +259,13 @@ export async function POST(req: NextRequest) {
 
     // 6. Recalculate Mock Test stats (totalQuestions, totalMarks)
     await recalculateMockStats(mockTest.id);
+
+    await recordAuditLog(
+      'QUESTION_CREATE',
+      `Added question #${questionNumber} (${createdQuestion.questionText.substring(0, 40)}...) with marks +${numMarks}/-${numNegMarks}`,
+      authRes.user.email || 'Admin',
+      'SUCCESS'
+    );
 
     return NextResponse.json({
       success: true,
@@ -274,3 +305,69 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const authRes = await requireAdmin();
+  if (authRes instanceof NextResponse) return authRes;
+
+  const { searchParams } = new URL(req.url);
+  const mockTestId = searchParams.get('mockTestId');
+
+  if (!mockTestId) {
+    return NextResponse.json(
+      { error: 'mockTestId query parameter is required for bulk deletion.' },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const mockTest = await prisma.mockTest.findUnique({
+      where: { id: mockTestId },
+      include: {
+        exam: true,
+        _count: { select: { attempts: true, questions: true } },
+      },
+    });
+
+    if (!mockTest) {
+      return NextResponse.json({ error: 'Mock test not found.' }, { status: 404 });
+    }
+
+    // Refuse to delete if students have attempts
+    const attemptsCount = mockTest._count.attempts;
+    if (attemptsCount > 0) {
+      return NextResponse.json(
+        {
+          error: `Cannot delete questions for Mock Test "${mockTest.name}": students have already submitted ${attemptsCount} attempt(s). Bulk deleting questions would corrupt student exam histories.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    const deleted = await prisma.question.deleteMany({
+      where: { mockTestId },
+    });
+
+    await recalculateMockStats(mockTestId);
+
+    await recordAuditLog(
+      'QUESTIONS_BULK_DELETE',
+      `Bulk deleted all ${deleted.count} questions from mock test "${mockTest.name}" in exam "${mockTest.exam.name}"`,
+      authRes.user.email || 'Admin',
+      'SUCCESS'
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: `Successfully deleted all ${deleted.count} questions from "${mockTest.name}".`,
+      count: deleted.count,
+    });
+  } catch (err: any) {
+    console.error('Failed to bulk delete questions:', err);
+    return NextResponse.json(
+      { error: err.message || 'Failed to bulk delete questions from mock test.' },
+      { status: 500 }
+    );
+  }
+}
+

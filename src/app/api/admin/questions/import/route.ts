@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
 import prisma from '@/lib/prisma';
-import { resolveOrCreateMockTest, recalculateMockStats } from '@/lib/mock-resolver';
+import { recalculateMockStats } from '@/lib/mock-resolver';
 import {
   parseImportFile,
   validateImportRows,
   generateErrorReportCsv,
   ImportRow,
 } from '@/lib/question-importer';
+import { recordAuditLog } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,9 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     const mode = (formData.get('mode') as string) || 'preview'; // 'preview' or 'execute'
+    const createMissingMockTests = formData.get('createMissingMockTests') === 'true' || formData.get('createMissingMockTests') === '1';
+    const createMissingSubjects = formData.get('createMissingSubjects') === 'true' || formData.get('createMissingSubjects') === '1';
+    const replaceAllQuestions = formData.get('replaceAllQuestions') === 'true' || formData.get('replaceAllQuestions') === '1';
     const rawRowsJson = formData.get('rows') as string | null;
 
     let rows: ImportRow[] = [];
@@ -42,36 +46,39 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Retrieve existing question fingerprints from DB to detect duplicates
-    const existingQuestionsSet = new Set<string>();
-    try {
-      const existing = await prisma.question.findMany({
-        select: {
-          questionText: true,
-          questionTextHi: true,
-          mockTest: {
-            select: {
-              testNumber: true,
-              exam: { select: { slug: true } },
-            },
-          },
-        },
-      });
+    // 1. Gather database context for validation
+    const dbExams = await prisma.exam.findMany({
+      include: {
+        mockTests: { select: { id: true, testNumber: true } },
+        subjects: { select: { id: true, name: true } },
+      },
+    });
 
-      existing.forEach((q) => {
-        const examSlug = q.mockTest?.exam?.slug || 'hp-police-constable';
-        const testNum = q.mockTest?.testNumber || 1;
-        const text = (q.questionText || q.questionTextHi || '').toLowerCase().trim();
-        existingQuestionsSet.add(`${examSlug}_${testNum}_${text}`);
-      });
-    } catch (err) {
-      console.warn('Could not query existing DB questions for deduplication check:', err);
-    }
+    const existingExams = new Set(dbExams.map((e) => e.slug.toLowerCase()));
+    const existingMockNumbers = new Map<string, Set<number>>();
+    const existingExamSubjects = new Map<string, Set<string>>();
 
-    // Run deep validation
-    const validation = validateImportRows(rows, existingQuestionsSet);
+    dbExams.forEach((e) => {
+      existingMockNumbers.set(
+        e.slug.toLowerCase(),
+        new Set(e.mockTests.map((m) => m.testNumber))
+      );
+      existingExamSubjects.set(
+        e.slug.toLowerCase(),
+        new Set(e.subjects.map((s) => s.name.toLowerCase().trim()))
+      );
+    });
 
-    // If preview mode, return validation preview table
+    // 2. Run deep validation
+    const validation = validateImportRows(rows, new Set(), {
+      createMissingMockTests,
+      createMissingSubjects,
+      existingExams,
+      existingMockNumbers,
+      existingExamSubjects,
+    });
+
+    // If PREVIEW MODE: return summary, row-level errors, preview rows
     if (mode === 'preview') {
       const errorReportCsv = validation.invalidRows > 0 ? generateErrorReportCsv(validation.results) : null;
       return NextResponse.json({
@@ -81,106 +88,246 @@ export async function POST(req: NextRequest) {
           invalidRows: validation.invalidRows,
           duplicateRows: validation.duplicateRows,
         },
-        preview: validation.results.slice(0, 100), // Preview first 100
+        rowErrors: validation.rowErrors,
+        preview: validation.results.slice(0, 100).map((r) => ({
+          rowNumber: r.rowNumber,
+          isValid: r.isValid,
+          errors: r.errors,
+          warnings: r.warnings,
+          exam: r.data.exam,
+          mock_test_number: r.data.mock_test_number,
+          question: r.data.question || r.data.hindi_question,
+          subject: r.data.subject,
+          correct_answer: r.data.correct_answer,
+          difficulty: r.data.difficulty,
+          marks: r.data.marks,
+          negative_marks: r.data.negative_marks,
+        })),
         errorReportCsv,
       });
     }
 
-    // EXECUTE MODE: Import only valid rows inside a transaction
+    // ==========================================
+    // EXECUTE MODE
+    // ==========================================
     const validRowsToImport = validation.results
       .filter((r) => r.isValid)
       .map((r) => r.data);
 
-    let importedCount = 0;
+    if (validRowsToImport.length === 0) {
+      return NextResponse.json(
+        {
+          error: `Validation failed: 0 valid rows out of ${validation.totalRows}. Please fix the row errors before importing.`,
+          rowErrors: validation.rowErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    let createdCount = 0;
+    let updatedCount = 0;
     let skippedCount = validation.invalidRows;
     const affectedMockTestIds = new Set<string>();
 
-    if (validRowsToImport.length > 0) {
-      // 1. Pre-determine affected mock tests and record initial question counts in DB
-      for (const row of validRowsToImport) {
-        const testNum = Number(row.mock_test_number) || 1;
-        const examSlug = (row.exam || 'hp-police-constable').toLowerCase().trim();
-        const mockTest = await resolveOrCreateMockTest({
-          examSlug,
-          testNumber: testNum,
-          mockTestId: `${examSlug}-mock-${testNum}`,
-        });
-        if (mockTest) {
-          affectedMockTestIds.add(mockTest.id);
-        }
+    // 1. Group rows by Exam and Mock Test Number
+    const groupedByExamAndMock = new Map<string, ImportRow[]>();
+    for (const row of validRowsToImport) {
+      const examSlug = (row.exam || 'hp-patwari').toLowerCase().trim();
+      const testNum = Number(row.mock_test_number) || 1;
+      const key = `${examSlug}:::${testNum}`;
+      if (!groupedByExamAndMock.has(key)) {
+        groupedByExamAndMock.set(key, []);
+      }
+      groupedByExamAndMock.get(key)!.push(row);
+    }
+
+    // 2. Process each Exam and Mock Test Group
+    for (const [key, groupRows] of groupedByExamAndMock.entries()) {
+      const [examSlug, testNumStr] = key.split(':::');
+      const testNum = parseInt(testNumStr, 10);
+
+      // A. Resolve or create Exam
+      let exam = await prisma.exam.findUnique({
+        where: { slug: examSlug },
+      });
+
+      if (!exam) {
+        return NextResponse.json(
+          { error: `Exam "${examSlug}" does not exist in the database.` },
+          { status: 400 }
+        );
       }
 
-      const preCounts = new Map<string, number>();
-      for (const mId of affectedMockTestIds) {
-        const c = await prisma.question.count({ where: { mockTestId: mId } });
-        preCounts.set(mId, c);
-      }
-
-      // 2. Execute all row insertions inside a database transaction
-      await prisma.$transaction(async (tx) => {
-        for (const row of validRowsToImport) {
-          const testNum = Number(row.mock_test_number) || 1;
-          const examSlug = (row.exam || 'hp-police-constable').toLowerCase().trim();
-
-          // 1. Resolve or create mock test using shared resolver
-          const mockTest = await resolveOrCreateMockTest({
-            examSlug,
+      // B. Resolve or create Mock Test
+      let mockTest = await prisma.mockTest.findUnique({
+        where: {
+          examId_testNumber: {
+            examId: exam.id,
             testNumber: testNum,
-            mockTestId: `${examSlug}-mock-${testNum}`,
-          });
-          if (!mockTest) {
-            throw new Error(`Could not resolve mock test for exam "${examSlug}" test ${testNum}`);
-          }
-          affectedMockTestIds.add(mockTest.id);
+          },
+        },
+        include: {
+          _count: { select: { attempts: true } },
+        },
+      });
 
-          // 2. Find or create subject
-          const subjectName = row.subject?.trim() || 'General Awareness';
-          let subject = await tx.subject.findFirst({
-            where: { examId: mockTest.examId, name: subjectName },
+      if (!mockTest) {
+        if (!createMissingMockTests) {
+          return NextResponse.json(
+            { error: `Mock Test #${testNum} for exam "${exam.name}" does not exist. Enable "Create missing mock tests" to auto-create.` },
+            { status: 400 }
+          );
+        }
+
+        mockTest = await prisma.mockTest.create({
+          data: {
+            examId: exam.id,
+            testNumber: testNum,
+            name: `${exam.name} Full Mock ${testNum}`,
+            isFree: testNum === 1,
+            isPublished: false,
+            totalQuestions: 0,
+            durationMinutes: exam.durationMinutes,
+            totalMarks: 0,
+            marksPerQuestion: exam.marksPerQuestion,
+            negativeMarksPerQuestion: exam.negativeMarking,
+          },
+          include: {
+            _count: { select: { attempts: true } },
+          },
+        });
+      }
+
+      affectedMockTestIds.add(mockTest.id);
+
+      // C. Check "Replace all questions" attempt protection
+      if (replaceAllQuestions) {
+        const studentAttempts = mockTest._count.attempts;
+        if (studentAttempts > 0) {
+          return NextResponse.json(
+            {
+              error: `Cannot replace all questions in Mock Test #${testNum} (${mockTest.name}): students have already submitted ${studentAttempts} attempt(s). Replacing questions would corrupt historical test scores.`,
+            },
+            { status: 400 }
+          );
+        }
+
+        // Safe to delete existing questions for this mock test
+        await prisma.question.deleteMany({
+          where: { mockTestId: mockTest.id },
+        });
+      }
+
+      // D. Cache subjects and topics for this exam
+      const dbSubjects = await prisma.subject.findMany({
+        where: { examId: exam.id },
+        include: { topics: true },
+      });
+      const subjectMap = new Map<string, any>();
+      dbSubjects.forEach((s) => subjectMap.set(s.name.toLowerCase().trim(), s));
+
+      // E. Process each question row in order within this mock test
+      for (let i = 0; i < groupRows.length; i++) {
+        const row = groupRows[i];
+        const questionNumber = i + 1;
+
+        // Resolve subject
+        const rawSubjectName = (row.subject || 'General Awareness').trim();
+        const subjectKey = rawSubjectName.toLowerCase();
+        let subject = subjectMap.get(subjectKey);
+
+        if (!subject) {
+          if (!createMissingSubjects) {
+            return NextResponse.json(
+              { error: `Subject "${rawSubjectName}" does not exist for exam "${exam.name}". Enable "Create missing subjects/topics" to auto-create.` },
+              { status: 400 }
+            );
+          }
+
+          subject = await prisma.subject.create({
+            data: {
+              examId: exam.id,
+              name: rawSubjectName,
+              nameHi: rawSubjectName,
+            },
+            include: { topics: true },
           });
-          if (!subject) {
-            subject = await tx.subject.create({
-              data: {
-                examId: mockTest.examId,
-                name: subjectName,
-                nameHi: subjectName,
+          subjectMap.set(subjectKey, subject);
+        }
+
+        // Resolve topic
+        const rawTopicName = (row.topic || 'General').trim();
+        const topicKey = rawTopicName.toLowerCase();
+        let topic = (subject.topics || []).find((t: any) => t.name.toLowerCase().trim() === topicKey);
+
+        if (!topic) {
+          topic = await prisma.topic.create({
+            data: {
+              subjectId: subject.id,
+              name: rawTopicName,
+              nameHi: rawTopicName,
+            },
+          });
+          if (!subject.topics) subject.topics = [];
+          subject.topics.push(topic);
+        }
+
+        const qMarks = Number(row.marks) || 1.0;
+        const qNegMarks = Number(row.negative_marks) !== undefined ? Number(row.negative_marks) : 0.25;
+        const qCorrect = (row.correct_answer || 'A').toUpperCase().trim() as 'A' | 'B' | 'C' | 'D';
+        const qDifficulty = (row.difficulty || 'MEDIUM').toUpperCase().trim() as any;
+
+        // Check if question already exists at this questionNumber for this mock test
+        const existingQuestion = await prisma.question.findUnique({
+          where: {
+            mockTestId_questionNumber: {
+              mockTestId: mockTest.id,
+              questionNumber,
+            },
+          },
+        });
+
+        if (existingQuestion) {
+          // UPDATE EXISTING QUESTION (NO DUPLICATION)
+          await prisma.question.update({
+            where: { id: existingQuestion.id },
+            data: {
+              subjectId: subject.id,
+              topicId: topic.id,
+              questionText: row.question || row.hindi_question || '',
+              questionTextHi: row.hindi_question || row.question || '',
+              correctOption: qCorrect,
+              marks: qMarks,
+              negativeMarks: qNegMarks,
+              difficulty: qDifficulty,
+              explanation: row.explanation || '',
+              explanationHi: row.hindi_explanation || row.explanation || '',
+              options: {
+                deleteMany: {},
+                create: [
+                  { optionLabel: 'A', optionText: row.option_a || '', optionTextHi: row.hindi_option_a || row.option_a || '' },
+                  { optionLabel: 'B', optionText: row.option_b || '', optionTextHi: row.hindi_option_b || row.option_b || '' },
+                  { optionLabel: 'C', optionText: row.option_c || '', optionTextHi: row.hindi_option_c || row.option_c || '' },
+                  { optionLabel: 'D', optionText: row.option_d || '', optionTextHi: row.hindi_option_d || row.option_d || '' },
+                ],
               },
-            });
-          }
-
-          // 3. Find or create topic
-          const topicName = row.topic?.trim() || 'General';
-          let topic = await tx.topic.findFirst({
-            where: { subjectId: subject.id, name: topicName },
+            },
           });
-          if (!topic) {
-            topic = await tx.topic.create({
-              data: {
-                subjectId: subject.id,
-                name: topicName,
-                nameHi: topicName,
-              },
-            });
-          }
-
-          // 4. Determine current question count for this mock test
-          const currentCount = await tx.question.count({
-            where: { mockTestId: mockTest.id },
-          });
-
-          // 5. Create Question + Options
-          await tx.question.create({
+          updatedCount++;
+        } else {
+          // CREATE NEW QUESTION
+          await prisma.question.create({
             data: {
               mockTestId: mockTest.id,
               subjectId: subject.id,
               topicId: topic.id,
-              questionNumber: currentCount + 1,
+              questionNumber,
               questionText: row.question || row.hindi_question || '',
               questionTextHi: row.hindi_question || row.question || '',
-              correctOption: (row.correct_answer?.trim().toUpperCase() as any) || 'A',
-              marks: Number(row.marks) || 1.0,
-              negativeMarks: Number(row.negative_marks) || 0.25,
-              difficulty: (row.difficulty?.trim().toUpperCase() as any) || 'MEDIUM',
+              correctOption: qCorrect,
+              marks: qMarks,
+              negativeMarks: qNegMarks,
+              difficulty: qDifficulty,
               explanation: row.explanation || '',
               explanationHi: row.hindi_explanation || row.explanation || '',
               options: {
@@ -193,55 +340,37 @@ export async function POST(req: NextRequest) {
               },
             },
           });
-
-          importedCount++;
+          createdCount++;
         }
-      });
-
-      // 3. Re-query the database to verify the actual inserted count before showing success (Requirement 4)
-      let verifiedInsertedCount = 0;
-      for (const mId of affectedMockTestIds) {
-        const postCount = await prisma.question.count({ where: { mockTestId: mId } });
-        const preCount = preCounts.get(mId) || 0;
-        verifiedInsertedCount += (postCount - preCount);
-      }
-
-      if (verifiedInsertedCount !== importedCount) {
-        throw new Error(
-          `Database verification failed: ${importedCount} questions submitted, but only ${verifiedInsertedCount} confirmed in PostgreSQL.`
-        );
-      }
-
-      // Recalculate stats for all affected mock tests
-      for (const mId of affectedMockTestIds) {
-        await recalculateMockStats(mId);
       }
     }
 
-    if (validRowsToImport.length > 0 && importedCount === 0) {
-      return NextResponse.json(
-        { error: 'Failed to import rows into database. 0 questions were saved.' },
-        { status: 500 }
-      );
+    // 3. Recalculate totals for all affected Mock Tests and Exams
+    for (const mockId of affectedMockTestIds) {
+      await recalculateMockStats(mockId);
     }
 
-    const errorReportCsv = validation.invalidRows > 0 ? generateErrorReportCsv(validation.results) : null;
+    await recordAuditLog(
+      'QUESTION_IMPORT',
+      `Bulk CSV import executed: ${createdCount} created, ${updatedCount} updated, ${skippedCount} skipped across ${affectedMockTestIds.size} mock test(s).`,
+      authRes.user.email || 'Admin',
+      'SUCCESS'
+    );
 
     return NextResponse.json({
       success: true,
-      message: `Import complete. ${importedCount} questions successfully imported into PostgreSQL database. ${skippedCount} skipped due to validation errors.`,
+      message: `Import successfully completed: ${createdCount} created, ${updatedCount} updated, ${skippedCount} skipped.`,
       summary: {
         totalRows: validation.totalRows,
-        imported: importedCount,
+        created: createdCount,
+        updated: updatedCount,
         skipped: skippedCount,
-        errors: validation.invalidRows,
       },
-      errorReportCsv,
     });
   } catch (err: any) {
     console.error('Import processing failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Bulk import processing failed in PostgreSQL database.' },
+      { error: err.message || 'Bulk import processing failed.' },
       { status: 500 }
     );
   }

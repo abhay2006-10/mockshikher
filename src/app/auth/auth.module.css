@@ -180,3 +180,24 @@
 .footerLink:hover {
   text-decoration: underline;
 }
+
+@media (max-width: 480px) {
+  .pageWrapper {
+    padding: var(--space-4) var(--space-2);
+    min-height: calc(100dvh - 120px);
+  }
+
+  .authCard {
+    padding: var(--space-5) var(--space-4);
+    border-radius: var(--radius-xl);
+    gap: var(--space-4);
+  }
+
+  .cardTitle {
+    font-size: var(--text-xl);
+  }
+
+  .googleBtn {
+    min-height: 44px;
+  }
+}

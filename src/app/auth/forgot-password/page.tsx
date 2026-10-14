@@ -18,11 +18,26 @@ export default function ForgotPasswordPage() {
     setError(null);
     setIsLoading(true);
 
-    // Simulate password reset email send
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Failed to process password reset request.');
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(false);
       setIsSubmitted(true);
-    }, 800);
+    } catch {
+      setError('An error occurred. Please try again.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -70,7 +85,10 @@ export default function ForgotPasswordPage() {
               type="email"
               placeholder="you@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError(null);
+              }}
               leftIcon={<Mail size={16} />}
               required
             />

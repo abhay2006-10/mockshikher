@@ -1,121 +1,165 @@
-import crypto from 'crypto';
-import prisma from '@/lib/prisma';
+// Transactional email client using Brevo API (https://api.brevo.com/v3/smtp/email)
 
-export interface EmailVerificationResult {
-  token: string;
-  verifyUrl: string;
-  sent: boolean;
-  message?: string;
+interface SendEmailOptions {
+  to: string;
+  subject: string;
+  htmlContent: string;
+  textContent?: string;
+}
+
+interface ParsedSender {
+  name: string;
+  email: string;
 }
 
 /**
- * Creates an email verification token and attempts to send the verification link.
- * If no email provider API key is set in environment variables, it logs the configuration
- * requirement and provides the verification link for local development.
+ * Parses EMAIL_FROM environment variable.
+ * Supports formats: "Mockshikhar <support@mockshikhar.com>" or "support@mockshikhar.com"
  */
-export async function sendVerificationEmail(email: string, baseUrl: string): Promise<EmailVerificationResult> {
-  // Generate secure random token
-  const token = crypto.randomBytes(32).toString('hex');
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+function parseSender(fromStr?: string): ParsedSender {
+  const fallback = { name: 'Mockshikhar', email: 'support@mockshikhar.com' };
+  if (!fromStr) return fallback;
 
-  // Save to verification_tokens table in database
-  await prisma.verificationToken.upsert({
-    where: {
-      identifier_token: {
-        identifier: email,
-        token: token,
-      },
-    },
-    update: {
-      token,
-      expires,
-    },
-    create: {
-      identifier: email,
-      token,
-      expires,
-    },
-  });
+  const match = fromStr.match(/^(.*?)\s*<(.+?)>$/);
+  if (match) {
+    return {
+      name: match[1]?.trim() || fallback.name,
+      email: match[2]?.trim() || fallback.email,
+    };
+  }
+  return {
+    name: fallback.name,
+    email: fromStr.trim(),
+  };
+}
 
-  const verifyUrl = `${baseUrl}/api/auth/verify-email?token=${token}`;
+/**
+ * Sends a transactional email using the Brevo API.
+ * In development without an API key, logs the email/code to the console.
+ * In production with missing keys, fails loudly.
+ */
+export async function sendTransactionalEmail({
+  to,
+  subject,
+  htmlContent,
+  textContent,
+}: SendEmailOptions): Promise<{ success: boolean; messageId?: string; devMode?: boolean }> {
+  const apiKey = process.env.BREVO_API_KEY;
+  const rawSender = process.env.EMAIL_FROM;
+  const isProd = process.env.NODE_ENV === 'production';
 
-  // Check for email provider configuration (Resend or Brevo)
-  const resendApiKey = process.env.RESEND_API_KEY;
-  const brevoApiKey = process.env.BREVO_API_KEY;
-  const emailFrom = process.env.EMAIL_FROM || 'Mockshikhar <onboarding@mockshikhar.com>';
-
-  if (resendApiKey) {
-    try {
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${resendApiKey}`,
-        },
-        body: JSON.stringify({
-          from: emailFrom,
-          to: email,
-          subject: 'Verify your Mockshikhar Account',
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h2>Welcome to Mockshikhar!</h2>
-              <p>Please click the button below to verify your email address:</p>
-              <a href="${verifyUrl}" style="display: inline-block; padding: 12px 24px; background: #6366f1; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 16px 0;">
-                Verify Email Address
-              </a>
-              <p style="color: #666; font-size: 14px;">If you did not create an account, you can safely ignore this email.</p>
-              <p style="color: #999; font-size: 12px;">Link expires in 24 hours.</p>
-            </div>
-          `,
-        }),
-      });
-
-      if (res.ok) {
-        return { token, verifyUrl, sent: true };
-      }
-      console.warn('Resend API returned non-OK status:', await res.text());
-    } catch (err) {
-      console.error('Failed to send verification email via Resend:', err);
+  if (!apiKey) {
+    if (isProd) {
+      throw new Error(
+        'BREVO_API_KEY is not configured in production environment. Transactional email failed.'
+      );
     }
-  } else if (brevoApiKey) {
-    try {
-      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-key': brevoApiKey,
-        },
-        body: JSON.stringify({
-          sender: { name: 'Mockshikhar', email: process.env.BREVO_SENDER_EMAIL || 'support@mockshikhar.com' },
-          to: [{ email }],
-          subject: 'Verify your Mockshikhar Account',
-          htmlContent: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h2>Welcome to Mockshikhar!</h2>
-              <p>Please click the button below to verify your email address:</p>
-              <a href="${verifyUrl}" style="display: inline-block; padding: 12px 24px; background: #6366f1; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 16px 0;">
-                Verify Email Address
-              </a>
-              <p style="color: #666; font-size: 14px;">If you did not create an account, you can safely ignore this email.</p>
-            </div>
-          `,
-        }),
-      });
 
-      if (res.ok) {
-        return { token, verifyUrl, sent: true };
-      }
-    } catch (err) {
-      console.error('Failed to send verification email via Brevo:', err);
-    }
+    // In development only: print the message and code to the server console
+    console.log(
+      `\n============================================================\n` +
+      `[DEV EMAIL SENDER] To: ${to}\n` +
+      `Subject: ${subject}\n` +
+      `Content:\n${textContent || htmlContent.replace(/<[^>]*>?/gm, '')}\n` +
+      `============================================================\n`
+    );
+    return { success: true, devMode: true };
   }
 
-  // If no email service is configured, log verification details for configuration
-  console.log(`[Email Service Not Configured] Verification token generated for ${email}. Link: ${verifyUrl}`);
-  return {
-    token,
-    verifyUrl,
-    sent: false,
-    message: 'Email provider not configured in environment variables. Configure RESEND_API_KEY to send automated emails.',
-  };
+  const sender = parseSender(rawSender);
+
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'api-key': apiKey,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      sender,
+      to: [{ email: to }],
+      subject,
+      htmlContent,
+      textContent: textContent || htmlContent.replace(/<[^>]*>?/gm, ''),
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`Brevo email API failed with HTTP ${response.status}:`, errorText);
+    throw new Error(`Failed to send email via Brevo: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json().catch(() => ({}));
+  return { success: true, messageId: data?.messageId };
+}
+
+/**
+ * Sends a 6-digit email verification code.
+ */
+export async function sendVerificationCodeEmail(email: string, code: string) {
+  const subject = `${code} is your Mockshikhar verification code`;
+  const htmlContent = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; background: #0F0F1A; color: #F1F5F9; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+      <div style="margin-bottom: 24px; text-align: center;">
+        <h1 style="color: #F5B301; font-size: 24px; margin: 0 0 8px 0; font-weight: 800;">Mockshikhar</h1>
+        <p style="color: #94A3B8; font-size: 14px; margin: 0;">Online Mock Test Platform</p>
+      </div>
+      <div style="background: #16213E; padding: 24px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); text-align: center;">
+        <p style="color: #CBD5E1; font-size: 15px; margin: 0 0 16px 0;">Your email verification code is:</p>
+        <div style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #F5B301; padding: 12px 24px; background: rgba(245, 179, 1, 0.1); border-radius: 8px; display: inline-block; font-family: monospace;">
+          ${code}
+        </div>
+        <p style="color: #94A3B8; font-size: 13px; margin: 20px 0 0 0;">
+          This code is valid for <strong>10 minutes</strong>. Do not share it with anyone.
+        </p>
+      </div>
+      <p style="color: #64748B; font-size: 12px; text-align: center; margin-top: 24px;">
+        If you did not request this verification, you can safely ignore this email.
+      </p>
+    </div>
+  `;
+  const textContent = `Your Mockshikhar verification code is: ${code}. This code is valid for 10 minutes.`;
+
+  return sendTransactionalEmail({
+    to: email,
+    subject,
+    htmlContent,
+    textContent,
+  });
+}
+
+/**
+ * Sends a password reset email using the same Brevo sender.
+ */
+export async function sendPasswordResetEmail(email: string, resetUrl: string) {
+  const subject = `Reset your Mockshikhar password`;
+  const htmlContent = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; background: #0F0F1A; color: #F1F5F9; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+      <div style="margin-bottom: 24px; text-align: center;">
+        <h1 style="color: #F5B301; font-size: 24px; margin: 0 0 8px 0; font-weight: 800;">Mockshikhar</h1>
+        <p style="color: #94A3B8; font-size: 14px; margin: 0;">Password Reset Request</p>
+      </div>
+      <div style="background: #16213E; padding: 24px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); text-align: center;">
+        <p style="color: #CBD5E1; font-size: 15px; margin: 0 0 20px 0;">Click the button below to reset your password:</p>
+        <a href="${resetUrl}" style="display: inline-block; background: #2563EB; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-weight: 700; font-size: 15px;">
+          Reset Password
+        </a>
+        <p style="color: #94A3B8; font-size: 13px; margin: 20px 0 0 0;">
+          This link expires in 60 minutes.
+        </p>
+      </div>
+      <p style="color: #64748B; font-size: 12px; text-align: center; margin-top: 24px;">
+        If you did not request a password reset, you can safely ignore this email.
+      </p>
+    </div>
+  `;
+  const textContent = `Reset your Mockshikhar password by visiting: ${resetUrl}. This link expires in 60 minutes.`;
+
+  return sendTransactionalEmail({
+    to: email,
+    subject,
+    htmlContent,
+    textContent,
+  });
 }

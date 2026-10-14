@@ -70,11 +70,13 @@ model User {
   name          String
   email         String    @unique
   emailVerified DateTime?
-  passwordHash  String?
-  image         String?
-  role          UserRole  @default(USER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  passwordHash    String?
+  image           String?
+  phone           String?
+  whatsappConsent Boolean   @default(true)
+  role            UserRole  @default(USER)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Relations
   accounts     Account[]
@@ -206,6 +208,9 @@ model MockTest {
   totalMarks              Float
   marksPerQuestion        Float   @default(1)
   negativeMarksPerQuestion Float  @default(0.25)
+  durationOverride        Int?
+  marksOverride           Float?
+  negativeMarksOverride   Float?
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
@@ -411,3 +416,33 @@ model Payment {
   @@index([status])
   @@map("payments")
 }
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  details   String   @db.Text
+  author    String
+  status    String   @default("SUCCESS")
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action])
+  @@map("audit_logs")
+}
+
+model PromoCode {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  discount    Int       // Discount in ₹ (e.g. 51 for ₹200 -> ₹149)
+  isActive    Boolean   @default(true)
+  maxUses     Int?      // Nullable for unlimited
+  usedCount   Int       @default(0)
+  expiresAt   DateTime? // Optional expiry date
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+  @@map("promo_codes")
+}
+

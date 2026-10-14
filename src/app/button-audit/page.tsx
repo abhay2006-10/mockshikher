@@ -181,7 +181,7 @@ export default function ButtonAuditPage() {
               <Link href="/auth/signup" className="btn btn--primary btn--md">
                 HTML Link .btn--primary
               </Link>
-              <Link href="/pricing" className="btn btn--secondary btn--md">
+              <Link href="/exams" className="btn btn--secondary btn--md">
                 HTML Link .btn--secondary
               </Link>
               <Link href="/exams" className="btn btn--outline btn--md">

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Outfit } from 'next/font/google';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -15,6 +15,14 @@ const outfit = Outfit({
   subsets: ['latin'],
   display: 'swap',
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#0F0F1A',
+  viewportFit: 'cover',
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://mockshikhar.com'),
@@ -85,7 +93,7 @@ export default async function RootLayout({
     <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
       <body>
         <AuthProvider>
-          <div id="app-root" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+          <div id="app-root" style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>
             <Header initialUser={initialUser} />
             <main style={{ flex: 1 }}>{children}</main>
             <Footer />

@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-auth';
 import { generateTemplateCsv } from '@/lib/question-importer';
 
 export async function GET() {
+  const authRes = await requireAdmin();
+  if (authRes instanceof NextResponse) return authRes;
+
   const csvContent = generateTemplateCsv();
 
   return new NextResponse(csvContent, {

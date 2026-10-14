@@ -122,8 +122,9 @@ export async function POST(
     }
 
     // Create a new server-owned test attempt
-    const durationMinutes = mockTest.durationMinutes || 60;
-    const deadline = new Date(now.getTime() + durationMinutes * 60 * 1000);
+    const effectiveDurationMinutes =
+      mockTest.durationMinutes || mockTest.exam?.durationMinutes || 60;
+    const deadline = new Date(now.getTime() + effectiveDurationMinutes * 60 * 1000);
 
     const newAttempt = await prisma.testAttempt.create({
       data: {
@@ -139,7 +140,7 @@ export async function POST(
       attemptId: newAttempt.id,
       startedAt: newAttempt.startedAt.toISOString(),
       deadline: newAttempt.deadline.toISOString(),
-      timeLeftSeconds: durationMinutes * 60,
+      timeLeftSeconds: effectiveDurationMinutes * 60,
       isResume: false,
       savedAnswers: {},
     });

@@ -21,6 +21,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           Google({
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            allowDangerousEmailAccountLinking: true,
           }),
         ]
       : []),
@@ -57,6 +58,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error('Invalid email or password');
         }
 
+        // Block unverified users from logging in with password
+        if (!user.emailVerified) {
+          throw new Error('EMAIL_NOT_VERIFIED');
+        }
+
         return {
           id: user.id,
           name: user.name,
@@ -68,6 +74,85 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === 'google') {
+        const email = user.email?.toLowerCase().trim();
+        if (!email) return false;
+
+        const existingUser = await prisma.user.findUnique({
+          where: { email },
+        });
+
+        if (existingUser) {
+          // Link Google account to existing user if not already linked
+          const existingAccount = await prisma.account.findUnique({
+            where: {
+              provider_providerAccountId: {
+                provider: 'google',
+                providerAccountId: account.providerAccountId,
+              },
+            },
+          });
+
+          if (!existingAccount) {
+            await prisma.account.create({
+              data: {
+                userId: existingUser.id,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                access_token: account.access_token,
+                expires_at: account.expires_at,
+                token_type: account.token_type,
+                scope: account.scope,
+                id_token: account.id_token,
+              },
+            });
+          }
+
+          // Mark verified automatically for Google users
+          if (!existingUser.emailVerified) {
+            await prisma.user.update({
+              where: { id: existingUser.id },
+              data: { emailVerified: new Date() },
+            });
+          }
+
+          user.id = existingUser.id;
+          (user as any).role = existingUser.role;
+        } else {
+          // Create new user, marked emailVerified automatically
+          const newUser = await prisma.user.create({
+            data: {
+              name: user.name || 'User',
+              email,
+              emailVerified: new Date(),
+              image: user.image,
+              role: 'USER',
+            },
+          });
+
+          await prisma.account.create({
+            data: {
+              userId: newUser.id,
+              type: account.type,
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+              access_token: account.access_token,
+              expires_at: account.expires_at,
+              token_type: account.token_type,
+              scope: account.scope,
+              id_token: account.id_token,
+            },
+          });
+
+          user.id = newUser.id;
+          (user as any).role = newUser.role;
+        }
+      }
+      return true;
+    },
+
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
@@ -78,6 +163,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return token;
     },
+
     async session({ session, token }) {
       if (session.user && token) {
         session.user.id = token.id as string;

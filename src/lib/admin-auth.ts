@@ -1,16 +1,17 @@
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
 
 export interface AdminSessionUser {
   id: string;
   name?: string | null;
   email?: string | null;
-  role: 'ADMIN' | 'USER';
+  role: 'ADMIN';
 }
 
 /**
- * Server-side authorization check for Admin API routes
- * Returns the authenticated admin user or throws/returns a 401/403 response.
+ * Server-side authorization check for Admin API routes.
+ * Strictly verifies that the authenticated user has role ADMIN in the PostgreSQL database.
  */
 export async function requireAdmin(): Promise<{ user: AdminSessionUser } | NextResponse> {
   const session = await auth();
@@ -22,10 +23,23 @@ export async function requireAdmin(): Promise<{ user: AdminSessionUser } | NextR
     );
   }
 
-  // @ts-expect-error role is on session.user
-  const role = session.user.role || (session.user.email?.includes('admin') ? 'ADMIN' : 'USER');
+  const userId = session.user.id;
+  const userEmail = session.user.email;
 
-  if (role !== 'ADMIN') {
+  let dbUser = null;
+  if (userId) {
+    dbUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true, role: true },
+    });
+  } else if (userEmail) {
+    dbUser = await prisma.user.findUnique({
+      where: { email: userEmail },
+      select: { id: true, name: true, email: true, role: true },
+    });
+  }
+
+  if (!dbUser || dbUser.role !== 'ADMIN') {
     return NextResponse.json(
       { error: 'Forbidden. Admin privileges required.' },
       { status: 403 }
@@ -34,9 +48,9 @@ export async function requireAdmin(): Promise<{ user: AdminSessionUser } | NextR
 
   return {
     user: {
-      id: session.user.id || 'admin-user',
-      name: session.user.name,
-      email: session.user.email,
+      id: dbUser.id,
+      name: dbUser.name,
+      email: dbUser.email,
       role: 'ADMIN',
     },
   };

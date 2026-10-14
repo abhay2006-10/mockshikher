@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import {
-  Menu,
-  X,
   GraduationCap,
   User,
   LogOut,
@@ -17,7 +16,12 @@ import {
   History,
   TrendingUp,
   ShieldCheck,
+  Home,
+  Flame,
+  MoreHorizontal,
+  X,
 } from 'lucide-react';
+import AuthModal, { AuthModalTab } from '@/components/ui/AuthModal';
 import styles from './Header.module.css';
 
 interface HeaderUser {
@@ -29,25 +33,50 @@ interface HeaderUser {
 
 interface HeaderProps {
   initialUser?: HeaderUser | null;
-  user?: HeaderUser | null; // Backwards-compatible prop
+  user?: HeaderUser | null;
 }
 
-const userMenuItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
+// User menu items for desktop dropdown
+const desktopMenuItems = [
   { href: '/dashboard', label: 'My Performance', icon: TrendingUp },
-  { href: '/dashboard/mistakes', label: 'My Mistakes', icon: BookOpen },
+  { href: '/dashboard/mistakes', label: 'My Mistakes', icon: Flame },
   { href: '/dashboard/bookmarks', label: 'Bookmarks', icon: Bookmark },
-  { href: '/dashboard', label: 'Test History', icon: History },
-  { href: '/dashboard', label: 'Profile', icon: User },
+  { href: '/dashboard/profile', label: 'Profile', icon: User },
 ];
 
 export default function Header({ initialUser, user: legacyUser }: HeaderProps) {
   const pathname = usePathname();
   const { data: session, status } = useSession();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [moreSheetOpen, setMoreSheetOpen] = useState(false);
 
-  // Synchronize user from real server session or client-side NextAuth state
+  // Auth modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTab, setModalTab] = useState<AuthModalTab>('login');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Lock body scroll and listen for Escape when bottom sheet is open
+  useEffect(() => {
+    if (!moreSheetOpen) return;
+
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMoreSheetOpen(false);
+    };
+    document.addEventListener('keydown', handleEsc);
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [moreSheetOpen]);
+
   const user: HeaderUser | null =
     status === 'authenticated' && session?.user
       ? {
@@ -60,177 +89,193 @@ export default function Header({ initialUser, user: legacyUser }: HeaderProps) {
       ? null
       : initialUser || legacyUser || null;
 
-  // Don't show header on test attempt pages
-  if (pathname?.includes('/test/') && pathname?.includes('/attempt')) {
+  // Pages where top header is completely hidden (e.g. test attempt)
+  const isAttemptPage = pathname?.includes('/test/') && pathname?.includes('/attempt');
+  const isAdminPage = pathname?.startsWith('/admin');
+  const isAuthPage = pathname?.startsWith('/auth');
+
+  // Bottom bar should not show on test attempt, admin, or auth pages
+  const hideBottomBar = isAttemptPage || isAdminPage || isAuthPage;
+
+  if (isAttemptPage) {
     return null;
   }
 
-  const navLinks = [
+  // Desktop navigation links
+  const desktopNavLinks = [
     { href: '/', label: 'Home' },
     { href: '/exams', label: 'Exams' },
-    { href: '/pricing', label: 'Pricing' },
     ...(user ? [{ href: '/dashboard', label: 'Dashboard' }] : []),
     ...(user?.role === 'ADMIN' ? [{ href: '/admin', label: 'Admin' }] : []),
   ];
 
-  const getInitials = (name: string) => {
-    return name
+  const getInitials = (name: string) =>
+    name
       .split(' ')
       .map((n) => n[0])
       .join('')
       .toUpperCase()
       .slice(0, 2) || 'U';
-  };
 
   const handleSignOut = async () => {
     setUserMenuOpen(false);
-    setMobileMenuOpen(false);
+    setMoreSheetOpen(false);
     await signOut({ callbackUrl: '/' });
   };
 
+  const openLogin = () => {
+    setModalTab('login');
+    setModalOpen(true);
+  };
+
+  const openSignup = () => {
+    setModalTab('signup');
+    setModalOpen(true);
+  };
+
+
+
   return (
-    <header className={styles.header}>
-      <div className={styles.headerInner}>
-        {/* Logo */}
-        <Link href="/" className={styles.logo}>
-          <div className={styles.logoIcon}>
-            <GraduationCap size={24} />
-          </div>
-          <span className={styles.logoText}>Mockshikhar</span>
-        </Link>
-
-        {/* Desktop Navigation */}
-        <nav className={styles.desktopNav}>
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`${styles.navLink} ${
-                pathname === link.href ? styles.navLinkActive : ''
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Desktop Auth / User */}
-        <div className={styles.desktopActions}>
-          {user ? (
-            <div className={styles.userMenu}>
-              <button
-                className={styles.userMenuTrigger}
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                aria-expanded={userMenuOpen}
-                aria-label="User menu"
-              >
-                <div className={styles.avatar}>
-                  {user.image ? (
-                    <img src={user.image} alt={user.name} />
-                  ) : (
-                    getInitials(user.name)
-                  )}
-                </div>
-                <span className={styles.userName}>{user.name}</span>
-                <ChevronDown
-                  size={16}
-                  className={`${styles.chevron} ${
-                    userMenuOpen ? styles.chevronOpen : ''
-                  }`}
-                />
-              </button>
-
-              {userMenuOpen && (
-                <>
-                  <div
-                    className={styles.menuBackdrop}
-                    onClick={() => setUserMenuOpen(false)}
-                  />
-                  <div className={styles.dropdown}>
-                    <div className={styles.dropdownHeader}>
-                      <p className={styles.dropdownName}>{user.name}</p>
-                      <p className={styles.dropdownEmail}>{user.email}</p>
-                    </div>
-                    <div className={styles.dropdownDivider} />
-                    {userMenuItems.map((item) => (
-                      <Link
-                        key={item.href + item.label}
-                        href={item.href}
-                        className={styles.dropdownItem}
-                        onClick={() => setUserMenuOpen(false)}
-                      >
-                        <item.icon size={16} />
-                        {item.label}
-                      </Link>
-                    ))}
-                    {user.role === 'ADMIN' && (
-                      <>
-                        <div className={styles.dropdownDivider} />
-                        <Link
-                          href="/admin"
-                          className={styles.dropdownItem}
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          <ShieldCheck size={16} color="#fbbf24" />
-                          <span>Admin Control Centre</span>
-                        </Link>
-                      </>
-                    )}
-                    <div className={styles.dropdownDivider} />
-                    <button
-                      className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`}
-                      onClick={handleSignOut}
-                    >
-                      <LogOut size={16} />
-                      Sign Out
-                    </button>
-                  </div>
-                </>
-              )}
+    <>
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
+          {/* Logo */}
+          <Link href="/" className={styles.logo}>
+            <div className={styles.logoIcon}>
+              <GraduationCap size={22} />
             </div>
-          ) : (
-            <div className={styles.authButtons}>
-              <Link href="/auth/login" className="btn btn--ghost btn--sm">
-                Log In
-              </Link>
-              <Link href="/auth/signup" className="btn btn--primary btn--sm">
-                Sign Up Free
-              </Link>
-            </div>
-          )}
-        </div>
+            <span className={styles.logoText}>Mockshikhar</span>
+          </Link>
 
-        {/* Mobile Menu Button */}
-        <button
-          className={styles.mobileMenuBtn}
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-        >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className={styles.mobileMenu}>
-          <nav className={styles.mobileNav}>
-            {navLinks.map((link) => (
+          {/* Desktop Navigation (md+) */}
+          <nav className={styles.desktopNav}>
+            {desktopNavLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`${styles.mobileNavLink} ${
-                  pathname === link.href ? styles.mobileNavLinkActive : ''
+                className={`${styles.navLink} ${
+                  pathname === link.href ? styles.navLinkActive : ''
                 }`}
-                onClick={() => setMobileMenuOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
           </nav>
 
-          {user ? (
-            <div className={styles.mobileUserSection}>
-              <div className={styles.mobileUserInfo}>
+          {/* Desktop Auth / User Menu */}
+          <div className={styles.desktopActions}>
+            {user ? (
+              <div className={styles.userMenu}>
+                <button
+                  className={styles.userMenuTrigger}
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  aria-expanded={userMenuOpen}
+                  aria-label="User menu"
+                >
+                  <div className={styles.avatar}>
+                    {user.image ? (
+                      <img src={user.image} alt={user.name} />
+                    ) : (
+                      getInitials(user.name)
+                    )}
+                  </div>
+                  <span className={styles.userName}>{user.name}</span>
+                  <ChevronDown
+                    size={16}
+                    className={`${styles.chevron} ${
+                      userMenuOpen ? styles.chevronOpen : ''
+                    }`}
+                  />
+                </button>
+
+                {userMenuOpen && (
+                  <>
+                    <div
+                      className={styles.menuBackdrop}
+                      onClick={() => setUserMenuOpen(false)}
+                    />
+                    <div className={styles.dropdown}>
+                      <div className={styles.dropdownHeader}>
+                        <p className={styles.dropdownName}>{user.name}</p>
+                        <p className={styles.dropdownEmail}>{user.email}</p>
+                      </div>
+                      <div className={styles.dropdownDivider} />
+                      {desktopMenuItems.map((item) => (
+                        <Link
+                          key={item.href + item.label}
+                          href={item.href}
+                          className={styles.dropdownItem}
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <item.icon size={16} />
+                          {item.label}
+                        </Link>
+                      ))}
+
+                      {/* Admin Link only visible to ADMIN role */}
+                      {user.role === 'ADMIN' && (
+                        <>
+                          <div className={styles.dropdownDivider} />
+                          <Link
+                            href="/admin"
+                            className={styles.dropdownItem}
+                            onClick={() => setUserMenuOpen(false)}
+                          >
+                            <ShieldCheck size={16} color="#fbbf24" />
+                            <span>Admin Control Centre</span>
+                          </Link>
+                        </>
+                      )}
+
+                      <div className={styles.dropdownDivider} />
+                      <button
+                        className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`}
+                        onClick={handleSignOut}
+                      >
+                        <LogOut size={16} />
+                        Sign Out
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className={styles.authButtons}>
+                <button
+                  className="btn btn--ghost btn--sm"
+                  onClick={openLogin}
+                  type="button"
+                >
+                  Log In
+                </button>
+                <button
+                  className="btn btn--primary btn--sm"
+                  onClick={openSignup}
+                  type="button"
+                >
+                  Sign Up Free
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Right: Guest shows Log In button; Logged in shows Avatar to open sheet */}
+          <div className={styles.mobileRight}>
+            {!user ? (
+              <button
+                className={styles.mobileLoginBtn}
+                onClick={openLogin}
+                type="button"
+              >
+                Log In
+              </button>
+            ) : (
+              <button
+                className={styles.mobileAvatarBtn}
+                onClick={() => setMoreSheetOpen(true)}
+                aria-label="User navigation menu"
+                type="button"
+              >
                 <div className={styles.avatar}>
                   {user.image ? (
                     <img src={user.image} alt={user.name} />
@@ -238,74 +283,235 @@ export default function Header({ initialUser, user: legacyUser }: HeaderProps) {
                     getInitials(user.name)
                   )}
                 </div>
-                <div>
-                  <p className={styles.mobileUserName}>{user.name}</p>
-                  <p className={styles.mobileUserEmail}>{user.email}</p>
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Spacer so page content is not hidden behind the fixed bottom bar */}
+      {!hideBottomBar && (
+        <div className={styles.bottomBarSpacer} aria-hidden="true" />
+      )}
+
+      {/* React Portal to document.body for bottom bar and bottom sheet */}
+      {mounted && typeof document !== 'undefined' && createPortal(
+        <>
+          {/* Phone Fixed Bottom Tab Bar */}
+          {!hideBottomBar && (
+            <nav className={styles.bottomTabBar} aria-label="Mobile Navigation">
+              {user ? (
+                <>
+                  {/* 1. Home */}
+                  <Link
+                    href="/"
+                    className={`${styles.bottomTabItem} ${
+                      pathname === '/' ? styles.bottomTabItemActive : ''
+                    }`}
+                  >
+                    <Home className={styles.bottomTabIcon} />
+                    <span>Home</span>
+                  </Link>
+
+                  {/* 2. Exams */}
+                  <Link
+                    href="/exams"
+                    className={`${styles.bottomTabItem} ${
+                      pathname?.startsWith('/exams') ? styles.bottomTabItemActive : ''
+                    }`}
+                  >
+                    <BookOpen className={styles.bottomTabIcon} />
+                    <span>Exams</span>
+                  </Link>
+
+                  {/* 3. Dashboard */}
+                  <Link
+                    href="/dashboard"
+                    className={`${styles.bottomTabItem} ${
+                      pathname === '/dashboard' ? styles.bottomTabItemActive : ''
+                    }`}
+                  >
+                    <BarChart3 className={styles.bottomTabIcon} />
+                    <span>Dashboard</span>
+                  </Link>
+
+                  {/* 4. Mistakes */}
+                  <Link
+                    href="/dashboard/mistakes"
+                    className={`${styles.bottomTabItem} ${
+                      pathname?.startsWith('/dashboard/mistakes')
+                        ? styles.bottomTabItemActive
+                        : ''
+                    }`}
+                  >
+                    <Flame className={styles.bottomTabIcon} />
+                    <span>Mistakes</span>
+                  </Link>
+
+                  {/* 5. More */}
+                  <button
+                    type="button"
+                    className={`${styles.bottomTabItem} ${
+                      moreSheetOpen ||
+                      pathname?.startsWith('/dashboard/bookmarks') ||
+                      pathname?.startsWith('/dashboard/profile')
+                        ? styles.bottomTabItemActive
+                        : ''
+                    }`}
+                    onClick={() => setMoreSheetOpen(true)}
+                    aria-label="More navigation options"
+                  >
+                    <MoreHorizontal className={styles.bottomTabIcon} />
+                    <span>More</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* Guests: Home and Exams */}
+                  <Link
+                    href="/"
+                    className={`${styles.bottomTabItem} ${
+                      pathname === '/' ? styles.bottomTabItemActive : ''
+                    }`}
+                  >
+                    <Home className={styles.bottomTabIcon} />
+                    <span>Home</span>
+                  </Link>
+
+                  <Link
+                    href="/exams"
+                    className={`${styles.bottomTabItem} ${
+                      pathname?.startsWith('/exams') ? styles.bottomTabItemActive : ''
+                    }`}
+                  >
+                    <BookOpen className={styles.bottomTabIcon} />
+                    <span>Exams</span>
+                  </Link>
+                </>
+              )}
+            </nav>
+          )}
+
+          {/* Unified Bottom Sheet Modal for Mobile (opened from "More" tab or top Avatar) */}
+          {moreSheetOpen && user && (
+            <>
+              <div
+                className={styles.moreBackdrop}
+                onClick={() => setMoreSheetOpen(false)}
+                aria-hidden="true"
+              />
+              <div
+                className={styles.moreSheet}
+                role="dialog"
+                aria-modal="true"
+                aria-label="User navigation menu"
+              >
+                <div className={styles.sheetHandle} />
+
+                {/* Fixed Header */}
+                <div className={styles.sheetHeader}>
+                  <div className={styles.sheetUserInfo}>
+                    <span className={styles.sheetUserName}>{user.name}</span>
+                    <span className={styles.sheetUserEmail}>{user.email}</span>
+                  </div>
+                  <button
+                    className={styles.sheetCloseBtn}
+                    onClick={() => setMoreSheetOpen(false)}
+                    aria-label="Close"
+                    type="button"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Scrollable list below header with 52px rows */}
+                <div className={styles.sheetItems}>
+                  {/* 1. My Performance */}
+                  <Link
+                    href="/dashboard"
+                    className={styles.sheetItem}
+                    onClick={() => setMoreSheetOpen(false)}
+                  >
+                    <TrendingUp size={20} />
+                    <span>My Performance</span>
+                  </Link>
+
+                  {/* 2. My Mistakes */}
+                  <Link
+                    href="/dashboard/mistakes"
+                    className={styles.sheetItem}
+                    onClick={() => setMoreSheetOpen(false)}
+                  >
+                    <Flame size={20} />
+                    <span>My Mistakes</span>
+                  </Link>
+
+                  {/* 3. Bookmarks */}
+                  <Link
+                    href="/dashboard/bookmarks"
+                    className={styles.sheetItem}
+                    onClick={() => setMoreSheetOpen(false)}
+                  >
+                    <Bookmark size={20} />
+                    <span>Bookmarks</span>
+                  </Link>
+
+                  {/* 4. Test History */}
+                  <Link
+                    href="/dashboard#history"
+                    className={styles.sheetItem}
+                    onClick={() => setMoreSheetOpen(false)}
+                  >
+                    <History size={20} />
+                    <span>Test History</span>
+                  </Link>
+
+                  {/* 5. Profile */}
+                  <Link
+                    href="/dashboard/profile"
+                    className={styles.sheetItem}
+                    onClick={() => setMoreSheetOpen(false)}
+                  >
+                    <User size={20} />
+                    <span>Profile</span>
+                  </Link>
+
+                  {/* 6. Admin Control Centre (ADMIN only) */}
+                  {user.role === 'ADMIN' && (
+                    <Link
+                      href="/admin"
+                      className={styles.sheetItem}
+                      onClick={() => setMoreSheetOpen(false)}
+                    >
+                      <ShieldCheck size={20} color="#fbbf24" />
+                      <span>Admin Control Centre</span>
+                    </Link>
+                  )}
+
+                  {/* 7. Sign Out */}
+                  <button
+                    type="button"
+                    className={`${styles.sheetItem} ${styles.sheetItemDanger}`}
+                    onClick={handleSignOut}
+                  >
+                    <LogOut size={20} />
+                    <span>Sign Out</span>
+                  </button>
                 </div>
               </div>
-              <div className={styles.mobileUserLinks}>
-                {userMenuItems.map((item) => (
-                  <Link
-                    key={item.href + item.label}
-                    href={item.href}
-                    className={styles.mobileNavLink}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <item.icon size={18} />
-                    {item.label}
-                  </Link>
-                ))}
-                {user.role === 'ADMIN' && (
-                  <Link
-                    href="/admin"
-                    className={styles.mobileNavLink}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <ShieldCheck size={18} color="#fbbf24" />
-                    Admin Control Centre
-                  </Link>
-                )}
-                <button
-                  className={`${styles.mobileNavLink} ${styles.dropdownItemDanger}`}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    width: '100%',
-                    textAlign: 'left',
-                    padding: 'var(--space-3) var(--space-4)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    color: '#ef4444',
-                  }}
-                  onClick={handleSignOut}
-                >
-                  <LogOut size={18} />
-                  Sign Out
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className={styles.mobileAuthButtons}>
-              <Link
-                href="/auth/login"
-                className="btn btn--secondary btn--full"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Log In
-              </Link>
-              <Link
-                href="/auth/signup"
-                className="btn btn--primary btn--full"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Sign Up Free
-              </Link>
-            </div>
+            </>
           )}
-        </div>
+        </>,
+        document.body
       )}
-    </header>
+
+      {/* Auth Modal for Login/Signup */}
+      <AuthModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        initialTab={modalTab}
+        callbackUrl="/dashboard"
+      />
+    </>
   );
 }

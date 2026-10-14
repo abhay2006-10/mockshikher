@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
+import { recordAuditLog } from '@/lib/audit';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
@@ -47,6 +48,13 @@ export async function POST(req: NextRequest) {
     await writeFile(filePath, buffer);
 
     const publicUrl = `/uploads/questions/${cleanName}`;
+
+    await recordAuditLog(
+      'IMAGE_UPLOAD',
+      `Uploaded ${type} image "${cleanName}" (${(file.size / 1024).toFixed(1)} KB)`,
+      authRes.user.email || 'Admin',
+      'SUCCESS'
+    );
 
     return NextResponse.json({
       success: true,

@@ -109,6 +109,8 @@ export async function resolveOrCreateMockTest(options: ResolveMockOptions) {
           isPublished: true,
           totalQuestions: 0,
           durationMinutes: exam.durationMinutes || 60,
+          marksPerQuestion: exam.marksPerQuestion || 1.0,
+          negativeMarksPerQuestion: exam.negativeMarking ?? 0.25,
           totalMarks: 0,
         },
         include: { exam: true },

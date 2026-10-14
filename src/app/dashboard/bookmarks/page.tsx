@@ -206,12 +206,14 @@ export default function BookmarksPage() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '0.5rem',
                     padding: '0.75rem 1rem',
                     borderBottom: '1px solid var(--color-border, #334155)',
                     background: 'rgba(129,140,248,0.05)',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <Bookmark size={15} style={{ color: 'var(--color-accent, #818cf8)' }} />
                     <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>Q{q.questionNumber}</span>
                     <Badge variant="neutral" size="sm">{q.subjectName}</Badge>
@@ -223,7 +225,8 @@ export default function BookmarksPage() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.3rem',
-                      padding: '0.3rem 0.75rem',
+                      padding: '0.4rem 0.75rem',
+                      minHeight: '36px',
                       borderRadius: '6px',
                       border: '1px solid rgba(239,68,68,0.3)',
                       background: 'transparent',
@@ -252,7 +255,8 @@ export default function BookmarksPage() {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '0.75rem',
-                            padding: '0.6rem 0.875rem',
+                            padding: '0.65rem 0.875rem',
+                            minHeight: '44px',
                             borderRadius: '8px',
                             border: `1px solid ${isCorrect ? '#22c55e' : 'var(--color-border, #334155)'}`,
                             background: isCorrect ? 'rgba(34,197,94,0.08)' : 'transparent',

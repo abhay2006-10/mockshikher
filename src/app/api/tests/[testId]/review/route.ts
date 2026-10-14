@@ -34,6 +34,9 @@ export async function GET(
         status: { in: ['SUBMITTED', 'AUTO_SUBMITTED'] },
       },
       orderBy: { submittedAt: 'desc' },
+      include: {
+        answers: true,
+      },
     });
 
     if (!submittedAttempt) {
@@ -42,6 +45,8 @@ export async function GET(
         { status: 403 }
       );
     }
+
+    const answerMap = new Map(submittedAttempt.answers.map((a) => [a.questionId, a]));
 
     const dbQuestions = await prisma.question.findMany({
       where: { mockTestId: mockTest.id },
@@ -61,33 +66,49 @@ export async function GET(
       orderBy: { questionNumber: 'asc' },
     });
 
-    const formatted = dbQuestions.map((q) => ({
-      id: q.id,
-      mockTestId: q.mockTestId,
-      questionNumber: q.questionNumber,
-      questionText: q.questionText,
-      questionTextHi: q.questionTextHi || q.questionText,
-      questionImage: q.questionImage || null,
-      correctOption: q.correctOption,
-      marks: q.marks,
-      negativeMarks: q.negativeMarks,
-      difficulty: q.difficulty,
-      explanation: q.explanation || '',
-      explanationHi: q.explanationHi || '',
-      solutionImage: q.solutionImage || null,
-      subjectId: q.subjectId,
-      subjectName: q.subject?.name || 'General Awareness',
-      subjectNameHi: q.subject?.nameHi || q.subject?.name || 'सामान्य ज्ञान',
-      topicId: q.topicId,
-      topicName: q.topic?.name || 'General',
-      topicNameHi: q.topic?.nameHi || q.topic?.name || 'सामान्य',
-      options: q.options.map((opt) => ({
-        id: opt.id,
-        label: opt.optionLabel,
-        text: opt.optionText,
-        textHi: opt.optionTextHi || opt.optionText,
-      })),
-    }));
+    const formatted = dbQuestions.map((q) => {
+      const userAns = answerMap.get(q.id);
+      const effectiveMarks =
+        userAns?.marksSnapshot ??
+        q.marks ??
+        mockTest.marksPerQuestion ??
+        mockTest.exam?.marksPerQuestion ??
+        1;
+      const effectiveNegMarks =
+        userAns?.negativeMarksSnapshot ??
+        q.negativeMarks ??
+        mockTest.negativeMarksPerQuestion ??
+        mockTest.exam?.negativeMarking ??
+        0.25;
+
+      return {
+        id: q.id,
+        mockTestId: q.mockTestId,
+        questionNumber: q.questionNumber,
+        questionText: q.questionText,
+        questionTextHi: q.questionTextHi || q.questionText,
+        questionImage: q.questionImage || null,
+        correctOption: q.correctOption,
+        marks: effectiveMarks,
+        negativeMarks: effectiveNegMarks,
+        difficulty: q.difficulty,
+        explanation: q.explanation || '',
+        explanationHi: q.explanationHi || '',
+        solutionImage: q.solutionImage || null,
+        subjectId: q.subjectId,
+        subjectName: q.subject?.name || 'General Awareness',
+        subjectNameHi: q.subject?.nameHi || q.subject?.name || 'सामान्य ज्ञान',
+        topicId: q.topicId,
+        topicName: q.topic?.name || 'General',
+        topicNameHi: q.topic?.nameHi || q.topic?.name || 'सामान्य',
+        options: q.options.map((opt) => ({
+          id: opt.id,
+          label: opt.optionLabel,
+          text: opt.optionText,
+          textHi: opt.optionTextHi || opt.optionText,
+        })),
+      };
+    });
 
     const response = NextResponse.json({
       test: {

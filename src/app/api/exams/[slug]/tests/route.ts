@@ -29,7 +29,7 @@ export async function GET(
       },
     });
 
-    if (!exam) {
+    if (!exam || (exam.isArchived && !isAdmin)) {
       return NextResponse.json({ error: 'Exam not found' }, { status: 404 });
     }
 

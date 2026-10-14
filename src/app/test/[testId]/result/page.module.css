@@ -253,18 +253,52 @@
 }
 
 @media (max-width: 768px) {
+  .container {
+    padding: var(--space-4) var(--space-3) var(--space-16);
+  }
+
   .scoreHero {
     flex-direction: column;
     align-items: stretch;
+    padding: var(--space-5);
   }
 
   .metricsGrid {
     grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
   }
 
   .upgradeBox {
     flex-direction: column;
     align-items: flex-start;
+    padding: var(--space-5);
+  }
+
+  .actionRow {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .actionRow a,
+  .actionRow button {
+    width: 100%;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
+
+@media (max-width: 480px) {
+  .metricsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .scoreLeft {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+}
+
 

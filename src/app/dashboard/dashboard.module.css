@@ -248,8 +248,62 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  .container {
+    padding: var(--space-4) var(--space-3) var(--space-16);
+  }
+
+  .welcomeBanner {
+    padding: var(--space-5);
+  }
+
   .statsGrid {
     grid-template-columns: 1fr;
   }
+
+  /* Responsive card transformation for test history on mobile */
+  .historyTable thead {
+    display: none;
+  }
+
+  .historyTable,
+  .historyTable tbody,
+  .historyTable tr {
+    display: block;
+    width: 100%;
+  }
+
+  .historyTable tr {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .historyTable td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+
+  .historyTable td:last-child {
+    border-bottom: none;
+    padding-top: var(--space-3);
+  }
+
+  .rowActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .rowActions a,
+  .rowActions button {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
 }
+

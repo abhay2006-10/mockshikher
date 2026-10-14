@@ -1,31 +1,83 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, User, Mail, Lock, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, Lock, CheckCircle2, ShieldCheck, AlertCircle } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 
 export default function ProfilePage() {
-  const [name, setName] = useState('Vikas Sharma');
-  const [email] = useState('vikas.sharma@example.com');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [whatsappConsent, setWhatsappConsent] = useState(true);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSaved, setIsSaved] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
-  const handleUpdateProfile = (e: React.FormEvent) => {
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const res = await fetch('/api/user/profile');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            setName(data.user.name || '');
+            setEmail(data.user.email || '');
+            setPhone(data.user.phone || '');
+            setWhatsappConsent(data.user.whatsappConsent ?? true);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadProfile();
+  }, []);
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2500);
+    setErrorMsg(null);
+    setIsSaving(true);
+
+    try {
+      const res = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, whatsappConsent }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || 'Failed to update profile');
+        return;
+      }
+
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+    } catch {
+      setErrorMsg('Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleChangePassword = (e: React.FormEvent) => {
+  const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
       alert("New passwords don't match");
+      return;
+    }
+    if (newPassword.length < 8) {
+      alert('Password must be at least 8 characters long');
       return;
     }
     setIsUpdatingPassword(true);
@@ -70,9 +122,29 @@ export default function ProfilePage() {
           My Profile & Account Settings
         </h1>
         <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', margin: 0 }}>
-          Manage your student account information and security credentials.
+          Manage your student account information, mobile updates consent, and credentials.
         </p>
       </header>
+
+      {errorMsg && (
+        <div
+          style={{
+            marginBottom: '1.5rem',
+            padding: '0.75rem 1rem',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: '8px',
+            color: '#f87171',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '0.9rem',
+          }}
+        >
+          <AlertCircle size={16} />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         {/* Personal Details */}
@@ -111,9 +183,64 @@ export default function ProfilePage() {
               helperText="Email address cannot be modified after registration"
             />
 
+            <Input
+              label="Mobile Number (WhatsApp)"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="e.g. 9816012345"
+              leftIcon={<Phone size={16} />}
+              helperText="10-digit Indian mobile number for test notifications & announcements"
+            />
+
+            {/* WhatsApp Updates & Opt-out setting */}
+            <div
+              style={{
+                marginTop: '0.25rem',
+                padding: '1rem',
+                background: 'var(--color-bg-secondary)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+              }}
+            >
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.75rem',
+                  fontSize: '0.9rem',
+                  color: 'var(--color-text-primary)',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={whatsappConsent}
+                  onChange={(e) => setWhatsappConsent(e.target.checked)}
+                  style={{
+                    marginTop: '0.2rem',
+                    accentColor: 'var(--color-primary-600, #4f46e5)',
+                    cursor: 'pointer',
+                    width: '16px',
+                    height: '16px',
+                  }}
+                />
+                <div>
+                  <strong style={{ display: 'block', fontSize: '0.925rem' }}>
+                    WhatsApp Notifications & Course Announcements
+                  </strong>
+                  <span style={{ fontSize: '0.825rem', color: 'var(--color-text-secondary)', display: 'block', marginTop: '0.2rem' }}>
+                    {whatsappConsent
+                      ? 'You are currently subscribed to receive exam alerts, result updates and new test announcements. Uncheck this box to opt out anytime.'
+                      : 'You are currently opted out. Check this box to re-enable WhatsApp updates.'}
+                  </span>
+                </div>
+              </label>
+            </div>
+
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-              <Button type="submit" variant="primary" size="md">
-                {isSaved ? 'Changes Saved!' : 'Save Profile Changes'}
+              <Button type="submit" variant="primary" size="md" isLoading={isSaving}>
+                {isSaved ? 'Changes Saved Successfully!' : 'Save Profile Changes'}
               </Button>
             </div>
           </form>
@@ -129,25 +256,20 @@ export default function ProfilePage() {
             boxShadow: 'var(--shadow-sm)',
           }}
         >
-          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '0 0 1.25rem 0', color: 'var(--color-text-primary)' }}>
-            Update Password
-          </h2>
+          <div style={{ marginBottom: '1.25rem' }}>
+            <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0, color: 'var(--color-text-primary)' }}>
+              Security & Password
+            </h2>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: '0.25rem 0 0' }}>
+              Ensure your account is protected with a secure password.
+            </p>
+          </div>
 
           <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <Input
-              label="Current Password"
-              type="password"
-              placeholder="••••••••"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              leftIcon={<Lock size={16} />}
-              required
-            />
-
-            <Input
               label="New Password"
               type="password"
-              placeholder="At least 6 characters"
+              placeholder="••••••••"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               leftIcon={<Lock size={16} />}
@@ -157,7 +279,7 @@ export default function ProfilePage() {
             <Input
               label="Confirm New Password"
               type="password"
-              placeholder="Re-enter new password"
+              placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               leftIcon={<Lock size={16} />}
@@ -165,7 +287,7 @@ export default function ProfilePage() {
             />
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-              <Button type="submit" variant="outline" size="md" isLoading={isUpdatingPassword}>
+              <Button type="submit" variant="secondary" size="md" isLoading={isUpdatingPassword}>
                 Update Password
               </Button>
             </div>

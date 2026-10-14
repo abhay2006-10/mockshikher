@@ -415,3 +415,31 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+@media (max-width: 640px) {
+  .container {
+    padding: var(--space-4) var(--space-3) var(--space-12);
+    gap: var(--space-6);
+  }
+
+  .bannerInfo {
+    gap: var(--space-3);
+  }
+
+  .examTitle {
+    font-size: 1.5rem;
+  }
+
+  .examStats {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .quickBuyCard {
+    padding: var(--space-4);
+  }
+
+  .priceRow {
+    flex-wrap: wrap;
+  }
+}

@@ -112,20 +112,35 @@ export async function POST(
     let unansweredCount = 0;
     let rawScore = 0;
 
+    let totalPossibleMarks = 0;
+
     const questionResults = dbQuestions.map((q) => {
       const userAnsObj = answers[q.id];
       const selectedOption = userAnsObj?.selectedOption || null;
       const isAnswered = selectedOption !== null && selectedOption !== undefined;
       const isCorrect = isAnswered && selectedOption === q.correctOption;
 
+      // Effective value rule: question > mock test override > exam default
+      const effMarks =
+        q.marks !== undefined && q.marks !== null && !isNaN(q.marks) && q.marks > 0
+          ? q.marks
+          : (mockTest.marksPerQuestion ?? mockTest.exam?.marksPerQuestion ?? 1);
+
+      const effNegMarks =
+        q.negativeMarks !== undefined && q.negativeMarks !== null && !isNaN(q.negativeMarks) && q.negativeMarks >= 0
+          ? q.negativeMarks
+          : (mockTest.negativeMarksPerQuestion ?? mockTest.exam?.negativeMarking ?? 0.25);
+
+      totalPossibleMarks += effMarks;
+
       if (!isAnswered) {
         unansweredCount++;
       } else if (isCorrect) {
         correctCount++;
-        rawScore += q.marks;
+        rawScore += effMarks;
       } else {
         wrongCount++;
-        rawScore -= q.negativeMarks;
+        rawScore -= effNegMarks;
       }
 
       return {
@@ -146,8 +161,8 @@ export async function POST(
         correctOption: q.correctOption,
         isCorrect,
         isAnswered,
-        marks: q.marks,
-        negativeMarks: q.negativeMarks,
+        marks: effMarks,
+        negativeMarks: effNegMarks,
         explanation: q.explanation || '',
         explanationHi: q.explanationHi || '',
         timeSpent: userAnsObj?.timeSpent || 0,
@@ -155,7 +170,6 @@ export async function POST(
     });
 
     const finalScore = Math.max(0, parseFloat(rawScore.toFixed(2)));
-    const totalPossibleMarks = dbQuestions.reduce((acc, q) => acc + q.marks, 0);
     const percentage = totalPossibleMarks > 0
       ? parseFloat(((finalScore / totalPossibleMarks) * 100).toFixed(1))
       : 0;

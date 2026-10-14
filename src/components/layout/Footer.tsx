@@ -5,7 +5,6 @@ import styles from './Footer.module.css';
 const footerLinks = {
   platform: [
     { href: '/exams', label: 'Browse Exams' },
-    { href: '/pricing', label: 'Pricing' },
     { href: '/auth/signup', label: 'Sign Up Free' },
   ],
   support: [
@@ -14,7 +13,7 @@ const footerLinks = {
     { href: '/refund-policy', label: 'Refund Policy' },
   ],
   exams: [
-    { href: '/exams/hp-police', label: 'HP Police' },
+    { href: '/exams/hp-patwari', label: 'HP Patwari' },
   ],
 };
 
@@ -39,10 +38,14 @@ export default function Footer() {
               improve your score.
             </p>
             <div className={styles.contactInfo}>
-              <div className={styles.contactItem}>
+              <a href="mailto:mockshikhar@gmail.com" className={styles.contactItem} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <Mail size={14} />
-                <span>support@mockshikhar.com</span>
-              </div>
+                <span>mockshikhar@gmail.com</span>
+              </a>
+              <a href="tel:+917876725758" className={styles.contactItem} style={{ textDecoration: 'none', color: 'inherit', marginTop: '0.35rem' }}>
+                <Phone size={14} />
+                <span>+91 78767 25758</span>
+              </a>
             </div>
           </div>
 

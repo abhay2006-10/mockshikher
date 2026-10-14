@@ -1,112 +1,186 @@
-'use client';
+import type { Metadata } from 'next';
+import { prisma } from '@/lib/prisma';
+import { LANDING_EXAMS } from '@/lib/landing-exams';
+import { POPULAR_EXAMS, type MockExam } from '@/lib/mock-data';
+import ExamsPageClient, { type ExamItem } from './ExamsPageClient';
 
-import React, { useState, useMemo } from 'react';
-import { Search, Filter, BookOpen } from 'lucide-react';
-import ExamCard from '@/components/exam/ExamCard';
-import Input from '@/components/ui/Input';
-import Badge from '@/components/ui/Badge';
-import { POPULAR_EXAMS } from '@/lib/mock-data';
-import styles from './page.module.css';
+export const dynamic = 'force-dynamic';
 
-export default function ExamsListPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+export const metadata: Metadata = {
+  title: 'All HP Government Exam Mock Tests — Mockshikhar',
+  description:
+    'Browse full-length bilingual mock tests for Himachal Pradesh government exams. Every exam includes 1 free sample mock.',
+};
 
-  const categories = useMemo(() => {
-    const cats = ['All', ...new Set(POPULAR_EXAMS.map((e) => e.category))];
-    return cats;
-  }, []);
-
-  const filteredExams = useMemo(() => {
-    return POPULAR_EXAMS.filter((exam) => {
-      const matchesSearch =
-        exam.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        exam.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        exam.category.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesCat =
-        selectedCategory === 'All' || exam.category === selectedCategory;
-
-      return matchesSearch && matchesCat;
+async function getExamsPageData() {
+  try {
+    const dbExams = await prisma.exam.findMany({
+      where: { isArchived: false },
+      include: {
+        subjects: {
+          select: { id: true, name: true, nameHi: true },
+          orderBy: { sortOrder: 'asc' },
+        },
+        mockTests: {
+          where: { isPublished: true },
+          select: {
+            id: true,
+            isFree: true,
+            testNumber: true,
+            totalQuestions: true,
+            durationMinutes: true,
+          },
+          orderBy: { testNumber: 'asc' },
+        },
+      },
     });
-  }, [searchQuery, selectedCategory]);
 
-  return (
-    <div className={styles.container}>
-      <header className={styles.pageHeader}>
-        <div className={styles.headerBadge}>
-          <Badge variant="primary" size="md">
-            Exam Directory
-          </Badge>
-        </div>
-        <h1 className={styles.title}>All Government & Police Mock Tests</h1>
-        <p className={styles.subtitle}>
-          Practice with realistic full-length test series. Every exam includes at least 1 free
-          mock test with bilingual questions and full step-by-step explanations.
-        </p>
+    const archivedExams = await prisma.exam.findMany({
+      where: { isArchived: true },
+      select: { slug: true },
+    });
+    const archivedSlugs = new Set(archivedExams.map((e) => e.slug));
 
-        {/* Search & Filters */}
-        <div className={styles.filterControls}>
-          <div className={styles.searchBox}>
-            <Input
-              type="text"
-              placeholder="Search by exam name (e.g. HP Police, Patwari, SSC)..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              leftIcon={<Search size={18} />}
-            />
-          </div>
+    const dbMap = new Map(dbExams.map((e) => [e.slug, e]));
 
-          <div className={styles.categoryPills}>
-            <div className={styles.filterLabel}>
-              <Filter size={14} />
-              <span>Category:</span>
-            </div>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`${styles.catButton} ${
-                  selectedCategory === cat ? styles.catButtonActive : ''
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
+    // All distinct categories from DB exams and standard config
+    const categoriesSet = new Set<string>();
+    LANDING_EXAMS.forEach((c) => {
+      if (!archivedSlugs.has(c.slug)) categoriesSet.add(c.category);
+    });
+    dbExams.forEach((e) => {
+      if (e.category) categoriesSet.add(e.category);
+    });
 
-      {/* Exam Grid */}
-      {filteredExams.length > 0 ? (
-        <div className={styles.examGrid}>
-          {filteredExams.map((exam) => (
-            <ExamCard key={exam.id} exam={exam} />
-          ))}
-        </div>
-      ) : (
-        <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>
-            <BookOpen size={40} />
-          </div>
-          <h3 className={styles.emptyTitle}>No matching exams found</h3>
-          <p className={styles.emptyDesc}>
-            We couldn&apos;t find any exams matching &quot;{searchQuery}&quot;. Try adjusting your
-            search keyword or category filter.
-          </p>
-          <button
-            type="button"
-            className={styles.resetBtn}
-            onClick={() => {
-              setSearchQuery('');
-              setSelectedCategory('All');
-            }}
-          >
-            Clear Filters
-          </button>
-        </div>
-      )}
-    </div>
-  );
+    // 1. Process defined exams in strict order, excluding any that are archived in DB
+    const examsList: ExamItem[] = LANDING_EXAMS.filter((c) => !archivedSlugs.has(c.slug)).map((config) => {
+      const db = dbMap.get(config.slug);
+      const publishedTests = db?.mockTests || [];
+      const hasPublishedTests = publishedTests.length > 0;
+
+      // If exam is not in DB or has no published tests -> Coming Soon card
+      if (!db || !hasPublishedTests) {
+        return {
+          isComingSoon: true,
+          slug: config.slug,
+          name: config.name,
+          description: config.description,
+          category: config.category,
+        };
+      }
+
+      const freeTest = publishedTests.find((t) => t.isFree) || publishedTests[0];
+      const staticExam = POPULAR_EXAMS.find((e) => e.slug === config.slug);
+
+      const subjects =
+        db.subjects.length > 0
+          ? db.subjects.map((s) => ({
+              id: s.id,
+              name: s.name,
+              nameHi: s.nameHi || s.name,
+              questionCount: 0,
+            }))
+          : staticExam?.subjects || [];
+
+      const mockExam: MockExam = {
+        id: db.id,
+        name: db.name,
+        slug: db.slug,
+        description: db.description,
+        totalQuestions: db.totalQuestions,
+        durationMinutes: db.durationMinutes,
+        difficulty: (db.difficulty as any) || 'Medium',
+        price: db.price,
+        originalPrice: staticExam?.originalPrice ?? db.price * 3,
+        isPopular: db.isPopular,
+        category: db.category || config.category,
+        totalMocks: publishedTests.length,
+        freeMocks: publishedTests.filter((t) => t.isFree).length,
+        subjects,
+      };
+
+      return {
+        isComingSoon: false,
+        exam: mockExam,
+        freeMockId: freeTest?.id || `${db.slug}-mock-1`,
+      };
+    });
+
+    // 2. Add any other non-archived exams from database that aren't in LANDING_EXAMS
+    dbExams.forEach((db) => {
+      if (!LANDING_EXAMS.some((c) => c.slug === db.slug)) {
+        const publishedTests = db.mockTests || [];
+        if (publishedTests.length === 0) {
+          examsList.push({
+            isComingSoon: true,
+            slug: db.slug,
+            name: db.name,
+            description: db.description,
+            category: db.category || 'General',
+          });
+        } else {
+          const freeTest = publishedTests.find((t) => t.isFree) || publishedTests[0];
+          examsList.push({
+            isComingSoon: false,
+            exam: {
+              id: db.id,
+              name: db.name,
+              slug: db.slug,
+              description: db.description,
+              totalQuestions: db.totalQuestions,
+              durationMinutes: db.durationMinutes,
+              difficulty: (db.difficulty as any) || 'Medium',
+              price: db.price,
+              originalPrice: db.price * 3,
+              isPopular: db.isPopular,
+              category: db.category || 'General',
+              totalMocks: publishedTests.length,
+              freeMocks: publishedTests.filter((t) => t.isFree).length,
+              subjects: db.subjects.map((s) => ({
+                id: s.id,
+                name: s.name,
+                nameHi: s.nameHi || s.name,
+                questionCount: 0,
+              })),
+            },
+            freeMockId: freeTest?.id || `${db.slug}-mock-1`,
+          });
+        }
+      }
+    });
+
+    return {
+      exams: examsList,
+      categories: ['All', ...Array.from(categoriesSet)],
+    };
+  } catch {
+    // Graceful fallback
+    const fallbackList: ExamItem[] = LANDING_EXAMS.map((c) => {
+      if (c.slug === 'hp-police-constable') {
+        const staticExam = POPULAR_EXAMS.find((e) => e.slug === c.slug) || POPULAR_EXAMS[0];
+        return {
+          isComingSoon: false as const,
+          exam: staticExam,
+          freeMockId: 'hp-police-mock-1',
+        };
+      }
+      return {
+        isComingSoon: true as const,
+        slug: c.slug,
+        name: c.name,
+        description: c.description,
+        category: c.category,
+      };
+    });
+
+    return {
+      exams: fallbackList,
+      categories: ['All', 'Police Exams', 'State Revenue', 'Forestry', 'Panchayat', 'Secretariat', 'Court Exams'],
+    };
+  }
+}
+
+export default async function ExamsPage() {
+  const { exams, categories } = await getExamsPageData();
+  return <ExamsPageClient initialExams={exams} categories={categories} />;
 }
