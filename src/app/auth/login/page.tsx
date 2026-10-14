@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Mail, Lock, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Mail, Lock, AlertCircle, CheckCircle2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -39,6 +39,7 @@ function LoginForm() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(
     isVerifiedParam ? 'Email verified successfully! You can now log in.' : null
@@ -185,7 +186,7 @@ function LoginForm() {
 
           <Input
             label="Password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             placeholder="••••••••"
             value={password}
             onChange={(e) => {
@@ -193,6 +194,16 @@ function LoginForm() {
               if (error) setError(null);
             }}
             leftIcon={<Lock size={16} />}
+            rightIcon={
+              <button
+                type="button"
+                className={styles.eyeBtn}
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            }
             required
           />
 

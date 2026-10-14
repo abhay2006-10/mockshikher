@@ -129,6 +129,38 @@ export async function sendVerificationCodeEmail(email: string, code: string) {
   });
 }
 
+export async function sendPasswordResetOtpEmail(email: string, code: string) {
+  const subject = `${code} is your Mockshikhar password reset code`;
+  const htmlContent = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; background: #0F0F1A; color: #F1F5F9; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+      <div style="margin-bottom: 24px; text-align: center;">
+        <h1 style="color: #F5B301; font-size: 24px; margin: 0 0 8px 0; font-weight: 800;">Mockshikhar</h1>
+        <p style="color: #94A3B8; font-size: 14px; margin: 0;">Password Reset Verification</p>
+      </div>
+      <div style="background: #16213E; padding: 24px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); text-align: center;">
+        <p style="color: #CBD5E1; font-size: 15px; margin: 0 0 16px 0;">Use the following verification code to reset your password:</p>
+        <div style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #F5B301; padding: 12px 24px; background: rgba(245, 179, 1, 0.1); border-radius: 8px; display: inline-block; font-family: monospace;">
+          ${code}
+        </div>
+        <p style="color: #94A3B8; font-size: 13px; margin: 20px 0 0 0;">
+          This code is valid for <strong>10 minutes</strong>. Do not share this code with anyone.
+        </p>
+      </div>
+      <p style="color: #64748B; font-size: 12px; text-align: center; margin-top: 24px;">
+        If you did not request a password reset, you can safely ignore this email.
+      </p>
+    </div>
+  `;
+  const textContent = `Your Mockshikhar password reset verification code is: ${code}. This code is valid for 10 minutes.`;
+
+  return sendTransactionalEmail({
+    to: email,
+    subject,
+    htmlContent,
+    textContent,
+  });
+}
+
 /**
  * Sends a password reset email using the same Brevo sender.
  */

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Mail, Lock, Phone, AlertCircle, ArrowRight } from 'lucide-react';
+import { User, Mail, Lock, Phone, AlertCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -40,6 +40,8 @@ export default function SignupPage() {
   const [whatsappConsent, setWhatsappConsent] = useState(true);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -223,7 +225,7 @@ export default function SignupPage() {
 
             <Input
               label="Password (min 8 characters)"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={password}
               onChange={(e) => {
@@ -231,12 +233,22 @@ export default function SignupPage() {
                 if (error) setError(null);
               }}
               leftIcon={<Lock size={16} />}
+              rightIcon={
+                <button
+                  type="button"
+                  className={styles.eyeBtn}
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
               required
             />
 
             <Input
               label="Confirm Password"
-              type="password"
+              type={showConfirmPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => {
@@ -244,6 +256,16 @@ export default function SignupPage() {
                 if (error) setError(null);
               }}
               leftIcon={<Lock size={16} />}
+              rightIcon={
+                <button
+                  type="button"
+                  className={styles.eyeBtn}
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
               required
             />
 

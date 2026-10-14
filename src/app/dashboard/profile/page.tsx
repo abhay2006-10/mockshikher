@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, User, Mail, Phone, Lock, CheckCircle2, ShieldCheck, AlertCircle } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, Lock, CheckCircle2, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -15,6 +15,8 @@ export default function ProfilePage() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -268,21 +270,57 @@ export default function ProfilePage() {
           <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <Input
               label="New Password"
-              type="password"
+              type={showNewPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               leftIcon={<Lock size={16} />}
+              rightIcon={
+                <button
+                  type="button"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--color-text-tertiary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '4px',
+                  }}
+                  onClick={() => setShowNewPassword((v) => !v)}
+                  aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
               required
             />
 
             <Input
               label="Confirm New Password"
-              type="password"
+              type={showConfirmPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               leftIcon={<Lock size={16} />}
+              rightIcon={
+                <button
+                  type="button"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--color-text-tertiary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '4px',
+                  }}
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
               required
             />
 

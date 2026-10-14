@@ -196,7 +196,7 @@ function LoginForm({
 
       <div className={styles.rowBetween}>
         <span />
-        <a href="/auth/forgot-password" className={styles.forgotLink}>
+        <a href="/auth/forgot-password" onClick={onClose} className={styles.forgotLink}>
           Forgot password?
         </a>
       </div>
@@ -419,6 +419,16 @@ function SignupForm({
           if (error) setError(null);
         }}
         leftIcon={<Lock size={16} />}
+        rightIcon={
+          <button
+            type="button"
+            className={styles.eyeBtn}
+            onClick={() => setShowPw((v) => !v)}
+            aria-label={showPw ? 'Hide password' : 'Show password'}
+          >
+            {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        }
         autoComplete="new-password"
         required
       />

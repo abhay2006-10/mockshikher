@@ -181,6 +181,24 @@
   text-decoration: underline;
 }
 
+.eyeBtn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast, 150ms ease);
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.eyeBtn:hover {
+  color: var(--color-text-primary);
+}
+
 @media (max-width: 480px) {
   .pageWrapper {
     padding: var(--space-4) var(--space-2);
