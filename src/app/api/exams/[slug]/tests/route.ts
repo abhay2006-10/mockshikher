@@ -48,27 +48,75 @@ export async function GET(
       orderBy: { testNumber: 'asc' },
     });
 
-    // Check user's previous attempts if logged in
+    // Check user's previous attempts and verified purchases if logged in
     const userAttemptsMap = new Map<string, any>();
-    if (session?.user?.id) {
-      const attempts = await prisma.testAttempt.findMany({
+    let isPurchased = false;
+
+    if (session?.user) {
+      const sessionUserId = session.user.id;
+      const sessionEmail = session.user.email ? session.user.email.toLowerCase().trim() : null;
+
+      const sessionRole = (session.user as any)?.role;
+
+      let dbUser = await prisma.user.findFirst({
         where: {
-          userId: session.user.id,
-          mockTestId: { in: mockTests.map((t) => t.id) },
-          status: { in: ['SUBMITTED', 'AUTO_SUBMITTED'] },
+          OR: [
+            ...(sessionUserId ? [{ id: sessionUserId }] : []),
+            ...(sessionEmail ? [{ email: sessionEmail }] : []),
+          ],
         },
-        orderBy: { submittedAt: 'desc' },
+        select: { id: true, role: true },
       });
-      attempts.forEach((att) => {
-        if (!userAttemptsMap.has(att.mockTestId)) {
-          userAttemptsMap.set(att.mockTestId, att);
+
+      if (!dbUser && sessionRole === 'ADMIN') {
+        dbUser = await prisma.user.findFirst({
+          where: { role: 'ADMIN' },
+          select: { id: true, role: true },
+        });
+      }
+
+      const effectiveUserId = dbUser?.id || sessionUserId;
+
+      if (effectiveUserId) {
+        const [attempts, purchaseRecord] = await Promise.all([
+          prisma.testAttempt.findMany({
+            where: {
+              userId: effectiveUserId,
+              mockTestId: { in: mockTests.map((t) => t.id) },
+              status: { in: ['SUBMITTED', 'AUTO_SUBMITTED'] },
+            },
+            orderBy: { submittedAt: 'desc' },
+          }),
+          prisma.purchase.findUnique({
+            where: {
+              userId_examId: {
+                userId: effectiveUserId,
+                examId: exam.id,
+              },
+            },
+          }),
+        ]);
+
+        attempts.forEach((att) => {
+          if (!userAttemptsMap.has(att.mockTestId)) {
+            userAttemptsMap.set(att.mockTestId, att);
+          }
+        });
+
+        if (purchaseRecord) {
+          isPurchased = true;
         }
-      });
+      }
+    }
+
+    if (isAdmin) {
+      isPurchased = true;
     }
 
     const formattedTests = mockTests.map((test) => {
       const qCount = test._count.questions;
       const lastAttempt = userAttemptsMap.get(test.id);
+      const isTestUnlocked = test.isFree || isPurchased;
 
       return {
         id: test.id,
@@ -76,6 +124,7 @@ export async function GET(
         name: test.name,
         testNumber: test.testNumber,
         isFree: test.isFree,
+        isUnlocked: isTestUnlocked,
         isPublished: test.isPublished,
         totalQuestions: qCount, // Real question count from database
         durationMinutes: test.durationMinutes || exam.durationMinutes || 60,
@@ -101,6 +150,7 @@ export async function GET(
         totalQuestions: exam.totalQuestions,
         negativeMarking: exam.negativeMarking,
         totalMocks: mockTests.length,
+        isPurchased,
         subjects: exam.subjects.map((s) => ({
           id: s.id,
           name: s.name,
@@ -109,6 +159,7 @@ export async function GET(
         })),
       },
       tests: formattedTests,
+      isPurchased,
     });
 
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

@@ -20,9 +20,11 @@ import {
   AlertCircle,
   CheckCircle2,
   HelpCircle,
+  CreditCard,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import WhatsAppUpdatesSection from '@/components/common/WhatsAppUpdatesSection';
 import styles from './dashboard.module.css';
 
 export default function DashboardPage() {
@@ -442,7 +444,29 @@ export default function DashboardPage() {
             </Button>
           </Link>
         </div>
+
+        <div className={styles.toolCard}>
+          <div className={styles.toolHeader}>
+            <div className={styles.toolIconWrap} style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>
+              <CreditCard size={24} />
+            </div>
+            <div>
+              <h3 className={styles.toolTitle}>Payment History & Purchases</h3>
+              <p className={styles.toolDesc}>
+                {payments.length} verified order(s). View receipts and unlocked test bundles.
+              </p>
+            </div>
+          </div>
+          <Link href="/dashboard/payments">
+            <Button variant="outline" size="md" rightIcon={<ArrowRight size={16} />}>
+              View Payment History
+            </Button>
+          </Link>
+        </div>
       </section>
+
+      {/* Mockshikhar Updates — Official WhatsApp Channel */}
+      <WhatsAppUpdatesSection sourceContext="dashboard" />
 
       {/* Recent Test Attempts History */}
       <section className={styles.historySection}>
@@ -522,9 +546,14 @@ export default function DashboardPage() {
               Verified purchases and unlocked mock test bundles for your account.
             </p>
           </div>
-          <Link href="/exams" className={styles.viewMoreLink}>
-            Explore Test Series →
-          </Link>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <Link href="/dashboard/payments" className={styles.viewMoreLink}>
+              Full Receipts & Invoices →
+            </Link>
+            <Link href="/exams" className={styles.viewMoreLink}>
+              Explore Test Series →
+            </Link>
+          </div>
         </div>
 
         <div className={styles.historyTableWrapper}>

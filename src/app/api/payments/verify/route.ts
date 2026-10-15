@@ -1,122 +1,269 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyRazorpaySignature } from '@/lib/razorpay';
+import { verifyRazorpaySignature, isRazorpayTestMode } from '@/lib/razorpay';
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import { POPULAR_EXAMS } from '@/lib/mock-data';
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. Require student authentication
     const session = await auth();
-    const body = await req.json();
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, examId, isMock, amount } = body;
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Authentication required. Please sign in to verify your payment.' },
+        { status: 401 }
+      );
+    }
 
-    // Resolve exam from database or fallback to static
-    let dbExam = null;
-    if (examId) {
-      dbExam = await prisma.exam.findFirst({
-        where: {
-          OR: [{ id: examId }, { slug: examId }],
-        },
+    const sessionUserId = session.user.id;
+    const sessionEmail = session.user.email ? session.user.email.toLowerCase().trim() : null;
+    const sessionRole = (session.user as any)?.role;
+
+    // Verify user exists in database (handle ID, email, or role resolution)
+    let dbUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          ...(sessionUserId ? [{ id: sessionUserId }] : []),
+          ...(sessionEmail ? [{ email: sessionEmail }] : []),
+        ],
+      },
+    });
+
+    // Resilient fallback for admin accounts whose JWT was issued under previous seed
+    if (!dbUser && sessionRole === 'ADMIN') {
+      dbUser = await prisma.user.findFirst({
+        where: { role: 'ADMIN' },
       });
     }
 
-    const fallbackExam = POPULAR_EXAMS.find((e) => e.id === examId || e.slug === examId) || POPULAR_EXAMS[0];
-    const targetExamId = dbExam?.id || fallbackExam.id;
-    const targetExamName = dbExam?.name || fallbackExam.name;
-    const paidAmount = Number(amount) || dbExam?.price || fallbackExam.price || 149;
-    const paymentId = razorpay_payment_id || `mock_pay_${Date.now()}`;
-    const orderId = razorpay_order_id || `order_mock_${Date.now()}`;
+    if (!dbUser) {
+      return NextResponse.json(
+        { error: 'User account not found. Please sign in again.' },
+        { status: 401 }
+      );
+    }
 
-    // Verify signature if not in mock demo mode
-    if (!isMock && process.env.RAZORPAY_KEY_SECRET) {
+    const userId = dbUser.id;
+
+    // 2. Parse request payload
+    const body = await req.json().catch(() => ({}));
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      examId,
+      isMock,
+      status: reportedStatus,
+      failureReason,
+    } = body;
+
+    // 3. Handle explicit failure reporting from checkout modal dismissal or decline
+    if (reportedStatus === 'FAILED') {
+      if (razorpay_order_id) {
+        await prisma.payment.updateMany({
+          where: { gatewayOrderId: razorpay_order_id, userId },
+          data: {
+            status: 'FAILED',
+            gatewayPaymentId: razorpay_payment_id || null,
+            gatewayResponse: { failureReason: failureReason || 'Transaction cancelled or failed at checkout' },
+          },
+        }).catch(() => {});
+      }
+      return NextResponse.json({
+        success: false,
+        error: failureReason || 'Payment failed',
+        status: 'FAILED',
+      });
+    }
+
+    // 4. Validate order ID presence
+    if (!razorpay_order_id) {
+      return NextResponse.json(
+        { error: 'Razorpay order ID is required for verification.' },
+        { status: 400 }
+      );
+    }
+
+    // 5. Look up the server-initialized Payment record
+    const existingPayment = await prisma.payment.findUnique({
+      where: { gatewayOrderId: razorpay_order_id },
+      include: { purchase: true },
+    });
+
+    if (!existingPayment) {
+      return NextResponse.json(
+        { error: 'Order not found. Orders must be created on the server before verification.' },
+        { status: 404 }
+      );
+    }
+
+    // 6. Security Check: Confirm the order strictly belongs to the authenticated user (prevent order/user mismatch)
+    if (existingPayment.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Order does not belong to the authenticated account.' },
+        { status: 403 }
+      );
+    }
+
+    // 7. Resolve and validate the target Exam
+    if (!examId) {
+      return NextResponse.json(
+        { error: 'Exam ID or slug is required for access verification.' },
+        { status: 400 }
+      );
+    }
+
+    const dbExam = await prisma.exam.findFirst({
+      where: {
+        OR: [{ id: examId }, { slug: examId }],
+        isArchived: false,
+      },
+    });
+
+    if (!dbExam) {
+      return NextResponse.json(
+        { error: 'Associated exam not found in database.' },
+        { status: 404 }
+      );
+    }
+
+    // 8. Idempotency Check: If order is already PAID and unlocked, return idempotent success
+    if (existingPayment.status === 'PAID' && existingPayment.purchase) {
+      return NextResponse.json({
+        success: true,
+        isUnlocked: true,
+        alreadyProcessed: true,
+        message: `Payment already verified. Test series for ${dbExam.name} is unlocked.`,
+        examId: dbExam.id,
+        examSlug: dbExam.slug,
+        paymentId: existingPayment.gatewayPaymentId || existingPayment.id,
+      });
+    }
+
+    const hasRazorpaySecret = !!process.env.RAZORPAY_KEY_SECRET;
+    const isTestMode = isRazorpayTestMode() || existingPayment.isTestMode;
+
+    // 9. Strict Cryptographic Signature Verification
+    if (hasRazorpaySecret) {
+      // In any mode with Razorpay credentials, signature and payment ID are strictly required
+      if (!razorpay_signature || !razorpay_payment_id) {
+        await prisma.payment.update({
+          where: { id: existingPayment.id },
+          data: {
+            status: 'FAILED',
+            gatewayResponse: { reason: 'Missing signature or payment ID parameters' },
+          },
+        }).catch(() => {});
+
+        return NextResponse.json(
+          { error: 'Payment signature and payment ID are strictly required for verification.' },
+          { status: 400 }
+        );
+      }
+
       const isValid = verifyRazorpaySignature({
-        orderId,
-        paymentId,
+        orderId: razorpay_order_id,
+        paymentId: razorpay_payment_id,
         signature: razorpay_signature,
       });
 
       if (!isValid) {
+        await prisma.payment.update({
+          where: { id: existingPayment.id },
+          data: {
+            status: 'FAILED',
+            gatewayPaymentId: razorpay_payment_id,
+            gatewayResponse: { reason: 'Cryptographic HMAC signature mismatch' },
+          },
+        }).catch(() => {});
+
         return NextResponse.json(
-          { error: 'Payment signature verification failed' },
+          { error: 'Payment signature verification failed. Untrusted payment details.' },
+          { status: 400 }
+        );
+      }
+    } else {
+      // In production, missing credentials is an error
+      if (process.env.NODE_ENV === 'production') {
+        return NextResponse.json(
+          { error: 'Payment gateway configuration missing in production environment' },
+          { status: 500 }
+        );
+      }
+      // In local dev without credentials, strictly require explicit isMock flag and payment ID
+      if (!isMock || !razorpay_payment_id) {
+        return NextResponse.json(
+          { error: 'Payment signature and verification parameters are required.' },
           { status: 400 }
         );
       }
     }
 
-    // If student is authenticated, securely store Payment and Purchase records in DB
-    let recordedPaymentId = paymentId;
-    if (session?.user) {
-      let userId = session.user.id;
-      if (!userId && session.user.email) {
-        const u = await prisma.user.findUnique({
-          where: { email: session.user.email },
-          select: { id: true },
-        });
-        if (u) userId = u.id;
-      }
+    // 10. Atomic Database Transaction: Update Payment to PAID and grant Purchase access
+    const verifiedPaymentId = razorpay_payment_id || `pay_mock_${Date.now()}`;
+    const { paymentRecord, isNewPurchase } = await prisma.$transaction(async (tx) => {
+      const payment = await tx.payment.update({
+        where: { id: existingPayment.id },
+        data: {
+          status: 'PAID',
+          gatewayPaymentId: verifiedPaymentId,
+          gatewaySignature: razorpay_signature || null,
+          isTestMode,
+        },
+      });
 
-      if (userId && dbExam) {
-        // Record verified Payment
-        const paymentRecord = await prisma.payment.upsert({
-          where: { gatewayOrderId: orderId },
-          create: {
-            userId,
-            amount: paidAmount,
-            currency: 'INR',
-            gatewayOrderId: orderId,
-            gatewayPaymentId: paymentId,
-            gatewaySignature: razorpay_signature || null,
-            status: 'PAID',
-            isTestMode: !!isMock,
-          },
-          update: {
-            status: 'PAID',
-            gatewayPaymentId: paymentId,
-            gatewaySignature: razorpay_signature || null,
-          },
-        });
-
-        // Record Purchase unlocking the full test series
-        await prisma.purchase.upsert({
-          where: {
-            userId_examId: {
-              userId,
-              examId: dbExam.id,
-            },
-          },
-          create: {
+      const existingPurchase = await tx.purchase.findUnique({
+        where: {
+          userId_examId: {
             userId,
             examId: dbExam.id,
-            paymentId: paymentRecord.id,
-            isTestMode: !!isMock,
           },
-          update: {
-            paymentId: paymentRecord.id,
+        },
+      });
+
+      await tx.purchase.upsert({
+        where: {
+          userId_examId: {
+            userId,
+            examId: dbExam.id,
           },
-        });
+        },
+        create: {
+          userId,
+          examId: dbExam.id,
+          paymentId: payment.id,
+          isTestMode,
+        },
+        update: {
+          paymentId: payment.id,
+          isTestMode,
+        },
+      });
 
-        recordedPaymentId = paymentRecord.gatewayPaymentId || paymentRecord.id;
+      return { paymentRecord: payment, isNewPurchase: !existingPurchase };
+    });
 
-        // If promo code was applied, increment its usage counter
-        if (body.promoCode) {
-          await prisma.promoCode.update({
-            where: { code: String(body.promoCode).trim().toUpperCase() },
-            data: { usedCount: { increment: 1 } },
-          }).catch(() => {});
-        }
-      }
+    // 11. If promo code was applied on a new purchase, increment its usage count
+    if (body.promoCode && isNewPurchase) {
+      await prisma.promoCode.update({
+        where: { code: String(body.promoCode).trim().toUpperCase() },
+        data: { usedCount: { increment: 1 } },
+      }).catch(() => {});
     }
 
+    // 12. Return verified access confirmation
     return NextResponse.json({
       success: true,
-      message: `Payment verified successfully. Full test series for ${targetExamName} is now unlocked!`,
-      examId: targetExamId,
-      paymentId: recordedPaymentId,
+      isUnlocked: true,
+      message: `Payment verified successfully. Full test series for ${dbExam.name} is unlocked!`,
+      examId: dbExam.id,
+      examSlug: dbExam.slug,
+      paymentId: paymentRecord.gatewayPaymentId || paymentRecord.id,
+      isTestMode,
     });
   } catch (error: unknown) {
     console.error('Error verifying payment:', error);
     return NextResponse.json(
-      { error: 'Payment verification failed' },
+      { error: 'Payment verification failed safely' },
       { status: 500 }
     );
   }

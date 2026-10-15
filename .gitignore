@@ -49,3 +49,10 @@ next-env.d.ts
 data/
 uploads/
 
+# legacy nested directory
+mock-test-platform/
+
+# local agent tooling
+.agents/
+skills-lock.json
+

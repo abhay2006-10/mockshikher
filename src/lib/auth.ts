@@ -156,6 +156,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
+        if (user.email) token.email = user.email;
         token.role = (user as unknown as { role?: string }).role || 'USER';
       }
       if (trigger === 'update' && session?.name) {
@@ -166,7 +167,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
     async session({ session, token }) {
       if (session.user && token) {
-        session.user.id = token.id as string;
+        session.user.id = (token.id || token.sub) as string;
+        if (token.email) session.user.email = token.email as string;
         // @ts-expect-error role is added to custom session
         session.user.role = token.role as 'USER' | 'ADMIN';
       }

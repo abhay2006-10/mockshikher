@@ -22,6 +22,7 @@ import ComingSoonExamCard from '@/components/exam/ComingSoonExamCard';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import AuthModal, { AuthModalTab } from '@/components/ui/AuthModal';
+import WhatsAppUpdatesSection from '@/components/common/WhatsAppUpdatesSection';
 import type { MockExam } from '@/lib/mock-data';
 import styles from './page.module.css';
 
@@ -406,6 +407,11 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
             <span key={i} className={styles.swipeDot} />
           ))}
         </div>
+      </section>
+
+      {/* ================= MOCKSHIKHAR UPDATES (WHATSAPP CHANNEL) ================= */}
+      <section className={styles.section} style={{ marginTop: '2.5rem', marginBottom: '1rem', maxWidth: '1000px', margin: '2.5rem auto 1rem' }}>
+        <WhatsAppUpdatesSection sourceContext="homepage" />
       </section>
 
       {/* ================= CONTACT US SECTION ================= */}

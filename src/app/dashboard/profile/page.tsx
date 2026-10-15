@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, User, Mail, Phone, Lock, CheckCircle2, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, ArrowRight, User, Mail, Phone, Lock, CheckCircle2, ShieldCheck, AlertCircle, Eye, EyeOff, CreditCard } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -330,6 +330,52 @@ export default function ProfilePage() {
               </Button>
             </div>
           </form>
+        </div>
+
+        {/* Payment History & Subscriptions Card */}
+        <div
+          style={{
+            background: 'var(--color-bg-primary)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-xl)',
+            padding: '1.5rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '1rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div
+              style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '10px',
+                background: 'rgba(59, 130, 246, 0.15)',
+                color: '#60a5fa',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <CreditCard size={22} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--color-text-primary)' }}>
+                Billing & Payment History
+              </h3>
+              <p style={{ fontSize: '0.825rem', color: 'var(--color-text-secondary)', margin: '0.2rem 0 0' }}>
+                View your verified test series receipts, transaction IDs, and active mock bundles.
+              </p>
+            </div>
+          </div>
+
+          <Link href="/dashboard/payments">
+            <Button variant="outline" size="sm" rightIcon={<ArrowRight size={14} />}>
+              View Payment Receipts
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

@@ -43,18 +43,32 @@ export default function TestInstructionsPage() {
   const [hasAgreed, setHasAgreed] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'hi'>('en');
 
+  const [requiresPurchase, setRequiresPurchase] = useState(false);
+  const [requiresAuth, setRequiresAuth] = useState(false);
+
   const fetchTestDetails = async () => {
     setIsLoading(true);
     setError(null);
+    setRequiresPurchase(false);
+    setRequiresAuth(false);
     try {
       const res = await fetch(`/api/tests/${encodeURIComponent(testId)}/questions`, {
         cache: 'no-store',
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `Failed to load test (${res.status})`);
+        if (data.requiresPurchase) {
+          setRequiresPurchase(true);
+          setError(data.error || 'This premium mock test is locked.');
+          return;
+        }
+        if (data.requiresAuth) {
+          setRequiresAuth(true);
+          setError(data.error || 'Please log in to access this mock test.');
+          return;
+        }
+        throw new Error(data.error || `Failed to load test (${res.status})`);
       }
-      const data = await res.json();
       setTest(data.test);
     } catch (err: any) {
       setError(err.message || 'Unable to connect to the server. Please try again.');
@@ -80,6 +94,51 @@ export default function TestInstructionsPage() {
         <div style={{ padding: '4rem 1rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
           <RefreshCw className="animate-spin" size={32} style={{ margin: '0 auto 1rem' }} />
           <p>Loading test configuration...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (requiresPurchase) {
+    return (
+      <div className={styles.container}>
+        <div style={{ maxWidth: '600px', margin: '4rem auto', padding: '2.5rem', textAlign: 'center', background: 'var(--color-bg-primary, #1e293b)', borderRadius: '16px', border: '1px solid var(--color-border, #334155)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <AlertTriangle size={32} />
+          </div>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--color-text-primary)' }}>Premium Mock Test Locked</h2>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', margin: 0, lineHeight: 1.5 }}>
+            This mock test is part of the full test series. Purchase the bundle to unlock all 10 full-length mock tests permanently.
+          </p>
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Button variant="outline" size="md" onClick={() => router.back()}>
+              Go Back
+            </Button>
+            <Link href="/exams">
+              <Button variant="accent" size="md">
+                Unlock Test Series
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (requiresAuth) {
+    return (
+      <div className={styles.container}>
+        <div style={{ maxWidth: '600px', margin: '4rem auto', padding: '2.5rem', textAlign: 'center', background: 'var(--color-bg-primary, #1e293b)', borderRadius: '16px', border: '1px solid var(--color-border, #334155)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <AlertCircle size={48} color="#60a5fa" style={{ margin: '0 auto' }} />
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--color-text-primary)' }}>Login Required</h2>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', margin: 0 }}>
+            Please sign in to verify your test series purchase and attempt this mock test.
+          </p>
+          <Link href="/auth/login">
+            <Button variant="primary" size="md">
+              Sign In to Continue
+            </Button>
+          </Link>
         </div>
       </div>
     );

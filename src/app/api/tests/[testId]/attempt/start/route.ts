@@ -51,6 +51,29 @@ export async function POST(
       );
     }
 
+    // Access control: Ensure user has a verified purchase for non-free tests
+    if (!mockTest.isFree && userRole !== 'ADMIN') {
+      const purchase = await prisma.purchase.findUnique({
+        where: {
+          userId_examId: {
+            userId: user.id,
+            examId: mockTest.examId,
+          },
+        },
+      });
+
+      if (!purchase) {
+        return NextResponse.json(
+          {
+            error: 'This mock test is locked. Please purchase the test series to unlock access.',
+            requiresPurchase: true,
+            examId: mockTest.examId,
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     // Check real question count in database
     const questionCount = await prisma.question.count({
       where: { mockTestId: mockTest.id },

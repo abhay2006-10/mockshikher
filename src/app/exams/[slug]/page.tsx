@@ -29,7 +29,7 @@ export default function ExamDetailPage() {
   const params = useParams();
   const router = useRouter();
   const slug = params?.slug as string;
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const isLoggedIn = status === 'authenticated';
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -64,6 +64,9 @@ export default function ExamDetailPage() {
           const data = await res.json();
           setExamData(data.exam);
           setTests(data.tests);
+          if (data.isPurchased) {
+            setUnlockedExam(true);
+          }
         }
       } catch (err) {
         console.error('Failed to load tests from database:', err);
@@ -88,6 +91,10 @@ export default function ExamDetailPage() {
   }, [tests]);
 
   const handleBuyClick = () => {
+    if (unlockedExam) {
+      alert('You have already purchased this test series. All mock tests are unlocked and ready to attempt!');
+      return;
+    }
     if (!isLoggedIn) {
       setAuthModalOpen(true);
       return;
@@ -125,6 +132,11 @@ export default function ExamDetailPage() {
   };
 
   const handleExecutePurchase = async () => {
+    if (!isLoggedIn) {
+      setIsPurchaseModalOpen(false);
+      setAuthModalOpen(true);
+      return;
+    }
     setIsProcessingPayment(true);
     try {
       // 1. Create payment order with optional promo code
@@ -137,9 +149,119 @@ export default function ExamDetailPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create payment order');
+      if (!res.ok) {
+        if (res.status === 401) {
+          setIsPurchaseModalOpen(false);
+          setAuthModalOpen(true);
+          return;
+        }
+        throw new Error(data.error || 'Failed to create payment order');
+      }
 
-      // 2. Verify payment (simulated or live webhook)
+      // 2. If real Razorpay key and not mock mode: Open Razorpay Checkout modal
+      if (!data.isMock && data.key && data.orderId) {
+        const loadRzp = (): Promise<boolean> =>
+          new Promise((resolve) => {
+            if (typeof window === 'undefined') return resolve(false);
+            if ((window as any).Razorpay) return resolve(true);
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.async = true;
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+          });
+
+        const loaded = await loadRzp();
+        if (!loaded) {
+          throw new Error('Could not load payment checkout. Please check your internet connection.');
+        }
+
+        const options = {
+          key: data.key,
+          amount: data.amount,
+          currency: data.currency || 'INR',
+          name: 'Mockshikhar',
+          description: `Full Test Series: ${exam.name}`,
+          order_id: data.orderId,
+          handler: async function (response: any) {
+            try {
+              setIsProcessingPayment(true);
+              const verifyRes = await fetch('/api/payments/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  examId: exam.id,
+                  amount: data.finalPrice || payablePrice,
+                  promoCode: appliedPromo?.code || undefined,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              });
+
+              if (verifyRes.ok) {
+                setUnlockedExam(true);
+                setIsPurchaseModalOpen(false);
+                const freshRes = await fetch(`/api/exams/${encodeURIComponent(slug)}/tests`, { cache: 'no-store' });
+                if (freshRes.ok) {
+                  const freshData = await freshRes.json();
+                  setExamData(freshData.exam);
+                  setTests(freshData.tests);
+                }
+              } else {
+                const verifyData = await verifyRes.json();
+                alert(verifyData.error || 'Payment verification failed');
+              }
+            } catch (err: any) {
+              alert(err.message || 'Error verifying payment');
+            } finally {
+              setIsProcessingPayment(false);
+            }
+          },
+          prefill: {
+            name: session?.user?.name || '',
+            email: session?.user?.email || '',
+          },
+          theme: {
+            color: '#4f46e5',
+          },
+          modal: {
+            ondismiss: function () {
+              setIsProcessingPayment(false);
+              fetch('/api/payments/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  razorpay_order_id: data.orderId,
+                  status: 'FAILED',
+                  failureReason: 'Checkout dismissed by user',
+                }),
+              }).catch(() => {});
+            },
+          },
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on('payment.failed', function (resp: any) {
+          setIsProcessingPayment(false);
+          fetch('/api/payments/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: data.orderId,
+              razorpay_payment_id: resp.error?.metadata?.payment_id,
+              status: 'FAILED',
+              failureReason: resp.error?.description || 'Payment failed',
+            }),
+          }).catch(() => {});
+          alert(`Payment failed: ${resp.error?.description || 'Transaction declined'}`);
+        });
+        rzp.open();
+        return;
+      }
+
+      // 3. Fallback simulated test mode (in local dev without active credentials)
       const verifyRes = await fetch('/api/payments/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -149,7 +271,7 @@ export default function ExamDetailPage() {
           amount: data.finalPrice || payablePrice,
           promoCode: appliedPromo?.code || undefined,
           razorpay_order_id: data.orderId,
-          razorpay_payment_id: `pay_${Date.now()}`,
+          razorpay_payment_id: `pay_mock_${Date.now()}`,
           razorpay_signature: 'mock_signature',
         }),
       });
@@ -157,6 +279,12 @@ export default function ExamDetailPage() {
       if (verifyRes.ok) {
         setUnlockedExam(true);
         setIsPurchaseModalOpen(false);
+        const freshRes = await fetch(`/api/exams/${encodeURIComponent(slug)}/tests`, { cache: 'no-store' });
+        if (freshRes.ok) {
+          const freshData = await freshRes.json();
+          setExamData(freshData.exam);
+          setTests(freshData.tests);
+        }
       } else {
         const verifyData = await verifyRes.json();
         throw new Error(verifyData.error || 'Payment verification failed');

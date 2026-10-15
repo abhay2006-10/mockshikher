@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 import { resolveOrCreateMockTest } from '@/lib/mock-resolver';
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,49 @@ export async function GET(
 
     if (!mockTest) {
       return NextResponse.json({ error: 'Test not found.' }, { status: 404 });
+    }
+
+    // Access Control: Enforce verified purchase for non-free mock tests
+    const session = await auth();
+    // @ts-expect-error user role in token
+    const isAdmin = session?.user?.role === 'ADMIN';
+    let isPurchased = false;
+
+    if (session?.user?.id) {
+      const purchase = await prisma.purchase.findUnique({
+        where: {
+          userId_examId: {
+            userId: session.user.id,
+            examId: mockTest.examId,
+          },
+        },
+      });
+      isPurchased = !!purchase;
+    }
+
+    if (isAdmin) {
+      isPurchased = true;
+    }
+
+    if (!mockTest.isFree && !isPurchased) {
+      if (!session?.user?.id) {
+        return NextResponse.json(
+          {
+            error: 'Please log in to access this premium mock test.',
+            requiresAuth: true,
+          },
+          { status: 401 }
+        );
+      }
+
+      return NextResponse.json(
+        {
+          error: 'This mock test is locked. Please purchase the test series to unlock access.',
+          requiresPurchase: true,
+          examId: mockTest.examId,
+        },
+        { status: 403 }
+      );
     }
 
     // Fetch questions strictly belonging to this mock test ID from PostgreSQL

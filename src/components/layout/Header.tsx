@@ -19,6 +19,7 @@ import {
   Home,
   Flame,
   MoreHorizontal,
+  CreditCard,
   X,
 } from 'lucide-react';
 import AuthModal, { AuthModalTab } from '@/components/ui/AuthModal';
@@ -41,6 +42,7 @@ const desktopMenuItems = [
   { href: '/dashboard', label: 'My Performance', icon: TrendingUp },
   { href: '/dashboard/mistakes', label: 'My Mistakes', icon: Flame },
   { href: '/dashboard/bookmarks', label: 'Bookmarks', icon: Bookmark },
+  { href: '/dashboard/payments', label: 'Payment History', icon: CreditCard },
   { href: '/dashboard/profile', label: 'Profile', icon: User },
 ];
 
@@ -466,7 +468,17 @@ export default function Header({ initialUser, user: legacyUser }: HeaderProps) {
                     <span>Test History</span>
                   </Link>
 
-                  {/* 5. Profile */}
+                  {/* 5. Payment History */}
+                  <Link
+                    href="/dashboard/payments"
+                    className={styles.sheetItem}
+                    onClick={() => setMoreSheetOpen(false)}
+                  >
+                    <CreditCard size={20} />
+                    <span>Payment History</span>
+                  </Link>
+
+                  {/* 6. Profile */}
                   <Link
                     href="/dashboard/profile"
                     className={styles.sheetItem}
