@@ -63,7 +63,11 @@ export function TestCard({
         </div>
         <div className={styles.metaItem}>
           <AlertCircle size={14} className={styles.negMarkIcon} />
-          <span>-{test.negativeMarksPerQuestion} Neg.</span>
+          <span>
+            {Number(test.negativeMarksPerQuestion) > 0
+              ? `-${test.negativeMarksPerQuestion} Neg.`
+              : '0 Neg.'}
+          </span>
         </div>
       </div>
 

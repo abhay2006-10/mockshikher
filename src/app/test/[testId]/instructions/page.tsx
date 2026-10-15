@@ -245,8 +245,16 @@ export default function TestInstructionsPage() {
               <div className={styles.specBox}>
                 <AlertCircle size={18} className={styles.negSpecIcon} />
                 <div>
-                  <span className={styles.specVal}>-{test.negativeMarksPerQuestion} Negative Marking</span>
-                  <span className={styles.specSub}>For incorrect answers</span>
+                  <span className={styles.specVal}>
+                    {Number(test.negativeMarksPerQuestion) > 0
+                      ? `-${test.negativeMarksPerQuestion} Negative Marking`
+                      : '0 Negative Marking'}
+                  </span>
+                  <span className={styles.specSub}>
+                    {Number(test.negativeMarksPerQuestion) > 0
+                      ? 'For incorrect answers'
+                      : 'No negative marking'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -268,7 +276,13 @@ export default function TestInstructionsPage() {
             <div className={styles.ruleItem}>
               <span className={styles.ruleNum}>2</span>
               <div>
-                <strong>Marking Scheme:</strong> Each correct answer awards <strong>+{test.marksPerQuestion} mark</strong>. Each wrong answer deducts <strong>-{test.negativeMarksPerQuestion} mark</strong>. Unattempted questions carry zero penalty.
+                <strong>Marking Scheme:</strong> Each correct answer awards <strong>+{test.marksPerQuestion} mark</strong>.{' '}
+                {Number(test.negativeMarksPerQuestion) > 0 ? (
+                  <span>Each wrong answer deducts <strong>-{test.negativeMarksPerQuestion} mark</strong>. </span>
+                ) : (
+                  <span>There is <strong>no negative marking (0 penalty)</strong> for incorrect answers. </span>
+                )}
+                Unattempted questions carry zero penalty.
               </div>
             </div>
 

@@ -31,11 +31,19 @@ export default function ExamDetailPage() {
   const slug = params?.slug as string;
   const { data: session, status } = useSession();
   const isLoggedIn = status === 'authenticated';
+  // @ts-expect-error role in session
+  const isAdmin = session?.user?.role === 'ADMIN';
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [unlockedExam, setUnlockedExam] = useState(false);
+
+  React.useEffect(() => {
+    if (isAdmin) {
+      setUnlockedExam(true);
+    }
+  }, [isAdmin]);
 
   // Promo code state
   const [promoInput, setPromoInput] = useState('');
@@ -64,7 +72,7 @@ export default function ExamDetailPage() {
           const data = await res.json();
           setExamData(data.exam);
           setTests(data.tests);
-          if (data.isPurchased) {
+          if (data.isPurchased || isAdmin) {
             setUnlockedExam(true);
           }
         }
@@ -340,7 +348,11 @@ export default function ExamDetailPage() {
             <div className={styles.statBox}>
               <AlertCircle size={18} className={styles.statIcon} />
               <div>
-                <span className={styles.statValue}>-0.25 Marks</span>
+                <span className={styles.statValue}>
+                  {exam.negativeMarking && Number(exam.negativeMarking) > 0
+                    ? `-${exam.negativeMarking} Marks`
+                    : '0 Marks'}
+                </span>
                 <span className={styles.statSub}>negative marking</span>
               </div>
             </div>
@@ -348,7 +360,7 @@ export default function ExamDetailPage() {
             <div className={styles.statBox}>
               <ShieldCheck size={18} className={styles.statIcon} />
               <div>
-                <span className={styles.statValue}>{exam.totalMocks} Total Mocks</span>
+                <span className={styles.statValue}>{exam.totalMocks || sortedTests.length || 10} Total Mocks</span>
                 <span className={styles.statSub}>Mock 1 is Free</span>
               </div>
             </div>
@@ -359,18 +371,21 @@ export default function ExamDetailPage() {
         <div className={styles.pricingCard}>
           <div className={styles.pricingBadge}>Special Launch Price</div>
           <div className={styles.priceRow}>
-            <span className={styles.price}>₹{exam.price}</span>
-            <span className={styles.origPrice}>₹{exam.originalPrice}</span>
+            <span className={styles.price}>₹{exam.price || 149}</span>
+            <span className={styles.origPrice}>₹{exam.originalPrice || 299}</span>
             <span className={styles.discount}>
-              {Math.round(((exam.originalPrice - exam.price) / exam.originalPrice) * 100)}% OFF
+              {Math.max(10, Math.round((((exam.originalPrice || 299) - (exam.price || 149)) / (exam.originalPrice || 299)) * 100))}% OFF
             </span>
           </div>
           <p className={styles.pricingGuarantee}>One-time payment • Valid for 1 full year</p>
+          <p style={{ fontSize: '0.85rem', color: '#10B981', fontWeight: 600, margin: '0.35rem 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span>🏷️</span> Get more discount with promo code
+          </p>
 
           <div className={styles.includedList}>
             <div className={styles.includedItem}>
               <CheckCircle2 size={16} className={styles.checkIcon} />
-              <span>All {exam.totalMocks} Full-Length Bilingual Tests</span>
+              <span>All {exam.totalMocks || sortedTests.length || 10} Full-Length Bilingual Tests</span>
             </div>
             <div className={styles.includedItem}>
               <CheckCircle2 size={16} className={styles.checkIcon} />
@@ -386,10 +401,10 @@ export default function ExamDetailPage() {
             </div>
           </div>
 
-          {unlockedExam ? (
+          {unlockedExam || isAdmin ? (
             <div className={styles.unlockedBadgeBox}>
               <CheckCircle2 size={18} />
-              <span>You own this full test series!</span>
+              <span>{isAdmin ? 'Admin Full Access Unlocked' : 'You own this full test series!'}</span>
             </div>
           ) : (
             <Button
@@ -399,7 +414,7 @@ export default function ExamDetailPage() {
               leftIcon={<Zap size={18} />}
               onClick={handleBuyClick}
             >
-              Buy Test Series • ₹{exam.price}
+              Buy Test Series • ₹{exam.price || 149}
             </Button>
           )}
         </div>
@@ -421,7 +436,7 @@ export default function ExamDetailPage() {
               <TestCard
                 key={test.id}
                 test={test}
-                isUnlocked={unlockedExam}
+                isUnlocked={unlockedExam || isAdmin}
                 onUnlockClick={handleBuyClick}
               />
             ))}
@@ -433,7 +448,7 @@ export default function ExamDetailPage() {
           <div className={styles.sidebarCard}>
             <h3 className={styles.sidebarTitle}>Official Exam Pattern</h3>
             <p className={styles.sidebarDesc}>
-              Strictly aligned with HP Police Constable latest notification structure.
+              Strictly aligned with {exam.name} latest notification structure.
             </p>
 
             <div className={styles.patternTable}>
@@ -441,7 +456,38 @@ export default function ExamDetailPage() {
                 <span>Subject / Section</span>
                 <span>Questions</span>
               </div>
-              {exam.subjects.map((sub: any) => (
+              {[
+                {
+                  id: 'sec-eng',
+                  name: 'English Language',
+                  nameHi: 'अंग्रेजी भाषा',
+                  questionCount: slug?.includes('patwari') ? 20 : slug?.includes('police') ? 16 : 20,
+                },
+                {
+                  id: 'sec-math',
+                  name: 'Mathematics',
+                  nameHi: 'गणित',
+                  questionCount: slug?.includes('patwari') ? 20 : slug?.includes('police') ? 16 : 20,
+                },
+                {
+                  id: 'sec-hindi',
+                  name: 'Hindi Language',
+                  nameHi: 'हिंदी भाषा',
+                  questionCount: slug?.includes('patwari') ? 20 : slug?.includes('police') ? 16 : 20,
+                },
+                {
+                  id: 'sec-gk',
+                  name: 'General Knowledge & HP GK',
+                  nameHi: 'सामान्य ज्ञान व हि.प्र. सामान्य ज्ञान',
+                  questionCount: slug?.includes('patwari') ? 20 : slug?.includes('police') ? 24 : 20,
+                },
+                {
+                  id: 'sec-reason',
+                  name: 'Reasoning Ability',
+                  nameHi: 'तर्कशक्ति (रीजनिंग)',
+                  questionCount: slug?.includes('patwari') ? 20 : slug?.includes('police') ? 18 : 20,
+                },
+              ].map((sub: any) => (
                 <div key={sub.id} className={styles.patternRow}>
                   <div>
                     <span className={styles.subjectNameEn}>{sub.name}</span>
@@ -452,16 +498,20 @@ export default function ExamDetailPage() {
               ))}
               <div className={styles.patternTotalRow}>
                 <span>Total Questions</span>
-                <span>{exam.totalQuestions} Marks (60 Mins)</span>
+                <span>{exam.totalQuestions} Questions ({exam.durationMinutes || 90} Mins)</span>
               </div>
             </div>
 
             <div className={styles.markingNotes}>
               <div className={styles.markingNote}>
-                <strong>+1.0 Mark</strong> for every correct answer
+                <strong>+{exam.marksPerQuestion || 1.0} Mark</strong> for every correct answer
               </div>
               <div className={styles.markingNote}>
-                <strong>-0.25 Mark</strong> deducted for incorrect attempts
+                <strong>
+                  {exam.negativeMarking && Number(exam.negativeMarking) > 0
+                    ? `-${exam.negativeMarking} Mark deducted for incorrect attempts`
+                    : '0 Marks deducted (No negative marking)'}
+                </strong>
               </div>
               <div className={styles.markingNote}>
                 <strong>0 Marks</strong> for unattempted questions

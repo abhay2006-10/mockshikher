@@ -12,7 +12,24 @@ export async function GET(
     const { slug } = await context.params;
     const session = await auth();
     // @ts-expect-error user role in token
-    const isAdmin = session?.user?.role === 'ADMIN';
+    let isAdmin = session?.user?.role === 'ADMIN';
+
+    if (!isAdmin && session?.user) {
+      const email = session.user.email?.toLowerCase().trim();
+      const id = session.user.id;
+      const dbUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            ...(id ? [{ id }] : []),
+            ...(email ? [{ email }] : []),
+          ],
+        },
+        select: { role: true },
+      });
+      if (dbUser?.role === 'ADMIN') {
+        isAdmin = true;
+      }
+    }
 
     const exam = await prisma.exam.findUnique({
       where: { slug },
