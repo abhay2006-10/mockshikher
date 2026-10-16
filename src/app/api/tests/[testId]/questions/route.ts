@@ -143,7 +143,11 @@ export async function GET(
         totalMarks: mockTest.totalMarks || studentQuestions.reduce((sum, q) => sum + q.marks, 0),
         negativeMarksPerQuestion:
           mockTest.name?.toLowerCase().includes('patwari') ||
+          mockTest.name?.toLowerCase().includes('clerk') ||
+          mockTest.name?.toLowerCase().includes('process-server') ||
           mockTest.exam?.slug?.includes('patwari') ||
+          mockTest.exam?.slug?.includes('clerk') ||
+          mockTest.exam?.slug?.includes('process-server') ||
           mockTest.negativeMarksPerQuestion === 0 ||
           mockTest.exam?.negativeMarking === 0
             ? 0

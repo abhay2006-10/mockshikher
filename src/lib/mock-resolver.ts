@@ -16,7 +16,8 @@ export function normalizeExamSlug(rawSlug?: string): string {
   const clean = rawSlug.toLowerCase().trim().replace(/\s+/g, '-');
   if (clean.includes('patwari')) return 'hp-patwari';
   if (clean.includes('allied')) return 'hp-allied-services';
-  if (clean.includes('clerk') || clean.includes('high-court')) return 'hp-high-court-clerk';
+  if (clean.includes('process-server')) return 'hp-judiciary-process-server';
+  if (clean.includes('clerk') || clean.includes('high-court')) return 'hp-judiciary-clerk';
   return 'hp-police-constable';
 }
 
@@ -60,7 +61,9 @@ export async function resolveOrCreateMockTest(options: ResolveMockOptions) {
       'hp-police-constable': 'HP Police Constable 2026',
       'hp-patwari': 'HP Patwari Examination',
       'hp-allied-services': 'HP Allied Services Examination',
-      'hp-high-court-clerk': 'HP High Court Clerk Examination',
+      'hp-judiciary-clerk': 'HP Judiciary Clerk',
+      'hp-judiciary-process-server': 'HP Judiciary Process Server',
+      'hp-high-court-clerk': 'HP Judiciary Clerk',
     };
 
     exam = await prisma.exam.create({

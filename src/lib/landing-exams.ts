@@ -29,6 +29,18 @@ export const LANDING_EXAMS: LandingExamConfig[] = [
     category: 'Police Exams',
   },
   {
+    slug: 'hp-judiciary-clerk',
+    name: 'HP Judiciary Clerk',
+    description: 'Full-length practice tests for HP High Court & District Judiciary Clerk / Proof Reader examination per official pattern.',
+    category: 'Court Exams',
+  },
+  {
+    slug: 'hp-judiciary-process-server',
+    name: 'HP Judiciary Process Server',
+    description: 'Comprehensive mock series for HP High Court & Subordinate Courts Process Server / Bailiff recruitment.',
+    category: 'Court Exams',
+  },
+  {
     slug: 'hp-forest-guard',
     name: 'HP Forest Guard',
     description: 'Practice series focused on Environment, HP Geography, Forest laws, General Science and Elementary Mathematics.',
@@ -40,20 +52,6 @@ export const LANDING_EXAMS: LandingExamConfig[] = [
     name: 'Panchayat Secretary',
     description: 'Mock series for HP Panchayati Raj department recruitment covering GK, Hindi, Mathematics and reasoning.',
     category: 'Panchayat',
-    isComingSoon: true,
-  },
-  {
-    slug: 'hp-secretariat-clerk',
-    name: 'Secretariat Clerk',
-    description: 'Full-length practice tests for HP Secretariat Clerk (Ministerial) examination per official pattern.',
-    category: 'Secretariat',
-    isComingSoon: true,
-  },
-  {
-    slug: 'hp-high-court-process-server',
-    name: 'High Court Process Server',
-    description: 'Practice series for HP High Court Process Server / Bailiff recruitment examination.',
-    category: 'Court Exams',
     isComingSoon: true,
   },
 ];

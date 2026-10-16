@@ -456,38 +456,40 @@ export default function ExamDetailPage() {
                 <span>Subject / Section</span>
                 <span>Questions</span>
               </div>
-              {[
-                {
-                  id: 'sec-eng',
-                  name: 'English Language',
-                  nameHi: 'अंग्रेजी भाषा',
-                  questionCount: slug?.includes('patwari') ? 20 : slug?.includes('police') ? 16 : 20,
-                },
-                {
-                  id: 'sec-math',
-                  name: 'Mathematics',
-                  nameHi: 'गणित',
-                  questionCount: slug?.includes('patwari') ? 20 : slug?.includes('police') ? 16 : 20,
-                },
-                {
-                  id: 'sec-hindi',
-                  name: 'Hindi Language',
-                  nameHi: 'हिंदी भाषा',
-                  questionCount: slug?.includes('patwari') ? 20 : slug?.includes('police') ? 16 : 20,
-                },
-                {
-                  id: 'sec-gk',
-                  name: 'General Knowledge & HP GK',
-                  nameHi: 'सामान्य ज्ञान व हि.प्र. सामान्य ज्ञान',
-                  questionCount: slug?.includes('patwari') ? 20 : slug?.includes('police') ? 24 : 20,
-                },
-                {
-                  id: 'sec-reason',
-                  name: 'Reasoning Ability',
-                  nameHi: 'तर्कशक्ति (रीजनिंग)',
-                  questionCount: slug?.includes('patwari') ? 20 : slug?.includes('police') ? 18 : 20,
-                },
-              ].map((sub: any) => (
+              {(() => {
+                if (slug?.includes('clerk')) {
+                  return [
+                    { id: 'sec-gk', name: 'General Knowledge & HP GK', nameHi: 'सामान्य ज्ञान व हि.प्र. सामान्य ज्ञान (HP, National & International)', questionCount: 60 },
+                    { id: 'sec-comp', name: 'Basic Computers & IT', nameHi: 'कंप्यूटर एवं सूचना प्रौद्योगिकी', questionCount: 20 },
+                    { id: 'sec-reason', name: 'Reasoning Ability', nameHi: 'तर्कशक्ति (रीजनिंग)', questionCount: 20 },
+                  ];
+                }
+                if (slug?.includes('process-server')) {
+                  return [
+                    { id: 'sec-gk', name: 'General Knowledge & HP GK', nameHi: 'सामान्य ज्ञान व हि.प्र. सामान्य ज्ञान', questionCount: 15 },
+                    { id: 'sec-math', name: 'Elementary Mathematics', nameHi: 'प्रारंभिक गणित', questionCount: 10 },
+                    { id: 'sec-sci', name: 'General Science', nameHi: 'सामान्य विज्ञान', questionCount: 10 },
+                    { id: 'sec-lang', name: 'General English & Hindi', nameHi: 'अंग्रेजी व हिंदी भाषा', questionCount: 10 },
+                    { id: 'sec-reason', name: 'Reasoning Ability', nameHi: 'तर्कशक्ति (रीजनिंग)', questionCount: 5 },
+                  ];
+                }
+                if (slug?.includes('police')) {
+                  return [
+                    { id: 'sec-eng', name: 'English Language', nameHi: 'अंग्रेजी भाषा', questionCount: 16 },
+                    { id: 'sec-hindi', name: 'Hindi Language', nameHi: 'हिंदी भाषा', questionCount: 16 },
+                    { id: 'sec-math', name: 'Mathematics', nameHi: 'गणित', questionCount: 16 },
+                    { id: 'sec-gk', name: 'General Knowledge & HP GK', nameHi: 'सामान्य ज्ञान व हि.प्र. सामान्य ज्ञान', questionCount: 24 },
+                    { id: 'sec-reason', name: 'Reasoning Ability', nameHi: 'तर्कशक्ति (रीजनिंग)', questionCount: 18 },
+                  ];
+                }
+                return [
+                  { id: 'sec-eng', name: 'English Language', nameHi: 'अंग्रेजी भाषा', questionCount: 20 },
+                  { id: 'sec-math', name: 'Mathematics', nameHi: 'गणित', questionCount: 20 },
+                  { id: 'sec-hindi', name: 'Hindi Language', nameHi: 'हिंदी भाषा', questionCount: 20 },
+                  { id: 'sec-gk', name: 'General Knowledge & HP GK', nameHi: 'सामान्य ज्ञान व हि.प्र. सामान्य ज्ञान', questionCount: 20 },
+                  { id: 'sec-reason', name: 'Reasoning Ability', nameHi: 'तर्कशक्ति (रीजनिंग)', questionCount: 20 },
+                ];
+              })().map((sub: any) => (
                 <div key={sub.id} className={styles.patternRow}>
                   <div>
                     <span className={styles.subjectNameEn}>{sub.name}</span>

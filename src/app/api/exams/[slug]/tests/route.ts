@@ -148,7 +148,11 @@ export async function GET(
         totalMarks: test.totalMarks || (qCount > 0 ? qCount * test.marksPerQuestion : exam.totalQuestions),
         marksPerQuestion: test.marksPerQuestion || 1.0,
         negativeMarksPerQuestion:
-          exam.slug.includes('patwari') || exam.negativeMarking === 0 || test.negativeMarksPerQuestion === 0
+          exam.slug.includes('patwari') ||
+          exam.slug.includes('clerk') ||
+          exam.slug.includes('process-server') ||
+          exam.negativeMarking === 0 ||
+          test.negativeMarksPerQuestion === 0
             ? 0
             : (test.negativeMarksPerQuestion ?? exam.negativeMarking ?? 0),
         hasAttempted: !!lastAttempt,

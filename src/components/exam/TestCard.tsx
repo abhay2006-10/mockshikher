@@ -62,7 +62,10 @@ export function TestCard({
           <span>{test.totalMarks} Marks</span>
         </div>
         <div className={styles.metaItem}>
-          {Number(test.negativeMarksPerQuestion) > 0 && !test.name?.toLowerCase().includes('patwari') ? (
+          {Number(test.negativeMarksPerQuestion) > 0 &&
+          !test.name?.toLowerCase().includes('patwari') &&
+          !test.name?.toLowerCase().includes('clerk') &&
+          !test.name?.toLowerCase().includes('process-server') ? (
             <>
               <AlertCircle size={14} className={styles.negMarkIcon} />
               <span>-{test.negativeMarksPerQuestion} Neg.</span>

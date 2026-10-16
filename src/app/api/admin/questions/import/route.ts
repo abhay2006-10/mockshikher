@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
 import prisma from '@/lib/prisma';
-import { recalculateMockStats } from '@/lib/mock-resolver';
+import { recalculateMockStats, normalizeExamSlug } from '@/lib/mock-resolver';
 import {
   parseImportFile,
   validateImportRows,
@@ -132,7 +132,8 @@ export async function POST(req: NextRequest) {
     // 1. Group rows by Exam and Mock Test Number
     const groupedByExamAndMock = new Map<string, ImportRow[]>();
     for (const row of validRowsToImport) {
-      const examSlug = (row.exam || 'hp-patwari').toLowerCase().trim();
+      const rawSlug = (row.exam || 'hp-patwari').toLowerCase().trim();
+      const examSlug = normalizeExamSlug(rawSlug);
       const testNum = Number(row.mock_test_number) || 1;
       const key = `${examSlug}:::${testNum}`;
       if (!groupedByExamAndMock.has(key)) {

@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { normalizeExamSlug } from '@/lib/mock-resolver';
 
 export interface ImportRow {
   exam: string;
@@ -269,7 +270,9 @@ export function validateImportRows(
     };
 
     // 1. Validate Exam
-    const cleanExamSlug = (row.exam || '').toLowerCase().trim();
+    const rawExam = (row.exam || '').toLowerCase().trim();
+    const cleanExamSlug = rawExam ? normalizeExamSlug(rawExam) : '';
+    row.exam = cleanExamSlug;
     if (!cleanExamSlug) {
       addError('exam', 'Exam slug is required.');
     } else if (existingExams && !existingExams.has(cleanExamSlug)) {

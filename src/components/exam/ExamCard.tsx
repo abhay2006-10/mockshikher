@@ -26,6 +26,12 @@ export function ExamCard({
     if (exam.slug?.includes('police')) {
       return ['English', 'Hindi', 'Mathematics', 'GK & HP GK', 'Reasoning'];
     }
+    if (exam.slug?.includes('process-server')) {
+      return ['HP & National GK', 'Mathematics', 'General Science', 'English & Hindi', 'Reasoning'];
+    }
+    if (exam.slug?.includes('clerk')) {
+      return ['HP & National GK', 'Computers & IT', 'Reasoning Ability'];
+    }
     if (exam.subjects && exam.subjects.length > 0) {
       const unique = Array.from(new Set(exam.subjects.map((s) => s.name)));
       return unique.slice(0, 5);
