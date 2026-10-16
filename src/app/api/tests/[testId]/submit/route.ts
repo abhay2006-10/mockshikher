@@ -178,100 +178,90 @@ export async function POST(
         ? parseFloat(((correctCount / (correctCount + wrongCount)) * 100).toFixed(1))
         : 0;
 
-    // Save attempt, per-question answers, mistake book, bookmarks in a single PostgreSQL transaction
-    await prisma.$transaction(async (tx) => {
-      // 1. Update TestAttempt
-      await tx.testAttempt.update({
-        where: { id: attempt.id },
-        data: {
-          status: finalStatus,
-          submittedAt: now,
-          score: finalScore,
-          totalMarks: totalPossibleMarks,
-          correctCount,
-          wrongCount,
-          unansweredCount,
-          accuracy,
-          percentage,
-          timeTakenSeconds: timeTaken,
-        },
-      });
-
-      // 2. Save snapshots in UserAnswer
-      for (const res of questionResults) {
-        const userAnsObj = answers[res.questionId];
-        await tx.userAnswer.upsert({
-          where: {
-            attemptId_questionId: {
-              attemptId: attempt.id,
-              questionId: res.questionId,
-            },
-          },
-          create: {
-            attemptId: attempt.id,
-            questionId: res.questionId,
-            selectedOption: (res.userAnswer as any) || null,
-            status: userAnsObj?.status || (res.isAnswered ? 'ANSWERED' : 'NOT_ANSWERED'),
-            timeSpentSeconds: res.timeSpent,
-            questionTextSnapshot: res.questionText,
-            correctOptionSnapshot: res.correctOption as any,
-            marksSnapshot: res.marks,
-            negativeMarksSnapshot: res.negativeMarks,
-            isCorrect: res.isCorrect,
-          },
-          update: {
-            selectedOption: (res.userAnswer as any) || null,
-            status: userAnsObj?.status || (res.isAnswered ? 'ANSWERED' : 'NOT_ANSWERED'),
-            timeSpentSeconds: res.timeSpent,
-            questionTextSnapshot: res.questionText,
-            correctOptionSnapshot: res.correctOption as any,
-            marksSnapshot: res.marks,
-            negativeMarksSnapshot: res.negativeMarks,
-            isCorrect: res.isCorrect,
+    // Save attempt, per-question answers, mistake book, bookmarks in a fast batched PostgreSQL transaction
+    await prisma.$transaction(
+      async (tx) => {
+        // 1. Update TestAttempt
+        await tx.testAttempt.update({
+          where: { id: attempt.id },
+          data: {
+            status: finalStatus,
+            submittedAt: now,
+            score: finalScore,
+            totalMarks: totalPossibleMarks,
+            correctCount,
+            wrongCount,
+            unansweredCount,
+            accuracy,
+            percentage,
+            timeTakenSeconds: timeTaken,
           },
         });
 
-        // 3. Automatically add wrong answers to Mistake Book (Requirement 1)
-        if (res.isAnswered && !res.isCorrect) {
-          await tx.mistakeBook.upsert({
-            where: {
-              userId_questionId_attemptId: {
-                userId: user.id,
-                questionId: res.questionId,
-                attemptId: attempt.id,
-              },
-            },
-            create: {
-              userId: user.id,
-              questionId: res.questionId,
-              attemptId: attempt.id,
-              isMastered: false,
-            },
-            update: {},
+        // 2. Clear previous draft answers for this attempt and batch insert final answers
+        await tx.userAnswer.deleteMany({
+          where: { attemptId: attempt.id },
+        });
+
+        const userAnswersData = questionResults.map((res) => {
+          const userAnsObj = answers[res.questionId];
+          return {
+            attemptId: attempt.id,
+            questionId: res.questionId,
+            selectedOption: (res.userAnswer as any) || null,
+            isMarkedForReview: userAnsObj?.status === 'MARKED_FOR_REVIEW' || userAnsObj?.status === 'ANSWERED_AND_MARKED',
+            status: userAnsObj?.status || (res.isAnswered ? 'ANSWERED' : 'NOT_ANSWERED'),
+            timeSpentSeconds: res.timeSpent || 0,
+            questionTextSnapshot: res.questionText,
+            correctOptionSnapshot: res.correctOption as any,
+            marksSnapshot: res.marks,
+            negativeMarksSnapshot: res.negativeMarks,
+            isCorrect: res.isCorrect,
+          };
+        });
+
+        if (userAnswersData.length > 0) {
+          await tx.userAnswer.createMany({
+            data: userAnswersData,
           });
         }
-      }
 
-      // 4. Save bookmarks per user in database (Requirement 1)
-      if (Array.isArray(bookmarkedIds)) {
-        for (const qId of bookmarkedIds) {
-          if (!qId) continue;
-          await tx.bookmark.upsert({
-            where: {
-              userId_questionId: {
-                userId: user.id,
-                questionId: qId,
-              },
-            },
-            create: {
+        // 3. Automatically add wrong answers to Mistake Book
+        const wrongResults = questionResults.filter((res) => res.isAnswered && !res.isCorrect);
+        if (wrongResults.length > 0) {
+          const mistakesData = wrongResults.map((res) => ({
+            userId: user.id,
+            questionId: res.questionId,
+            attemptId: attempt.id,
+            isMastered: false,
+          }));
+          await tx.mistakeBook.createMany({
+            data: mistakesData,
+            skipDuplicates: true,
+          });
+        }
+
+        // 4. Save bookmarks per user in database
+        if (Array.isArray(bookmarkedIds) && bookmarkedIds.length > 0) {
+          const validBookmarks = bookmarkedIds
+            .filter((qId): qId is string => typeof qId === 'string' && qId.length > 0)
+            .map((qId) => ({
               userId: user.id,
               questionId: qId,
-            },
-            update: {},
-          });
+            }));
+          if (validBookmarks.length > 0) {
+            await tx.bookmark.createMany({
+              data: validBookmarks,
+              skipDuplicates: true,
+            });
+          }
         }
+      },
+      {
+        maxWait: 15000, // 15 seconds max wait to acquire connection
+        timeout: 30000, // 30 seconds execution timeout
       }
-    });
+    );
 
     const submissionData = {
       attemptId: attempt.id,
