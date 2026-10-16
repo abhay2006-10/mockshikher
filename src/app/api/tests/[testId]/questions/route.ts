@@ -141,7 +141,13 @@ export async function GET(
         totalQuestions: studentQuestions.length,
         durationMinutes: mockTest.durationMinutes || 60,
         totalMarks: mockTest.totalMarks || studentQuestions.reduce((sum, q) => sum + q.marks, 0),
-        negativeMarksPerQuestion: mockTest.negativeMarksPerQuestion || 0.25,
+        negativeMarksPerQuestion:
+          mockTest.name?.toLowerCase().includes('patwari') ||
+          mockTest.exam?.slug?.includes('patwari') ||
+          mockTest.negativeMarksPerQuestion === 0 ||
+          mockTest.exam?.negativeMarking === 0
+            ? 0
+            : (mockTest.negativeMarksPerQuestion ?? mockTest.exam?.negativeMarking ?? 0.25),
         marksPerQuestion: mockTest.marksPerQuestion || 1.0,
       },
       questions: studentQuestions,

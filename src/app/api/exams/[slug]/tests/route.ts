@@ -147,7 +147,10 @@ export async function GET(
         durationMinutes: test.durationMinutes || exam.durationMinutes || 60,
         totalMarks: test.totalMarks || (qCount > 0 ? qCount * test.marksPerQuestion : exam.totalQuestions),
         marksPerQuestion: test.marksPerQuestion || 1.0,
-        negativeMarksPerQuestion: test.negativeMarksPerQuestion || 0.25,
+        negativeMarksPerQuestion:
+          exam.slug.includes('patwari') || exam.negativeMarking === 0 || test.negativeMarksPerQuestion === 0
+            ? 0
+            : (test.negativeMarksPerQuestion ?? exam.negativeMarking ?? 0),
         hasAttempted: !!lastAttempt,
         lastScore: lastAttempt?.score,
         lastPercentage: lastAttempt?.percentage,

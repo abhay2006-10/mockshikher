@@ -157,7 +157,7 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
             </div>
             <div className={styles.trustItem}>
               <CheckCircle2 size={18} className={styles.trustIcon} />
-              <span>Official Negative Marking (-0.25)</span>
+              <span>Instant Rank &amp; Performance Analysis</span>
             </div>
             <div className={styles.trustItem}>
               <CheckCircle2 size={18} className={styles.trustIcon} />

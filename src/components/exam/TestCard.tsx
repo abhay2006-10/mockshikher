@@ -62,12 +62,17 @@ export function TestCard({
           <span>{test.totalMarks} Marks</span>
         </div>
         <div className={styles.metaItem}>
-          <AlertCircle size={14} className={styles.negMarkIcon} />
-          <span>
-            {Number(test.negativeMarksPerQuestion) > 0
-              ? `-${test.negativeMarksPerQuestion} Neg.`
-              : '0 Neg.'}
-          </span>
+          {Number(test.negativeMarksPerQuestion) > 0 && !test.name?.toLowerCase().includes('patwari') ? (
+            <>
+              <AlertCircle size={14} className={styles.negMarkIcon} />
+              <span>-{test.negativeMarksPerQuestion} Neg.</span>
+            </>
+          ) : (
+            <>
+              <CheckCircle size={14} style={{ color: 'var(--color-success, #10b981)' }} />
+              <span>No Negative Marking</span>
+            </>
+          )}
         </div>
       </div>
 

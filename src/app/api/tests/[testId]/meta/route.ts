@@ -29,7 +29,13 @@ export async function GET(
         totalQuestions: questionCount,
         durationMinutes: mockTest.durationMinutes || 60,
         totalMarks: mockTest.totalMarks || questionCount,
-        negativeMarksPerQuestion: mockTest.negativeMarksPerQuestion || 0.25,
+        negativeMarksPerQuestion:
+          mockTest.name?.toLowerCase().includes('patwari') ||
+          mockTest.exam?.slug?.includes('patwari') ||
+          mockTest.negativeMarksPerQuestion === 0 ||
+          mockTest.exam?.negativeMarking === 0
+            ? 0
+            : (mockTest.negativeMarksPerQuestion ?? mockTest.exam?.negativeMarking ?? 0.25),
         marksPerQuestion: mockTest.marksPerQuestion || 1.0,
         isPublished: mockTest.isPublished,
       },

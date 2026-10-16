@@ -19,6 +19,20 @@ export function ExamCard({
 }: ExamCardProps) {
   const freeMockUrl = `/test/${freeMockId || `${exam.slug}-mock-1`}/instructions`;
 
+  const canonicalSubjects = React.useMemo(() => {
+    if (exam.slug?.includes('patwari')) {
+      return ['Hindi', 'English', 'Mathematics', 'General Knowledge', 'Reasoning'];
+    }
+    if (exam.slug?.includes('police')) {
+      return ['English', 'Hindi', 'Mathematics', 'GK & HP GK', 'Reasoning'];
+    }
+    if (exam.subjects && exam.subjects.length > 0) {
+      const unique = Array.from(new Set(exam.subjects.map((s) => s.name)));
+      return unique.slice(0, 5);
+    }
+    return ['English', 'Mathematics', 'Hindi', 'General Knowledge', 'Reasoning'];
+  }, [exam.slug, exam.subjects]);
+
   return (
     <div className={styles.card}>
       <div className={styles.header}>
@@ -36,14 +50,11 @@ export function ExamCard({
       </div>
 
       <div className={styles.subjectTags}>
-        {exam.subjects.slice(0, 3).map((sub) => (
-          <span key={sub.id} className={styles.subjectTag}>
-            {sub.name}
+        {canonicalSubjects.map((subName) => (
+          <span key={subName} className={styles.subjectTag}>
+            {subName}
           </span>
         ))}
-        {exam.subjects.length > 3 && (
-          <span className={styles.subjectMore}>+{exam.subjects.length - 3} more</span>
-        )}
       </div>
 
       <div className={styles.footer}>
