@@ -6,11 +6,14 @@ export const isRazorpayTestMode = (): boolean => {
   return key.startsWith('rzp_test_');
 };
 
+const rzpKeyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+const rzpKeySecret = process.env.RAZORPAY_KEY_SECRET;
+
 export const razorpay =
-  process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET
+  rzpKeyId && rzpKeySecret
     ? new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_KEY_SECRET,
+        key_id: rzpKeyId,
+        key_secret: rzpKeySecret,
       })
     : null;
 
