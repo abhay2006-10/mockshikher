@@ -516,7 +516,9 @@ function TestAttemptInner() {
 
             <div className={styles.questionMetaRight}>
               <span className={styles.marksBadge}>+{currentQ.marks} Marks</span>
-              <span className={styles.negMarksBadge}>-{currentQ.negativeMarks} Neg.</span>
+              {Number(currentQ.negativeMarks) > 0 && (
+                <span className={styles.negMarksBadge}>-{currentQ.negativeMarks} Neg.</span>
+              )}
 
               <button
                 type="button"

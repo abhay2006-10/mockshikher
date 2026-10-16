@@ -7,7 +7,7 @@ interface WhatsAppUpdatesSectionProps {
   sourceContext?: 'dashboard' | 'homepage';
 }
 
-const WHATSAPP_CHANNEL_URL = 'https://chat.whatsapp.com/Km7JHrYxgXK4ycuXDXSBFV';
+const WHATSAPP_CHANNEL_URL = 'https://whatsapp.com/channel/0029Vb8fgGaDjiOmOIGcxu2y';
 
 export default function WhatsAppUpdatesSection({
   className = '',

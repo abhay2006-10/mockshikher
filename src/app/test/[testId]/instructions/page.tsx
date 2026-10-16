@@ -243,19 +243,23 @@ export default function TestInstructionsPage() {
               </div>
 
               <div className={styles.specBox}>
-                <AlertCircle size={18} className={styles.negSpecIcon} />
-                <div>
-                  <span className={styles.specVal}>
-                    {Number(test.negativeMarksPerQuestion) > 0
-                      ? `-${test.negativeMarksPerQuestion} Negative Marking`
-                      : '0 Negative Marking'}
-                  </span>
-                  <span className={styles.specSub}>
-                    {Number(test.negativeMarksPerQuestion) > 0
-                      ? 'For incorrect answers'
-                      : 'No negative marking'}
-                  </span>
-                </div>
+                {Number(test.negativeMarksPerQuestion) > 0 ? (
+                  <>
+                    <AlertCircle size={18} className={styles.negSpecIcon} />
+                    <div>
+                      <span className={styles.specVal}>-{test.negativeMarksPerQuestion} Negative Marking</span>
+                      <span className={styles.specSub}>For incorrect answers</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={18} className={styles.specIcon} style={{ color: '#10B981' }} />
+                    <div>
+                      <span className={styles.specVal}>No Negative Marking</span>
+                      <span className={styles.specSub}>0 penalty for wrong answers</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -280,7 +284,7 @@ export default function TestInstructionsPage() {
                 {Number(test.negativeMarksPerQuestion) > 0 ? (
                   <span>Each wrong answer deducts <strong>-{test.negativeMarksPerQuestion} mark</strong>. </span>
                 ) : (
-                  <span>There is <strong>no negative marking (0 penalty)</strong> for incorrect answers. </span>
+                  <span>There is <strong>no penalty (0 marks deducted)</strong> for wrong answers. </span>
                 )}
                 Unattempted questions carry zero penalty.
               </div>

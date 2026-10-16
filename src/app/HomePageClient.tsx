@@ -134,7 +134,7 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
 
           <p className={styles.heroSubtitle}>
             Engineered strictly on official exam patterns. Take full-length bilingual mocks,
-            diagnose your exact weak areas, practice mistakes, and boost your score — starting at just ₹149.
+            diagnose your exact weak areas, practice mistakes, and boost your score.
           </p>
 
           <div className={styles.heroCtas}>

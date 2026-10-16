@@ -116,7 +116,7 @@ export async function GET(
       questionTextHi: q.questionTextHi || q.questionText,
       questionImage: q.questionImage || null,
       marks: q.marks,
-      negativeMarks: q.negativeMarks,
+      negativeMarks: Number(mockTest.negativeMarksPerQuestion) === 0 ? 0 : q.negativeMarks,
       difficulty: q.difficulty,
       subjectId: q.subjectId,
       subjectName: q.subject?.name || 'General Awareness',
