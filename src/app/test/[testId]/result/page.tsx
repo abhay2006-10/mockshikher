@@ -26,6 +26,11 @@ interface TestSubmissionData {
   attemptId: string;
   testId: string;
   testName: string;
+  examId?: string;
+  examName?: string;
+  examSlug?: string;
+  examPrice?: number;
+  examTotalMocks?: number;
   submittedAt: string;
   isAutoSubmit: boolean;
   totalQuestions: number;
@@ -274,17 +279,17 @@ function TestResultContent() {
             <span>Targeting Selection?</span>
           </div>
           <h3 className={styles.upgradeTitle}>
-            Unlock All 10 Full-Length HP Police Mocks for Just ₹149
+            Unlock {result.examTotalMocks ? `All ${result.examTotalMocks}` : 'All'} Full-Length {result.examName || 'Mock'} Tests for Just ₹{result.examPrice || 200}
           </h3>
           <p className={styles.upgradeDesc}>
-            Don&apos;t stop with 1 test. Practice the remaining 9 simulation mocks, access your
+            Don&apos;t stop with 1 test. Practice the remaining simulation mocks, access your
             personal Mistake Book, and track your rank against real competitors.
           </p>
         </div>
 
-        <Link href="/exams/hp-police-constable" className={styles.upgradeLink}>
+        <Link href={result.examSlug ? `/exams/${result.examSlug}` : '/exams'} className={styles.upgradeLink}>
           <Button variant="accent" size="lg" leftIcon={<Zap size={18} />}>
-            Unlock Full Series ₹149
+            Unlock Full Series • ₹{result.examPrice || 200}
           </Button>
         </Link>
       </section>

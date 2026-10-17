@@ -586,8 +586,10 @@ function TestAttemptInner() {
                 leftIcon={<ChevronLeft size={16} />}
                 onClick={handlePrev}
                 disabled={currentIndex === 0}
+                className={styles.navBtnPrev}
               >
-                Previous
+                <span className={styles.navBtnFullText}>Previous</span>
+                <span className={styles.navBtnShortText}>Prev</span>
               </Button>
 
               <Button
@@ -606,10 +608,12 @@ function TestAttemptInner() {
               <Button
                 variant="secondary"
                 size="md"
-                leftIcon={<Flag size={16} />}
+                leftIcon={<Flag size={15} />}
                 onClick={handleMarkForReviewAndNext}
+                className={styles.navBtnReview}
               >
-                Mark for Review
+                <span className={styles.navBtnFullText}>Mark for Review</span>
+                <span className={styles.navBtnShortText}>Review</span>
               </Button>
 
               <Button
@@ -617,8 +621,10 @@ function TestAttemptInner() {
                 size="md"
                 rightIcon={<ChevronRight size={16} />}
                 onClick={handleSaveAndNext}
+                className={styles.navBtnNext}
               >
-                Save & Next
+                <span className={styles.navBtnFullText}>Save & Next</span>
+                <span className={styles.navBtnShortText}>Save</span>
               </Button>
 
               <Button

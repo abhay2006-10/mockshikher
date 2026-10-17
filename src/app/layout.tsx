@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Outfit } from 'next/font/google';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
+import AppShell from '@/components/layout/AppShell';
 import './globals.css';
 
 const inter = Inter({
@@ -27,26 +26,21 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://mockshikhar.com'),
   title: {
-    default: 'Mockshikhar — HP Police Constable Mock Test Series 2026 | Affordable Online Practice',
+    default: 'Mockshikhar — Government Exam Mock Test Series | Affordable Online Practice',
     template: '%s | Mockshikhar',
   },
   description:
-    'Practice HP Police Constable 2026 mock tests online at ₹149. Bilingual (Hindi & English) full-length tests with real exam pattern, negative marking, instant scorecard, mistake book & detailed solutions. Free Mock 1 available.',
+    'Practice realistic full-length bilingual mock tests for Himachal Pradesh government exams (HP Patwari, HP Police, HP Judiciary Clerk & Process Server). Instant scorecard, deep performance analysis, auto mistake book. Free mock test available.',
   keywords: [
     'Mockshikhar',
-    'HP Police mock test',
-    'HP Police Constable 2026',
-    'HP Police Constable mock test series',
-    'HP Police online test',
-    'Himachal Pradesh Police exam preparation',
-    'HP Police practice test',
-    'HP Police Constable syllabus 2026',
-    'HP GK questions',
-    'HP Police bilingual mock test',
-    'government exam mock test',
+    'HP Government exam mock test',
     'HP Patwari mock test',
-    'HP Police Constable free mock test',
-    'competitive exam preparation India',
+    'HP Police Constable 2026',
+    'HP Judiciary Clerk mock test',
+    'HP Judiciary Process Server mock test',
+    'Himachal Pradesh competitive exams',
+    'HP GK questions',
+    'bilingual mock test series',
     'online mock test Hindi English',
   ],
   authors: [{ name: 'Mockshikhar' }],
@@ -55,15 +49,15 @@ export const metadata: Metadata = {
     locale: 'en_IN',
     url: process.env.NEXT_PUBLIC_APP_URL || 'https://mockshikhar.com',
     siteName: 'Mockshikhar',
-    title: 'Mockshikhar — HP Police Constable Mock Test Series 2026',
+    title: 'Mockshikhar — Government Exam Mock Test Series',
     description:
-      'Practice with realistic full-length bilingual mock tests for HP Police Constable 2026. Instant scorecard, deep analysis, auto mistake book — starting at just ₹149.',
+      'Prepare smarter for HP government exams with realistic bilingual mock tests, instant rank analysis, and step-by-step solutions.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Mockshikhar — HP Police Constable Mock Tests 2026',
+    title: 'Mockshikhar — Government Exam Mock Test Series',
     description:
-      'Affordable bilingual mock test series for HP Police Constable exam. Free Mock 1 available. Start practicing now!',
+      'Affordable bilingual mock test series for Himachal Pradesh competitive exams. Free sample mocks available.',
   },
   robots: {
     index: true,
@@ -93,11 +87,7 @@ export default async function RootLayout({
     <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
       <body>
         <AuthProvider>
-          <div id="app-root" style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>
-            <Header initialUser={initialUser} />
-            <main style={{ flex: 1 }}>{children}</main>
-            <Footer />
-          </div>
+          <AppShell initialUser={initialUser}>{children}</AppShell>
         </AuthProvider>
       </body>
     </html>

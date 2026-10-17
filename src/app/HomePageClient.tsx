@@ -174,9 +174,9 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
             <Badge variant="primary" size="md">
               Targeted Test Series
             </Badge>
-            <h2 className={styles.sectionTitle}>Popular Government &amp; Police Exams</h2>
+            <h2 className={styles.sectionTitle}>Prepare Smarter for Government Exams</h2>
             <p className={styles.sectionSubtitle}>
-              Select your goal and begin with a free full-length mock test today.
+              Choose your target exam, practise with realistic mock tests, and track your progress with focused performance analysis.
             </p>
           </div>
           <Link href="/exams">
@@ -319,10 +319,10 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
             <div className={styles.featureIcon}>
               <Zap size={28} />
             </div>
-            <h3 className={styles.featureTitle}>Unmatched Pricing (₹149)</h3>
+            <h3 className={styles.featureTitle}>Affordable Exam Preparation</h3>
             <p className={styles.featureDesc}>
-              Big coaching institutes charge ₹1,500 to ₹3,000 for basic tests. We believe quality
-              preparation should be accessible to every student at just ₹149.
+              Big coaching institutes charge thousands for basic mock papers. We make quality,
+              exam-oriented preparation accessible to every aspirant at honest prices.
             </p>
           </div>
 
@@ -390,8 +390,8 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
           <div className={`${styles.swipeItem} ${styles.reviewCard}`}>
             <div className={styles.stars}>★★★★★</div>
             <p className={styles.reviewText}>
-              &ldquo;At ₹149 for 10 full length tests with bilingual explanations, this is 10x better value
-              than coaching center test series. The timer and palette feel just like a real computer exam.&rdquo;
+              &ldquo;With comprehensive full-length tests and detailed bilingual explanations, this provides far
+              better value than coaching center test series. The timer and palette feel just like a real computer exam.&rdquo;
             </p>
             <div className={styles.reviewer}>
               <div className={styles.avatar}>RS</div>
@@ -421,9 +421,10 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
             background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(245, 179, 1, 0.05) 100%)',
             border: '1px solid var(--color-border)',
             borderRadius: '20px',
-            padding: '2.5rem 2rem',
+            padding: 'clamp(1.25rem, 4vw, 2.5rem) clamp(1rem, 3vw, 2rem)',
             maxWidth: '1000px',
             margin: '0 auto',
+            boxSizing: 'border-box',
           }}
         >
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
@@ -441,7 +442,7 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))',
               gap: '1.25rem',
             }}
           >
@@ -451,19 +452,22 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '1.25rem',
-                padding: '1.5rem',
+                gap: '1rem',
+                padding: '1.25rem',
                 background: 'var(--color-surface)',
                 border: '1px solid var(--color-border)',
                 borderRadius: '14px',
                 textDecoration: 'none',
                 color: 'inherit',
+                minWidth: 0,
+                boxSizing: 'border-box',
+                overflow: 'hidden',
               }}
             >
               <div
                 style={{
-                  width: '52px',
-                  height: '52px',
+                  width: '48px',
+                  height: '48px',
                   borderRadius: '12px',
                   background: 'rgba(99, 102, 241, 0.12)',
                   display: 'flex',
@@ -473,13 +477,21 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
                   flexShrink: 0,
                 }}
               >
-                <Mail size={24} />
+                <Mail size={22} />
               </div>
-              <div>
+              <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>
                   Official Email
                 </div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 700, marginTop: '0.2rem' }}>
+                <div
+                  style={{
+                    fontSize: '0.98rem',
+                    fontWeight: 700,
+                    marginTop: '0.2rem',
+                    overflowWrap: 'anywhere',
+                    wordBreak: 'break-word',
+                  }}
+                >
                   mockshikhar@gmail.com
                 </div>
                 <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '0.25rem' }}>
@@ -494,19 +506,22 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '1.25rem',
-                padding: '1.5rem',
+                gap: '1rem',
+                padding: '1.25rem',
                 background: 'var(--color-surface)',
                 border: '1px solid var(--color-border)',
                 borderRadius: '14px',
                 textDecoration: 'none',
                 color: 'inherit',
+                minWidth: 0,
+                boxSizing: 'border-box',
+                overflow: 'hidden',
               }}
             >
               <div
                 style={{
-                  width: '52px',
-                  height: '52px',
+                  width: '48px',
+                  height: '48px',
                   borderRadius: '12px',
                   background: 'rgba(16, 185, 129, 0.12)',
                   display: 'flex',
@@ -516,13 +531,21 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
                   flexShrink: 0,
                 }}
               >
-                <Phone size={24} />
+                <Phone size={22} />
               </div>
-              <div>
+              <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>
                   Phone &amp; WhatsApp Support
                 </div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 700, marginTop: '0.2rem' }}>
+                <div
+                  style={{
+                    fontSize: '0.98rem',
+                    fontWeight: 700,
+                    marginTop: '0.2rem',
+                    overflowWrap: 'anywhere',
+                    wordBreak: 'break-word',
+                  }}
+                >
                   +91 78767 25758
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>

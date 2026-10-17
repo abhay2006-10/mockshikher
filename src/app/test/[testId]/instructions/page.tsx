@@ -168,7 +168,7 @@ export default function TestInstructionsPage() {
 
   return (
     <div className={styles.container}>
-      <Link href="/exams/hp-police-constable" className={styles.backLink}>
+      <Link href={(test as any)?.examSlug ? `/exams/${(test as any).examSlug}` : '/exams'} className={styles.backLink}>
         <ArrowLeft size={16} />
         <span>Back to Exam Details</span>
       </Link>
@@ -383,7 +383,7 @@ export default function TestInstructionsPage() {
                   >
                     No Questions Added (Cannot Start)
                   </Button>
-                  <Link href="/exams/hp-police-constable">
+                  <Link href={(test as any)?.examSlug ? `/exams/${(test as any).examSlug}` : '/exams'}>
                     <Button variant="primary" size="lg">
                       Choose Another Mock Test
                     </Button>

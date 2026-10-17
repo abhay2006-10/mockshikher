@@ -371,10 +371,10 @@ export default function ExamDetailPage() {
         <div className={styles.pricingCard}>
           <div className={styles.pricingBadge}>Special Launch Price</div>
           <div className={styles.priceRow}>
-            <span className={styles.price}>₹{exam.price || 149}</span>
+            <span className={styles.price}>₹{exam.price || 200}</span>
             <span className={styles.origPrice}>₹{exam.originalPrice || 299}</span>
             <span className={styles.discount}>
-              {Math.max(10, Math.round((((exam.originalPrice || 299) - (exam.price || 149)) / (exam.originalPrice || 299)) * 100))}% OFF
+              {Math.max(10, Math.round((((exam.originalPrice || 299) - (exam.price || 200)) / (exam.originalPrice || 299)) * 100))}% OFF
             </span>
           </div>
           <p className={styles.pricingGuarantee}>One-time payment • Valid for 1 full year</p>
@@ -414,7 +414,7 @@ export default function ExamDetailPage() {
               leftIcon={<Zap size={18} />}
               onClick={handleBuyClick}
             >
-              Buy Test Series • ₹{exam.price || 149}
+              Buy Test Series • ₹{exam.price || 200}
             </Button>
           )}
         </div>
@@ -438,6 +438,8 @@ export default function ExamDetailPage() {
                 test={test}
                 isUnlocked={unlockedExam || isAdmin}
                 onUnlockClick={handleBuyClick}
+                examPrice={exam.price}
+                totalMocks={exam.totalMocks || sortedTests.length}
               />
             ))}
           </div>

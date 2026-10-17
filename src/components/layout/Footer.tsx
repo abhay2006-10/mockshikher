@@ -12,9 +12,6 @@ const footerLinks = {
     { href: '/terms', label: 'Terms of Service' },
     { href: '/refund-policy', label: 'Refund Policy' },
   ],
-  exams: [
-    { href: '/exams/hp-patwari', label: 'HP Patwari' },
-  ],
 };
 
 export default function Footer() {
@@ -63,23 +60,9 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Popular Exams */}
+          {/* Legal & Support */}
           <div className={styles.linkCol}>
-            <h4 className={styles.colTitle}>Popular Exams</h4>
-            <ul className={styles.linkList}>
-              {footerLinks.exams.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className={styles.link}>
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div className={styles.linkCol}>
-            <h4 className={styles.colTitle}>Legal</h4>
+            <h4 className={styles.colTitle}>Legal &amp; Support</h4>
             <ul className={styles.linkList}>
               {footerLinks.support.map((link) => (
                 <li key={link.href}>

@@ -13,6 +13,8 @@ interface TestCardProps {
   score?: number;
   percentage?: number;
   onUnlockClick?: () => void;
+  examPrice?: number;
+  totalMocks?: number;
 }
 
 export function TestCard({
@@ -22,6 +24,8 @@ export function TestCard({
   score,
   percentage,
   onUnlockClick,
+  examPrice,
+  totalMocks,
 }: TestCardProps) {
   const isAccessible = test.isFree || isUnlocked;
 
@@ -129,7 +133,9 @@ export function TestCard({
             fullWidth
             onClick={onUnlockClick}
           >
-            Unlock All 10 Mocks for ₹149
+            {examPrice
+              ? `Unlock ${totalMocks ? `All ${totalMocks} Mocks` : 'Full Series'} for ₹${examPrice}`
+              : 'Unlock Full Series'}
           </Button>
         )}
       </div>
