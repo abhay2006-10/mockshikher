@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { GraduationCap, Mail, MapPin, Phone } from 'lucide-react';
+import { WhatsAppIcon, InstagramIcon } from '@/components/common/WhatsAppUpdatesSection';
 import styles from './Footer.module.css';
 
 const footerLinks = {
@@ -43,6 +44,31 @@ export default function Footer() {
                 <Phone size={14} />
                 <span>+91 78767 25758</span>
               </a>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.65rem' }}>
+                <a
+                  href="https://whatsapp.com/channel/0029Va5I0zx0VycNW93eqO2P"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.contactItem}
+                  style={{ textDecoration: 'none', color: '#25d366', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                  aria-label="Join WhatsApp Channel"
+                >
+                  <WhatsAppIcon size={14} />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>WhatsApp</span>
+                </a>
+                <span style={{ color: 'var(--color-border)' }}>•</span>
+                <a
+                  href="https://www.instagram.com/himshikhar8262?rpxt=enVjNzB0dmtqMjk%3D&utm_source=qr"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.contactItem}
+                  style={{ textDecoration: 'none', color: '#e1306c', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                  aria-label="Follow on Instagram"
+                >
+                  <InstagramIcon size={14} />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Instagram</span>
+                </a>
+              </div>
             </div>
           </div>
 

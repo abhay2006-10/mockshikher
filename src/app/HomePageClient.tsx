@@ -22,7 +22,7 @@ import ComingSoonExamCard from '@/components/exam/ComingSoonExamCard';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import AuthModal, { AuthModalTab } from '@/components/ui/AuthModal';
-import WhatsAppUpdatesSection from '@/components/common/WhatsAppUpdatesSection';
+import WhatsAppUpdatesSection, { InstagramIcon } from '@/components/common/WhatsAppUpdatesSection';
 import type { MockExam } from '@/lib/mock-data';
 import styles from './page.module.css';
 
@@ -550,6 +550,62 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
                   Click to call or message
+                </div>
+              </div>
+            </a>
+
+            {/* Instagram Community Card */}
+            <a
+              href="https://www.instagram.com/himshikhar8262?rpxt=enVjNzB0dmtqMjk%3D&utm_source=qr"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                padding: '1.25rem',
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '14px',
+                textDecoration: 'none',
+                color: 'inherit',
+                minWidth: 0,
+                boxSizing: 'border-box',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  background: 'rgba(225, 48, 108, 0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#e1306c',
+                  flexShrink: 0,
+                }}
+              >
+                <InstagramIcon size={22} />
+              </div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>
+                  Official Instagram
+                </div>
+                <div
+                  style={{
+                    fontSize: '0.98rem',
+                    fontWeight: 700,
+                    marginTop: '0.2rem',
+                    overflowWrap: 'anywhere',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  @himshikhar8262
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#e1306c', marginTop: '0.25rem' }}>
+                  ● Follow for daily reels &amp; updates
                 </div>
               </div>
             </a>
