@@ -140,7 +140,7 @@ export async function GET(
         isFree: mockTest.isFree,
         examSlug: mockTest.exam?.slug || '',
         examName: mockTest.exam?.name || '',
-        examPrice: mockTest.exam?.price || 200,
+        examPrice: mockTest.exam?.price || 199,
         totalQuestions: studentQuestions.length,
         durationMinutes: mockTest.durationMinutes || 60,
         totalMarks: mockTest.totalMarks || studentQuestions.reduce((sum, q) => sum + q.marks, 0),

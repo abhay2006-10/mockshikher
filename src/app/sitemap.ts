@@ -1,46 +1,46 @@
 import type { MetadataRoute } from 'next';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+export const revalidate = 3600; // Revalidate every hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mockshikhar.com';
+  const baseUrl = 'https://mockshikhar.com';
 
-  // Static public pages
+  // 1. Static public canonical pages (only existing, public pages)
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
       lastModified: new Date(),
-      changeFrequency: 'weekly',
+      changeFrequency: 'daily',
       priority: 1.0,
     },
     {
       url: `${baseUrl}/exams`,
       lastModified: new Date(),
-      changeFrequency: 'weekly',
+      changeFrequency: 'daily',
       priority: 0.9,
     },
     {
       url: `${baseUrl}/privacy`,
       lastModified: new Date(),
-      changeFrequency: 'yearly',
+      changeFrequency: 'monthly',
       priority: 0.3,
     },
     {
       url: `${baseUrl}/terms`,
       lastModified: new Date(),
-      changeFrequency: 'yearly',
+      changeFrequency: 'monthly',
       priority: 0.3,
     },
     {
       url: `${baseUrl}/refund-policy`,
       lastModified: new Date(),
-      changeFrequency: 'yearly',
+      changeFrequency: 'monthly',
       priority: 0.3,
     },
   ];
 
-  // Dynamic exam pages from database
+  // 2. Dynamic public exam pages from database (excluding archived)
   let examPages: MetadataRoute.Sitemap = [];
   try {
     const exams = await prisma.exam.findMany({
@@ -50,12 +50,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     examPages = exams.map((exam) => ({
       url: `${baseUrl}/exams/${exam.slug}`,
-      lastModified: exam.updatedAt,
+      lastModified: exam.updatedAt || new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     }));
   } catch (error) {
     console.error('Sitemap: Failed to fetch exams from database:', error);
+    // Graceful fallback to canonical exams if DB connection is unavailable during static generation
+    const fallbackSlugs = ['hp-patwari', 'hp-police-constable', 'hp-judiciary-clerk', 'hp-judiciary-process-server'];
+    examPages = fallbackSlugs.map((slug) => ({
+      url: `${baseUrl}/exams/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    }));
   }
 
   return [...staticPages, ...examPages];

@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const rawCode = body.code ? String(body.code).trim().toUpperCase() : '';
-    const basePrice = Number(body.basePrice) || 200;
+    const basePrice = Number(body.basePrice) || 199;
 
     if (!rawCode) {
       return NextResponse.json(

@@ -122,7 +122,12 @@ export default function Header({ initialUser, user: legacyUser }: HeaderProps) {
   const handleSignOut = async () => {
     setUserMenuOpen(false);
     setMoreSheetOpen(false);
-    await signOut({ callbackUrl: '/' });
+    try {
+      await signOut({ redirect: false });
+    } catch (e) {
+      console.error('SignOut error:', e);
+    }
+    window.location.href = '/';
   };
 
   const openLogin = () => {

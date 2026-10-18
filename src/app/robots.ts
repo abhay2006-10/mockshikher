@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mockshikhar.com';
+  const baseUrl = 'https://mockshikhar.com';
 
   return {
     rules: [
@@ -19,6 +19,7 @@ export default function robots(): MetadataRoute.Robots {
           '/api/',
           '/auth',
           '/auth/',
+          '/button-audit',
         ],
       },
     ],

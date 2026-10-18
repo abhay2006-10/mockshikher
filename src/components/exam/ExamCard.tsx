@@ -65,7 +65,7 @@ export function ExamCard({
 
       <div className={styles.footer}>
         <div className={styles.priceLine}>
-          ₹{exam.price || 200} • 1 Year Validity
+          ₹{exam.price || 199} • 1 Year Validity
         </div>
 
         <div className={styles.buttonRow}>

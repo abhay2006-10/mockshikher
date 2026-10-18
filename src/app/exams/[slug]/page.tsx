@@ -55,8 +55,8 @@ export default function ExamDetailPage() {
   const [promoError, setPromoError] = useState<string | null>(null);
   const [isCheckingPromo, setIsCheckingPromo] = useState(false);
 
-  // Baseline price is ₹200 for all eligible exams
-  const basePrice = 200;
+  // Baseline price is ₹199 for all eligible exams
+  const basePrice = 199;
   const payablePrice = appliedPromo ? appliedPromo.finalPrice : basePrice;
 
   const baseExam = POPULAR_EXAMS.find((e) => e.slug === slug) || POPULAR_EXAMS[0];
@@ -371,10 +371,10 @@ export default function ExamDetailPage() {
         <div className={styles.pricingCard}>
           <div className={styles.pricingBadge}>Special Launch Price</div>
           <div className={styles.priceRow}>
-            <span className={styles.price}>₹{exam.price || 200}</span>
+            <span className={styles.price}>₹{exam.price || 199}</span>
             <span className={styles.origPrice}>₹{exam.originalPrice || 299}</span>
             <span className={styles.discount}>
-              {Math.max(10, Math.round((((exam.originalPrice || 299) - (exam.price || 200)) / (exam.originalPrice || 299)) * 100))}% OFF
+              {Math.max(10, Math.round((((exam.originalPrice || 299) - (exam.price || 199)) / (exam.originalPrice || 299)) * 100))}% OFF
             </span>
           </div>
           <p className={styles.pricingGuarantee}>One-time payment • Valid for 1 full year</p>
@@ -414,7 +414,7 @@ export default function ExamDetailPage() {
               leftIcon={<Zap size={18} />}
               onClick={handleBuyClick}
             >
-              Buy Test Series • ₹{exam.price || 200}
+              Buy Test Series • ₹{exam.price || 199}
             </Button>
           )}
         </div>
