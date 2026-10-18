@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import {
@@ -14,6 +14,8 @@ import {
   Mail,
   Phone,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Sparkles,
   RotateCcw,
   Sliders,
@@ -22,6 +24,12 @@ import {
   Award,
   Layers,
   GraduationCap,
+  History,
+  AlertTriangle,
+  Landmark,
+  BarChart2,
+  Filter,
+  TrendingUp,
 } from 'lucide-react';
 import ExamCard from '@/components/exam/ExamCard';
 import ComingSoonExamCard from '@/components/exam/ComingSoonExamCard';
@@ -106,37 +114,146 @@ const CONSOLE_QUESTIONS: MiniMockQuestion[] = [
   },
 ];
 
+interface HistoricalCutoffData {
+  examName: string;
+  totalMarks: number;
+  markingScheme: string;
+  cutoffs: {
+    UR: number;
+    OBC: number;
+    SC_ST: number;
+    EWS: number;
+  };
+  recruitmentRef: string;
+}
+
+const HISTORICAL_CUTOFF_DB: Record<string, HistoricalCutoffData> = {
+  patwari: {
+    examName: 'HP Patwari Examination',
+    totalMarks: 100,
+    markingScheme: '100 Qs • 100 Marks • Negative Marking: -0.25 (as applicable)',
+    cutoffs: { UR: 72.5, OBC: 68.0, SC_ST: 63.5, EWS: 66.0 },
+    recruitmentRef: '2019-2022 Revenue Dept Closing Marks (Reference)',
+  },
+  police: {
+    examName: 'HP Police Constable Examination',
+    totalMarks: 100,
+    markingScheme: '100 Qs • 100 Marks • Negative Marking: -0.25 (as applicable)',
+    cutoffs: { UR: 69.0, OBC: 65.5, SC_ST: 60.0, EWS: 63.5 },
+    recruitmentRef: '2021-2023 Shimla Police HQ Notification Reference',
+  },
+  judiciary: {
+    examName: 'HP High Court & District Judiciary Clerk',
+    totalMarks: 100,
+    markingScheme: '100 Qs • 100 Marks • Sectional Evaluation',
+    cutoffs: { UR: 74.0, OBC: 70.0, SC_ST: 65.0, EWS: 67.5 },
+    recruitmentRef: '2022-2024 High Court Shimla Result Reference',
+  },
+};
+
+interface ScoreTip {
+  id: string;
+  badge: string;
+  title: string;
+  desc: string;
+  focusArea: string;
+  accentColor: string;
+}
+
+const SCORE_TIPS: ScoreTip[] = [
+  {
+    id: 'tip-1',
+    badge: 'Marking Strategy',
+    title: 'Negative Marking Awareness',
+    desc: 'Check the marking rules for your selected examination and avoid guessing when you cannot eliminate options confidently.',
+    focusArea: 'Accuracy Focus',
+    accentColor: '#3B82F6',
+  },
+  {
+    id: 'tip-2',
+    badge: 'State Syllabus',
+    title: 'HP GK Revision',
+    desc: 'Revise Himachal Pradesh history, geography, districts and other syllabus-relevant topics based on your selected examination.',
+    focusArea: 'Syllabus Alignment',
+    accentColor: '#F59E0B',
+  },
+  {
+    id: 'tip-3',
+    badge: 'Pacing',
+    title: 'Time Management',
+    desc: 'Practise allocating time across questions and review your timing after completing a mock test.',
+    focusArea: 'Pacing Discipline',
+    accentColor: '#38BDF8',
+  },
+  {
+    id: 'tip-4',
+    badge: 'Smart Revision',
+    title: 'Review Incorrect Answers',
+    desc: 'Revisit questions you answered incorrectly and practise similar questions to strengthen your understanding.',
+    focusArea: 'Targeted Review',
+    accentColor: '#10B981',
+  },
+];
+
+interface ProductFeature {
+  id: string;
+  title: string;
+  desc: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+}
+
+const PRODUCT_VALUE_FEATURES: ProductFeature[] = [
+  {
+    id: 'feat-mock-practice',
+    title: 'Realistic Mock Practice',
+    desc: 'Attempt available exam-specific practice tests in a timed format.',
+    icon: Clock,
+  },
+  {
+    id: 'feat-score-review',
+    title: 'Score & Performance Review',
+    desc: 'Review your result and the performance information available after submitting a test.',
+    icon: BarChart2,
+  },
+  {
+    id: 'feat-mistake-book',
+    title: 'Mistake Book',
+    desc: 'Revisit incorrect answers from supported attempts for focused revision.',
+    icon: RotateCcw,
+  },
+  {
+    id: 'feat-progress-improvement',
+    title: 'Progress & Improvement',
+    desc: 'Use available performance history and topic-level insights to guide your next study session.',
+    icon: TrendingUp,
+  },
+];
+
 interface FaqItem {
-  qHi: string;
-  qEn: string;
-  aHi: string;
-  aEn: string;
+  question: string;
+  answer: string;
 }
 
 const FAQS: FaqItem[] = [
   {
-    qHi: 'क्या मॉक टेस्ट में नेगेटिव मार्किंग आधिकारिक नियमों के अनुसार है?',
-    qEn: 'Is negative marking calculated as per official notification rules?',
-    aHi: 'हाँ, बिल्कुल। HP Patwari, Police Constable और High Court Clerk में आधिकारिक अधिसूचना के अनुसार प्रत्येक गलत उत्तर पर -0.25 मार्क्स काटे जाते हैं और सबमिट करते ही आपकी शुद्ध (Net) अंक तालिका सामने आती है।',
-    aEn: 'Yes, exactly. Every test strictly enforces official examination deduction rules (-0.25 per incorrect answer) with real-time net score and accuracy calculation.',
+    question: 'Is negative marking calculated as per official exam rules?',
+    answer: 'Yes, exactly. For HP Patwari, HP Police Constable, and HP High Court Clerk examinations, negative marking (such as -0.25 marks per incorrect response) is calculated strictly as per the official notification rules. Your net score, penalty deductions, and accuracy are shown immediately upon test submission. Unattempted questions carry zero penalty.',
   },
   {
-    qHi: 'क्या हिमाचल सामान्य ज्ञान (HP GK) के प्रश्न 2026 के नवीनतम पाठ्यक्रम पर आधारित हैं?',
-    qEn: 'Are Himachal GK questions updated for the latest 2026 syllabus?',
-    aHi: 'हाँ। हिमाचल प्रदेश की नदियों, इतिहास, कला-संस्कृति, प्रमुख दर्रों, बजट और ताजा सरकारी योजनाओं पर विशेष ध्यान देकर प्रश्न तैयार किए गए हैं ताकि परीक्षा में अधिकतम स्कोर हो सके।',
-    aEn: 'Yes. Dedicated focus is given to HP rivers, districts, history, culture, geographic passes, state budget, and current government schemes matching previous year paper trends.',
+    question: 'Are Himachal Pradesh General Knowledge (HP GK) questions updated for current exams?',
+    answer: 'Yes. Dedicated focus is given to Himachal Pradesh geography, rivers, lakes, district history, state budget, administrative structure, and current government schemes reflecting official previous-year patterns.',
   },
   {
-    qHi: 'स्मार्ट गलती सुधार कॉपी (Mistake Book) कैसे काम करती है?',
-    qEn: 'How does the automated Mistake Book (गलती कॉपी) feature work?',
-    aHi: 'जब भी आप कोई प्रश्न गलत करते हैं या छोड़ते हैं, वह अपने-आप आपकी व्यक्तिगत गलती कॉपी में सुरक्षित हो जाता है। परीक्षा से पहले आप केवल अपनी गलतियों को री-अटेम्प्ट करके कमजोरियों को दूर कर सकते हैं।',
-    aEn: 'Whenever you answer incorrectly, the question is automatically archived into your personal Mistake Book with detailed solutions so you can re-attempt and eliminate errors before the actual exam.',
+    question: 'How does the Mistake Book feature work?',
+    answer: 'Whenever you mark an incorrect answer in any supported mock test, it is automatically recorded in your personal Mistake Book ledger. You can review the correct answer, study the explanation, and re-attempt questions to eliminate recurring errors before the actual exam.',
   },
   {
-    qHi: 'क्या एक बार टेस्ट सीरीज लेने पर 1 साल तक अनलिमिटेड री-अटेम्प्ट की सुविधा है?',
-    qEn: 'Do test series include 1-year unlimited re-attempts?',
-    aHi: 'हाँ, पूरे 1 वर्ष (365 दिन) तक आप जितने चाहें उतने री-अटेम्प्ट दे सकते हैं। कोई छिपे हुए शुल्क या मासिक रिन्यूअल नहीं हैं।',
-    aEn: 'Yes, every enrolled test series provides 1 full year of validity with unlimited re-attempts and complete solutions without hidden fees.',
+    question: 'Do enrolled test series include 1 full year of access with unlimited re-attempts?',
+    answer: 'Yes. Every enrolled test series provides 1 full year (365 days) of validity with unlimited re-attempt sessions, detailed bilingual solutions, and performance analytics with no hidden fees or monthly renewal charges.',
+  },
+  {
+    question: 'Can I practice mock tests on both mobile phones and desktop computers?',
+    answer: 'Yes. MockShikhar is fully responsive and optimized for mobile browsers, tablets, and desktop computers. You can practice timed mock tests anytime on whichever device you prefer.',
   },
 ];
 
@@ -160,8 +277,10 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
   // Mistake Book Interactive Demo
   const [reAttemptState, setReAttemptState] = useState<'initial' | 'solved'>('initial');
 
-  // Cutoff Radar Slider
-  const [sliderMarks, setSliderMarks] = useState(78);
+  // Cutoff Benchmark Selectors & Slider
+  const [targetExam, setTargetExam] = useState<'patwari' | 'police' | 'judiciary'>('patwari');
+  const [targetCategory, setTargetCategory] = useState<'UR' | 'OBC' | 'SC_ST' | 'EWS'>('UR');
+  const [sliderMarks, setSliderMarks] = useState(76);
 
   // Live timer tick
   useEffect(() => {
@@ -170,6 +289,23 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Carousel Refs & Scroll Handlers
+  const examCarouselRef = useRef<HTMLDivElement>(null);
+  const tipsCarouselRef = useRef<HTMLDivElement>(null);
+
+  const scrollCarousel = (ref: React.RefObject<HTMLDivElement | null>, offset: number) => {
+    if (ref.current) {
+      ref.current.scrollBy({ left: offset, behavior: 'smooth' });
+    }
+  };
+
+  const handleFilterChange = (cat: 'all' | 'patwari' | 'police' | 'court' | 'coming-soon') => {
+    setExamCategoryFilter(cat);
+    if (examCarouselRef.current) {
+      examCarouselRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  };
 
   const formatTimer = (sec: number) => {
     const mins = Math.floor(sec / 60);
@@ -205,38 +341,46 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
     }
   };
 
-  // Dynamic Cutoff Metrics calculation
-  const getCutoffMetrics = (marks: number) => {
-    let projectedRank = Math.round(2840 * Math.pow((100 - marks) / 100, 2.6)) + 1;
-    if (projectedRank < 1) projectedRank = 1;
-    const percentile = Math.min(99.9, Math.max(12.0, 100 - (projectedRank / 2840) * 100)).toFixed(1);
+  // Dynamic Cutoff Metrics calculation based on selected exam & category
+  const selectedCutoffData = HISTORICAL_CUTOFF_DB[targetExam];
+  const officialClosingCutoff = selectedCutoffData.cutoffs[targetCategory];
+  const delta = sliderMarks - officialClosingCutoff;
 
-    if (marks >= 80) {
+  const getCutoffMetrics = () => {
+    if (delta >= 4.0) {
+      const safeWrongQs = Math.floor(delta / 0.25);
       return {
-        rank: `#${projectedRank}`,
-        percentile: `${percentile}%`,
-        status: 'SAFE SELECTION ZONE 🏆',
-        statusColor: '#10b981',
-        advice: 'शानदार स्कोर! आप राज्य मेरिट लिस्ट में शीर्ष पर हैं। निरंतर अभ्यास जारी रखें।',
+        deltaText: `+${delta.toFixed(2)}`,
+        deltaColor: '#10B981',
+        status: 'ABOVE REFERENCE THRESHOLD (+Margin)',
+        statusColor: '#10B981',
+        penaltyCushion: `${safeWrongQs} Question Cushion`,
+        penaltyNote: `Your target score exceeds the historical reference mark by ${delta.toFixed(2)} marks.`,
       };
     }
-    if (marks >= 73) {
+    if (delta >= 0.0) {
+      const safeWrongQs = Math.max(0, Math.floor(delta / 0.25));
       return {
-        rank: `#${projectedRank}`,
-        percentile: `${percentile}%`,
-        status: 'CUTOFF CLEARED (~73.5) ✓',
+        deltaText: `+${delta.toFixed(2)}`,
+        deltaColor: '#F59E0B',
+        status: 'NEAR REFERENCE THRESHOLD (Tight Margin)',
         statusColor: '#F59E0B',
-        advice: 'कटऑफ क्लियर! सामान्य वर्ग के अनुमानित कटऑफ से आगे हैं। रिवीजन बनाए रखें।',
+        penaltyCushion: `${safeWrongQs} Question Margin`,
+        penaltyNote: `Your target score is within ${delta.toFixed(2)} marks of the reference cutoff mark.`,
       };
     }
+    const neededMarks = Math.abs(delta).toFixed(2);
     return {
-      rank: `#${projectedRank}`,
-      percentile: `${percentile}%`,
-      status: 'BORDERLINE / RISK ZONE ⚠️',
+      deltaText: `${delta.toFixed(2)}`,
+      deltaColor: '#F43F5E',
+      status: 'BELOW REFERENCE THRESHOLD (Score Gap)',
       statusColor: '#F43F5E',
-      advice: 'सतर्क रहें: कटऑफ पार करने के लिए कम से कम 74+ का लक्ष्य रखें। गलती सुधार कॉपी दोहराएं।',
+      penaltyCushion: `-${neededMarks} Marks Gap`,
+      penaltyNote: `Target score gap of ${neededMarks} marks relative to the historical reference mark.`,
     };
   };
+
+  const cutoff = getCutoffMetrics();
 
   const filteredLandingExams = landingExams.filter((item) => {
     if (examCategoryFilter === 'all') return true;
@@ -265,188 +409,157 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
     return true;
   });
 
-  const cutoff = getCutoffMetrics(sliderMarks);
-
   return (
     <div className={styles.container}>
-      {/* 1. TOP OFFICIAL RECRUITMENT TICKER */}
-      <div className={styles.topTickerBar}>
-        <div className={styles.tickerInner}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-            <span className={styles.tickerBadge}>📢 Official Notice</span>
-            <span className={styles.tickerText}>
-              HP Patwari 2026 &amp; HP Police Constable 2026 Full Test Series Live
-            </span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ color: '#94A3B8' }}>1st Full Mock is 100% Free:</span>
-            <button
-              type="button"
-              className={styles.tickerLink}
-              onClick={() => openAuthForTest(FREE_MOCK_URL)}
-            >
-              Start Free Mock Now →
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. DUAL-SPLIT MASTERPIECE HERO */}
+      {/* 1. DUAL-SPLIT MASTERPIECE HERO (Blue/Navy + Gold Identity) */}
       <section className={styles.heroSection}>
         <div className={styles.heroGrid}>
           {/* Left Column: Direct Value Proposition */}
           <div className={styles.heroLeft}>
             <div className={styles.officialNoticeChip}>
               <span>🏔️</span>
-              <span>HPPSC &amp; HPRCA Recruitment Standards</span>
+              <span>Himachal Pradesh State Examination Preparation</span>
             </div>
 
             <h1 className={styles.heroHeading}>
-              Crack Himachal Govt Exams{' '}
-              <span className={styles.heroHeadingHighlight}>With Real CBT Precision.</span>
+              Crack Himachal Pradesh Government Exams{' '}
+              <span className={styles.heroHeadingHighlight}>Practice Smarter with Realistic Mock Tests.</span>
             </h1>
 
-            <div className={styles.heroHindiSubline}>
-              असली परीक्षा जैसा टाइमर, -0.25 नेगेटिव मार्किंग और ऑटोमैटिक गलती सुधार कॉपी
-            </div>
-
             <p className={styles.heroParagraph}>
-              Strictly crafted for HP Patwari, HP Police Constable, and High Court Clerk with 100% verified HP GK syllabus, authentic bilingual questions, and instant scorecards.
+              Prepare for HP Patwari, HP Police Constable, and relevant Himachal Pradesh court recruitment exams with timed practice tests, HP-focused questions, performance analysis, and structured mistake revision.
             </p>
 
-            {/* Direct Value Strip */}
+            {/* Feature Highlights */}
             <div className={styles.valueStrip}>
               <div className={styles.valueItem}>
                 <CheckCircle2 size={16} className={styles.valueIconCheck} />
-                <span>10 Full-Length Mocks / Series</span>
+                <span>Full-length mock tests for available exam series</span>
               </div>
               <div className={styles.valueItem}>
                 <CheckCircle2 size={16} className={styles.valueIconCheck} />
-                <span>Official -0.25 Negative Marking</span>
+                <span>Timed test interface and score calculation</span>
+              </div>
+              <div className={styles.valueItem}>
+                <CheckCircle2 size={16} className={styles.valueIconCheckAmber} />
+                <span>Mistake Book for reviewing incorrect answers</span>
               </div>
               <div className={styles.valueItem}>
                 <CheckCircle2 size={16} className={styles.valueIconCheck} />
-                <span>Smart Mistake Book (गलती कॉपी)</span>
-              </div>
-              <div className={styles.valueItem}>
-                <CheckCircle2 size={16} className={styles.valueIconCheck} />
-                <span>1 Full Year Access (365 Days)</span>
+                <span>Performance tracking and improvement guidance</span>
               </div>
             </div>
 
-            {/* CTAs with Honest Pricing */}
+            {/* CTAs with Mobile-Friendly Stacking */}
             <div className={styles.heroCtas}>
               <Button
                 variant="accent"
                 size="lg"
-                leftIcon={<Zap size={18} />}
+                className={styles.primaryHeroCta}
                 rightIcon={<ArrowRight size={18} />}
                 onClick={() => openAuthForTest(FREE_MOCK_URL)}
               >
-                Attempt Free HP Patwari Mock 1
+                Attempt Free Mock
               </Button>
 
-              <Link href="/exams">
-                <Button variant="outline" size="lg">
-                  View All Test Series ({publishedExamCount})
+              <a href="#series-catalog" className={styles.secondaryHeroLink}>
+                <Button variant="secondary" size="lg" className={styles.secondaryHeroCta}>
+                  Explore Test Series
                 </Button>
-              </Link>
+              </a>
             </div>
 
-            <div className={styles.heroPricingBadge}>
-              <span>Complete 1-Year Single Series Pass at just</span>
-              <span className={styles.heroPriceAmount}>₹199</span>
-              <span>• No recurring fees</span>
+            {/* Trust Badges */}
+            <div className={styles.trustBadgesRow}>
+              <span className={styles.trustBadgeItem}>
+                <ShieldCheck size={16} className={styles.trustIconBlue} /> HP-Focused Practice
+              </span>
+              <span className={styles.trustBadgeItem}>
+                <BarChart2 size={16} className={styles.trustIconGold} /> Performance Analysis
+              </span>
+              <span className={styles.trustBadgeItem}>
+                <Check size={16} className={styles.trustIconGreen} /> Ad-Free Environment
+              </span>
             </div>
           </div>
 
-          {/* Right Column: Live Interactive CBT Console Simulator */}
-          <div className={styles.testConsoleWrapper}>
-            <div className={styles.consoleCandidateBanner}>
-              <span>Aspirant: Live Simulation</span>
-              <span>Center: Virtual CBT Lab 01</span>
-              <span>Roll: HP-2026-0842</span>
-            </div>
-
-            <div className={styles.consoleTitleBar}>
-              <div className={styles.consoleExamName}>
-                <span className={styles.consoleLivePulse} />
-                <span>HP PATWARI 2026 • 100 Q • 100 MARKS</span>
+          {/* Right Column: Live Interactive CBT Mock Exam Console */}
+          <div className={styles.consoleCard} id="cbt-console">
+            {/* Console Header Bar */}
+            <div className={styles.consoleHeaderBar}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <span className={styles.consoleTimer}>
+                  <Clock size={13} style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+                  {formatTimer(timerSeconds)}
+                </span>
+                <span className={styles.consoleSubjectTag}>
+                  {currentQ.section}
+                </span>
               </div>
-              <div className={styles.consoleControlsRow}>
-                <div className={styles.consoleTimer} title="Countdown Timer">
-                  ⏱️ {formatTimer(timerSeconds)}
-                </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span className={styles.consoleMarksScheme}>
+                  +1.00 / <span style={{ color: '#F43F5E' }}>-0.25</span>
+                </span>
                 <button
                   type="button"
-                  className={styles.langSwitchBtn}
+                  className={styles.consoleLangSwitch}
                   onClick={() => setLang(lang === 'hi' ? 'en' : 'hi')}
                 >
-                  {lang === 'hi' ? 'EN' : 'हिन्दी'}
+                  <Languages size={12} />
+                  {lang === 'hi' ? 'English Mode' : 'हिन्दी मोड'}
                 </button>
               </div>
             </div>
 
-            {/* Section Navigation Tabs */}
-            <div className={styles.consoleSectionNav}>
-              <button
-                type="button"
-                className={`${styles.sectionTab} ${currentQIndex === 0 ? styles.sectionTabActive : ''}`}
-                onClick={() => { setSelectedOpt(null); setCurrentQIndex(0); setActiveBubble(1); }}
-              >
-                1. हिमाचल GK (25 Q)
-              </button>
-              <button
-                type="button"
-                className={`${styles.sectionTab} ${currentQIndex === 1 ? styles.sectionTabActive : ''}`}
-                onClick={() => { setSelectedOpt(null); setCurrentQIndex(1); setActiveBubble(2); }}
-              >
-                2. गणित (25 Q)
-              </button>
-              <button
-                type="button"
-                className={`${styles.sectionTab} ${currentQIndex === 2 ? styles.sectionTabActive : ''}`}
-                onClick={() => { setSelectedOpt(null); setCurrentQIndex(2); setActiveBubble(3); }}
-              >
-                3. हिन्दी व्याकरण (25 Q)
-              </button>
-            </div>
-
-            {/* Question Body */}
-            <div className={styles.consoleQuestionBody}>
-              <div className={styles.qMetaLine}>
-                <span className={styles.qNumber}>Question {currentQIndex + 1} of 100</span>
-                <span className={styles.qMarksTag}>{currentQ.marksText}</span>
+            {/* Console Question Body */}
+            <div className={styles.consoleBody}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                <span className={styles.consoleQPill}>
+                  Q.{currentQ.id}
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className={styles.consoleQText}>
+                    {lang === 'hi' ? currentQ.questionHi : currentQ.questionEn}
+                  </div>
+                  <div className={styles.consoleQSubText}>
+                    ({lang === 'hi' ? currentQ.questionEn : currentQ.questionHi})
+                  </div>
+                </div>
               </div>
 
-              <div className={styles.qText}>
-                {lang === 'hi' ? currentQ.questionHi : currentQ.questionEn}
-              </div>
-
+              {/* Interactive Options */}
               <div className={styles.optionsStack}>
                 {currentQ.options.map((opt, idx) => {
                   const isSelected = selectedOpt === idx;
                   const isCorrect = idx === currentQ.correctIndex;
-                  const showResult = selectedOpt !== null;
+                  const showFeedback = selectedOpt !== null;
 
-                  let optClassName = styles.optionItem;
-                  if (showResult) {
-                    if (isCorrect) optClassName += ` ${styles.optionCorrect}`;
-                    else if (isSelected) optClassName += ` ${styles.optionWrong}`;
+                  let optionClass = styles.optionItem;
+                  if (showFeedback) {
+                    if (isCorrect) optionClass = `${styles.optionItem} ${styles.optionItemCorrect}`;
+                    else if (isSelected) optionClass = `${styles.optionItem} ${styles.optionItemWrong}`;
                   }
 
                   return (
                     <button
                       key={opt.key}
                       type="button"
-                      className={optClassName}
+                      className={optionClass}
                       onClick={() => handleOptionSelect(idx)}
-                      disabled={selectedOpt !== null}
                     >
-                      <span className={styles.optKeyBox}>{opt.key}</span>
-                      <span style={{ flex: 1 }}>{lang === 'hi' ? opt.textHi : opt.textEn}</span>
-                      {showResult && isCorrect && <Check size={16} color="#10B981" />}
-                      {showResult && isSelected && !isCorrect && <X size={16} color="#F43F5E" />}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span className={styles.optionKeyBadge}>{opt.key}</span>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#F1F5F9' }}>
+                          {lang === 'hi' ? opt.textHi : opt.textEn}
+                        </span>
+                      </div>
+                      {showFeedback && isCorrect && (
+                        <span className={styles.optionBadgeCorrect}>✓ Correct (+1.00)</span>
+                      )}
+                      {showFeedback && isSelected && !isCorrect && (
+                        <span className={styles.optionBadgeWrong}>✗ Incorrect (-0.25)</span>
+                      )}
                     </button>
                   );
                 })}
@@ -456,7 +569,7 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
               {selectedOpt !== null && (
                 <div className={styles.solutionDrawer}>
                   <div className={styles.solutionTitle}>
-                    {selectedOpt === currentQ.correctIndex ? '✓ सही उत्तर (+1.00 अंक)' : '❌ गलत उत्तर (-0.25 नेगेटिव मार्किंग)'}
+                    {selectedOpt === currentQ.correctIndex ? '✓ Official Key Rationale (+1.00 Mark)' : '❌ Incorrect (-0.25 Negative Marking)'}
                   </div>
                   <div>
                     {lang === 'hi' ? currentQ.explanationHi : currentQ.explanationEn}
@@ -508,320 +621,510 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
         </div>
       </section>
 
-      {/* 3. INTERACTIVE BENTO GRID: CORE INNOVATIONS */}
-      <section className={styles.sectionBlock}>
-        <div className={styles.sectionHeaderRow}>
-          <div className={styles.sectionHeaderCol}>
-            <div className={styles.sectionPreTitle}>Targeted Technology</div>
-            <h2 className={styles.sectionMainHeading}>Engineered For State Selection</h2>
-            <p className={styles.sectionDescription}>
-              Experience the tools designed to eliminate careless mistakes and push your score into the top state ranks.
-            </p>
-          </div>
-        </div>
-
-        <div className={styles.bentoGrid}>
-          {/* Bento 1: Automated Mistake Book */}
-          <div className={`${styles.bentoCard} ${styles.bentoCol8}`}>
-            <div className={styles.bentoHeader}>
-              <span className={styles.bentoTag}>
-                <BookOpen size={14} />
-                Automated Mistake Book (गलती कॉपी)
-              </span>
-              <button
-                type="button"
-                className={`${styles.reAttemptTriggerBtn} ${reAttemptState === 'solved' ? styles.reAttemptTriggerBtnSolved : ''}`}
-                onClick={() => setReAttemptState(reAttemptState === 'initial' ? 'solved' : 'initial')}
-              >
-                <RotateCcw size={12} />
-                {reAttemptState === 'solved' ? '✓ Mastered! +1.25 Score Swing' : 'Click to Fix Error'}
-              </button>
+      {/* 2. SECTION: CUTOFF REFERENCE & MOCK SCORE CALCULATOR */}
+      <section className={styles.sectionBlock} id="cutoff-radar">
+        <div className={styles.benchmarkWrapper}>
+          <div className={styles.benchmarkHeader}>
+            <div className={styles.benchmarkPill}>
+              <Landmark size={14} /> EXAM SCORE PLANNER
             </div>
-
-            <h3 className={styles.bentoTitle}>
-              Turn Negative Marks Into Verified Selection Scores
-            </h3>
-            <p className={styles.bentoDesc}>
-              Every mistake is automatically cataloged with verified solutions for quick re-attempts before the actual exam.
+            <h2 className={styles.benchmarkTitle}>
+              Cutoff Reference &amp; Mock Score Calculator
+            </h2>
+            <p className={styles.benchmarkSubtitle}>
+              Compare your practice score with available historical cutoff references and calculate your expected score using the selected examination&apos;s marking scheme.
             </p>
-
-            <div className={styles.mistakeReattemptBox}>
-              <div style={{ fontSize: '0.875rem', fontWeight: 700, color: '#F8FAFC' }}>
-                Q. गिरी नदी (Giri River) हिमाचल प्रदेश के किस जिले को सिस-गिरी और ट्रांस-गिरी में बांटती है?
-              </div>
-
-              <div className={styles.mistakeCompareRow}>
-                <div className={styles.wrongBadge}>
-                  <strong>❌ Past Mistake:</strong>
-                  <div>शिमला जिला (Shimla) • -0.25 Mark</div>
-                </div>
-                <div className={styles.correctBadge}>
-                  <strong>✓ Official Answer:</strong>
-                  <div>सिरमौर जिला (Sirmaur) • +1.00 Mark</div>
-                </div>
-              </div>
-
-              <div style={{ fontSize: '0.785rem', color: '#94A3B8', lineHeight: 1.5 }}>
-                <strong style={{ color: '#FBBF24' }}>समाधान:</strong> गिरी नदी कुपड़ चोटी (जुब्बल) से निकलकर सिरमौर के मध्य से बहती है।
-              </div>
+            <div className={styles.benchmarkCredibilityRow}>
+              <span className={styles.credibilityTag}>
+                <History size={13} /> Historical Reference Data (2018–2024 Exam Trends)
+              </span>
+              <span className={styles.credibilityTag}>
+                <ShieldCheck size={13} /> Illustrative Estimate: Based on Exam Marking Schemes
+              </span>
             </div>
           </div>
 
-          {/* Bento 2: State Cutoff & Selection Zone Radar */}
-          <div className={`${styles.bentoCard} ${styles.bentoCol4}`}>
-            <div className={styles.bentoHeader}>
-              <span className={styles.bentoTag}>
-                <Sliders size={14} />
-                Cutoff &amp; Rank Radar
-              </span>
-              <span className={styles.cutoffMarksBadge}>
-                {sliderMarks} / 100
-              </span>
+          <div className={styles.benchmarkMatrixCard}>
+            {/* Exam & Category Selectors */}
+            <div className={styles.benchmarkControlsGrid}>
+              <div className={styles.controlField}>
+                <label htmlFor="benchmark-exam-select" className={styles.controlLabel}>
+                  1. Select Target Himachal Examination:
+                </label>
+                <select
+                  id="benchmark-exam-select"
+                  className={styles.controlSelect}
+                  value={targetExam}
+                  onChange={(e) => setTargetExam(e.target.value as any)}
+                >
+                  <option value="patwari">HP Patwari Examination (100 Marks)</option>
+                  <option value="police">HP Police Constable Examination (100 Marks)</option>
+                  <option value="judiciary">HP High Court Clerk (100 Marks)</option>
+                </select>
+              </div>
+
+              <div className={styles.controlField}>
+                <label htmlFor="benchmark-cat-select" className={styles.controlLabel}>
+                  2. Select Reservation Category:
+                </label>
+                <select
+                  id="benchmark-cat-select"
+                  className={styles.controlSelect}
+                  value={targetCategory}
+                  onChange={(e) => setTargetCategory(e.target.value as any)}
+                >
+                  <option value="UR">General / Unreserved (UR)</option>
+                  <option value="OBC">Other Backward Classes (OBC)</option>
+                  <option value="SC_ST">Scheduled Caste / Tribe (SC / ST)</option>
+                  <option value="EWS">Economically Weaker Section (EWS)</option>
+                </select>
+              </div>
             </div>
 
-            <h3 className={styles.bentoTitle}>
-              Projected Selection Zone
-            </h3>
-            <p className={styles.bentoDesc}>
-              Slide your score to inspect projected state rank and selection safety:
-            </p>
+            {/* Slider Header & Live Value */}
+            <div className={styles.sliderHeaderRow}>
+              <div>
+                <label htmlFor="marks-slider" className={styles.sliderLabel}>
+                  Simulate Your Mock Target Score:
+                </label>
+                <p className={styles.sliderHint}>
+                  Marking Scheme: {selectedCutoffData.markingScheme}
+                </p>
+              </div>
+              <div className={styles.sliderValueBox}>
+                <span className={styles.sliderValueNum}>{sliderMarks}</span>
+                <span className={styles.sliderValueUnit}>/ 100 Marks</span>
+              </div>
+            </div>
 
-            <div className={styles.cutoffBox}>
+            {/* Interactive Slider */}
+            <div className={styles.sliderContainer}>
               <input
+                id="marks-slider"
                 type="range"
-                min="55"
-                max="95"
-                step="1"
+                min="40"
+                max="100"
+                step="0.5"
                 value={sliderMarks}
                 onChange={(e) => setSliderMarks(Number(e.target.value))}
-                className={styles.cutoffSlider}
+                className={styles.benchmarkRangeInput}
               />
+              <div className={styles.sliderScaleTicks}>
+                <span>40 (Qualifying)</span>
+                <span>55 (Average Pool)</span>
+                <span className={styles.anchorHighlight}>
+                  {officialClosingCutoff} ({targetCategory} Reference)
+                </span>
+                <span className={styles.anchorSafe}>85+ (Merit Safe Harbor)</span>
+                <span>100</span>
+              </div>
+            </div>
 
-              <div className={styles.cutoffResultsGrid}>
-                <div className={styles.cutoffStatMini}>
-                  <div style={{ fontSize: '0.7rem', color: '#94A3B8', textTransform: 'uppercase' }}>State Rank</div>
-                  <div className={styles.cutoffStatNum} style={{ color: '#10B981' }}>{cutoff.rank}</div>
+            {/* 3 Transparent Historical Metric Cards */}
+            <div className={styles.metricsTripleGrid}>
+              {/* Metric 1: Historical Cutoff Reference */}
+              <div className={styles.metricCard}>
+                <div className={styles.metricCardTop}>
+                  <span>Historical Cutoff Reference</span>
+                  <History size={16} className={styles.metricIconGold} />
                 </div>
-                <div className={styles.cutoffStatMini}>
-                  <div style={{ fontSize: '0.7rem', color: '#94A3B8', textTransform: 'uppercase' }}>Percentile</div>
-                  <div className={styles.cutoffStatNum} style={{ color: '#93C5FD' }}>{cutoff.percentile}</div>
+                <div className={styles.metricCardMid}>
+                  <span className={styles.metricValBig}>{officialClosingCutoff.toFixed(1)}</span>
+                  <span className={styles.metricValSub}> / 100</span>
+                </div>
+                <p className={styles.metricCardNote}>
+                  {selectedCutoffData.examName} ({targetCategory}) • {selectedCutoffData.recruitmentRef}
+                </p>
+              </div>
+
+              {/* Metric 2: Safe Margin Delta */}
+              <div className={styles.metricCard} style={{ borderColor: `${cutoff.deltaColor}55`, background: `${cutoff.deltaColor}10` }}>
+                <div className={styles.metricCardTop}>
+                  <span>Score Margin Delta</span>
+                  <ShieldCheck size={16} style={{ color: cutoff.deltaColor }} />
+                </div>
+                <div className={styles.metricCardMid}>
+                  <span className={styles.metricValBig} style={{ color: cutoff.deltaColor }}>
+                    {cutoff.deltaText}
+                  </span>
+                  <span className={styles.metricValSub}> Marks vs Reference</span>
+                </div>
+                <p className={styles.metricCardStatus} style={{ color: cutoff.statusColor }}>
+                  {cutoff.status}
+                </p>
+              </div>
+
+              {/* Metric 3: Exam Penalty Buffer */}
+              <div className={styles.metricCard}>
+                <div className={styles.metricCardTop}>
+                  <span>Exam Marking Scheme</span>
+                  <AlertTriangle size={16} className={styles.metricIconRose} />
+                </div>
+                <div className={styles.metricCardMid}>
+                  <span className={styles.metricValBig} style={{ color: cutoff.deltaColor }}>
+                    {cutoff.penaltyCushion}
+                  </span>
+                </div>
+                <p className={styles.metricCardNote}>
+                  {cutoff.penaltyNote}
+                </p>
+              </div>
+            </div>
+
+            {/* Transparency Methodology Box */}
+            <div className={styles.transparencyBox}>
+              <div className={styles.transparencyTitle}>
+                <CheckCircle2 size={16} className={styles.trustIconGreen} />
+                <span>Reference Methodology &amp; Data Transparency</span>
+              </div>
+              <p className={styles.transparencyText}>
+                Historical cutoff figures are compiled from publicly available previous exam notifications and merit lists (2018–2024). Scores are calculated using the specific examination&apos;s published marking scheme to assist study planning. This estimate represents a study reference, not a guaranteed selection score.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. SECTION: SMART MISTAKE BOOK */}
+      <section className={styles.sectionBlock} id="mistake-book">
+        <div className={styles.mistakeSplitGrid}>
+          {/* Left Side: Value Pillars */}
+          <div className={styles.mistakeLeftCol}>
+            <span className={styles.bentoTag}>
+              <BookOpen size={13} />
+              LEARN FROM EVERY ATTEMPT
+            </span>
+            <h2 className={styles.mistakeHeading}>
+              Turn Wrong Answers into <span className={styles.goldText}>Better Preparation</span>
+            </h2>
+            <p className={styles.mistakeLead}>
+              Review questions you answered incorrectly, understand the correct answer, and revisit your mistakes to strengthen weak areas before your next mock test.
+            </p>
+
+            <div className={styles.mistakePillarsStack}>
+              <div className={styles.mistakePillarItem}>
+                <div className={styles.pillarIconBoxBlue}>
+                  <RotateCcw size={16} />
+                </div>
+                <div>
+                  <h4 className={styles.pillarTitle}>1. Review Incorrect Answers</h4>
+                  <p className={styles.pillarDesc}>
+                    Find questions you answered incorrectly in supported mock attempts and revisit them for focused revision.
+                  </p>
                 </div>
               </div>
 
-              <div style={{ background: 'rgba(10, 14, 24, 0.8)', padding: '0.65rem 0.85rem', borderRadius: 8, fontSize: '0.785rem', color: cutoff.statusColor, fontWeight: 700, textAlign: 'center' }}>
-                {cutoff.status}
+              <div className={styles.mistakePillarItem}>
+                <div className={styles.pillarIconBoxGold}>
+                  <CheckCircle2 size={16} />
+                </div>
+                <div>
+                  <h4 className={styles.pillarTitle}>2. Understand the Correct Answer</h4>
+                  <p className={styles.pillarDesc}>
+                    Review the correct answer and any explanation available for the question.
+                  </p>
+                </div>
+              </div>
+
+              <div className={styles.mistakePillarItem}>
+                <div className={styles.pillarIconBoxGreen}>
+                  <TrendingUp size={16} />
+                </div>
+                <div>
+                  <h4 className={styles.pillarTitle}>3. Practise Weak Topics Again</h4>
+                  <p className={styles.pillarDesc}>
+                    Use your recorded mistakes to focus revision on the subjects and topics where you need more practice.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Side: Mistake Book Example Card */}
+          <div className={styles.mistakeRightCol}>
+            <div className={styles.mistakeInteractiveCard}>
+              <div className={styles.mistakeCardHeader}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span className={styles.exampleBadge}>Example Question</span>
+                </div>
+                <span className={styles.mistakePenaltyBadge}>
+                  Penalty: -0.25 Mark
+                </span>
+              </div>
+
+              <div className={styles.mistakeCardBody}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#FBBF24' }}>
+                  Subject: Himachal Pradesh General Knowledge
+                </span>
+                <p className={styles.mistakeCardQ}>
+                  Which river is known as the &ldquo;Chandrabhaga&rdquo; in the upper Himalayan region?
+                </p>
+
+                {/* Question Options */}
+                <div className={styles.exampleOptionList}>
+                  <div className={styles.exampleOptionItem}>
+                    <span>A. Beas River</span>
+                  </div>
+                  <div className={`${styles.exampleOptionItem} ${styles.exampleOptionCorrect}`}>
+                    <span>B. Chenab River</span>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700 }}>✓ Correct Answer</span>
+                  </div>
+                  <div className={`${styles.exampleOptionItem} ${styles.exampleOptionIncorrect}`}>
+                    <span>C. Ravi River</span>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700 }}>✗ Your Previous Response</span>
+                  </div>
+                  <div className={styles.exampleOptionItem}>
+                    <span>D. Sutlej River</span>
+                  </div>
+                </div>
+
+                <div className={styles.mistakePreviousAnswerBox}>
+                  <span>Your Previous Response: <strong>C. Ravi River</strong></span>
+                  <span style={{ fontWeight: 800 }}>✗ Incorrect (-0.25)</span>
+                </div>
+
+                {/* Solution & Explanation Card */}
+                <div className={styles.mistakeSolutionActionCard}>
+                  <p className={styles.mistakeSolutionText}>
+                    <strong style={{ color: '#10B981' }}>Correct answer:</strong> B. Chenab River<br />
+                    <strong style={{ color: '#CBD5E1' }}>Explanation:</strong> The Chenab River is formed by the confluence of the Chandra and Bhaga rivers near Tandi in Himachal Pradesh.
+                  </p>
+
+                  {reAttemptState === 'initial' ? (
+                    <button
+                      type="button"
+                      className={styles.mistakeReattemptBtn}
+                      onClick={() => setReAttemptState('solved')}
+                    >
+                      <RotateCcw size={14} /> Re-attempt Question (Demo)
+                    </button>
+                  ) : (
+                    <div className={styles.mistakeSuccessBanner}>
+                      ✓ Re-attempted Correctly: B. Chenab River (+1.00 Mark)
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 4. TARGET TEST SERIES SECTION */}
-      <section className={styles.sectionBlock}>
+      {/* 5. SECTION: SCORE OPTIMIZATION (TIPS CAROUSEL) */}
+      <section className={styles.sectionBlock} id="tips-to-improve">
+        <div className={styles.sectionHeaderRow}>
+          <div className={styles.sectionHeaderCol}>
+            <div className={styles.sectionPreTitle}>Preparation Strategy</div>
+            <h2 className={styles.sectionMainHeading}>
+              Score Optimization: <span className={styles.goldText}>Tips to Boost Your Score &amp; Accuracy</span>
+            </h2>
+            <p className={styles.sectionDescription}>
+              Practical preparation guidance calibrated for Himachal Pradesh competitive examinations.
+            </p>
+          </div>
+          <div className={styles.carouselNavButtons}>
+            <button
+              type="button"
+              className={styles.carouselArrowBtn}
+              onClick={() => scrollCarousel(tipsCarouselRef, -340)}
+              aria-label="Previous tips"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              type="button"
+              className={styles.carouselArrowBtn}
+              onClick={() => scrollCarousel(tipsCarouselRef, 340)}
+              aria-label="Next tips"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        </div>
+
+        <div className={styles.carouselWrapper}>
+          <div
+            ref={tipsCarouselRef}
+            className={styles.carouselTrack}
+            tabIndex={0}
+            role="region"
+            aria-label="Preparation tips carousel"
+          >
+            {SCORE_TIPS.map((tip) => (
+              <div key={tip.id} className={styles.carouselTipCardItem}>
+                <div className={styles.tipCard}>
+                  <div className={styles.tipCardTop}>
+                    <span
+                      className={styles.tipBadge}
+                      style={{
+                        borderColor: `${tip.accentColor}55`,
+                        color: tip.accentColor,
+                        background: `${tip.accentColor}18`,
+                      }}
+                    >
+                      {tip.badge}
+                    </span>
+                    <span className={styles.tipFocusArea}>{tip.focusArea}</span>
+                  </div>
+                  <div style={{ marginTop: '0.65rem', marginBottom: '0.35rem' }}>
+                    <h3 className={styles.tipTitle}>{tip.title}</h3>
+                  </div>
+                  <p className={styles.tipDesc}>{tip.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 6. TARGET TEST SERIES SECTION (REAL DATA CAROUSEL) */}
+      <section className={styles.sectionBlock} id="series-catalog">
         <div className={styles.sectionHeaderRow}>
           <div className={styles.sectionHeaderCol}>
             <div className={styles.sectionPreTitle}>Targeted HP Examinations</div>
             <h2 className={styles.sectionMainHeading}>Select Your Test Series</h2>
             <p className={styles.sectionDescription}>
-              Includes 1 Free Full Mock, official syllabus weightage, and detailed solutions.
+              Includes 1 Free Full Mock, syllabus-aligned questions, and detailed bilingual solutions.
             </p>
           </div>
-          <Link href="/exams">
-            <Button variant="ghost" size="md" rightIcon={<ArrowRight size={16} />}>
-              All Series ({publishedExamCount})
-            </Button>
-          </Link>
+          <div className={styles.sectionActionsRow}>
+            <Link href="/exams">
+              <Button variant="ghost" size="md" rightIcon={<ArrowRight size={16} />}>
+                All Series ({publishedExamCount})
+              </Button>
+            </Link>
+          </div>
         </div>
 
-        {/* Filter Pills */}
-        <div className={styles.filterPillsRow}>
-          <button
-            type="button"
-            className={`${styles.filterPill} ${examCategoryFilter === 'all' ? styles.filterPillActive : ''}`}
-            onClick={() => setExamCategoryFilter('all')}
-          >
-            🔥 All Series ({landingExams.length})
-          </button>
-          <button
-            type="button"
-            className={`${styles.filterPill} ${examCategoryFilter === 'patwari' ? styles.filterPillActive : ''}`}
-            onClick={() => setExamCategoryFilter('patwari')}
-          >
-            🌾 HP Patwari 2026
-          </button>
-          <button
-            type="button"
-            className={`${styles.filterPill} ${examCategoryFilter === 'police' ? styles.filterPillActive : ''}`}
-            onClick={() => setExamCategoryFilter('police')}
-          >
-            👮 HP Police Constable
-          </button>
-          <button
-            type="button"
-            className={`${styles.filterPill} ${examCategoryFilter === 'court' ? styles.filterPillActive : ''}`}
-            onClick={() => setExamCategoryFilter('court')}
-          >
-            ⚖️ High Court &amp; Subordinate Courts
-          </button>
-          <button
-            type="button"
-            className={`${styles.filterPill} ${examCategoryFilter === 'coming-soon' ? styles.filterPillActive : ''}`}
-            onClick={() => setExamCategoryFilter('coming-soon')}
-          >
-            ⏳ Upcoming Series
-          </button>
+        {/* Filter Bar: Category Tabs on Left + Carousel Arrows on Right */}
+        <div className={styles.catalogControlsBar}>
+          <div className={styles.filterPillsRow}>
+            <button
+              type="button"
+              className={`${styles.filterPill} ${examCategoryFilter === 'all' ? styles.filterPillActive : ''}`}
+              onClick={() => handleFilterChange('all')}
+            >
+              All Series ({landingExams.length})
+            </button>
+            <button
+              type="button"
+              className={`${styles.filterPill} ${examCategoryFilter === 'patwari' ? styles.filterPillActive : ''}`}
+              onClick={() => handleFilterChange('patwari')}
+            >
+              🌾 HP Patwari
+            </button>
+            <button
+              type="button"
+              className={`${styles.filterPill} ${examCategoryFilter === 'police' ? styles.filterPillActive : ''}`}
+              onClick={() => handleFilterChange('police')}
+            >
+              👮 HP Police
+            </button>
+            <button
+              type="button"
+              className={`${styles.filterPill} ${examCategoryFilter === 'court' ? styles.filterPillActive : ''}`}
+              onClick={() => handleFilterChange('court')}
+            >
+              ⚖️ HP High Court
+            </button>
+            <button
+              type="button"
+              className={`${styles.filterPill} ${examCategoryFilter === 'coming-soon' ? styles.filterPillActive : ''}`}
+              onClick={() => handleFilterChange('coming-soon')}
+            >
+              ⏳ Upcoming
+            </button>
+          </div>
+
+          <div className={styles.carouselNavButtons}>
+            <button
+              type="button"
+              className={styles.carouselArrowBtn}
+              onClick={() => scrollCarousel(examCarouselRef, -360)}
+              aria-label="Previous exam cards"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              type="button"
+              className={styles.carouselArrowBtn}
+              onClick={() => scrollCarousel(examCarouselRef, 360)}
+              aria-label="Next exam cards"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
         </div>
 
-        {/* Exam Cards Grid */}
-        <div className={styles.examsGrid}>
-          {filteredLandingExams.map((item) => {
-            if (item.isComingSoon) {
+        {/* Exam Cards Carousel */}
+        <div className={styles.carouselWrapper}>
+          <div
+            ref={examCarouselRef}
+            className={styles.carouselTrack}
+            tabIndex={0}
+            role="region"
+            aria-label="Exam series catalog carousel"
+          >
+            {filteredLandingExams.map((item) => {
+              if (item.isComingSoon) {
+                return (
+                  <div key={item.slug} className={styles.carouselExamCardItem}>
+                    <ComingSoonExamCard
+                      name={item.name}
+                      description={item.description}
+                      category={item.category}
+                    />
+                  </div>
+                );
+              }
               return (
-                <ComingSoonExamCard
-                  key={item.slug}
-                  name={item.name}
-                  description={item.description}
-                  category={item.category}
-                />
+                <div key={item.exam.id} className={styles.carouselExamCardItem}>
+                  <ExamCard
+                    exam={item.exam}
+                    isLoggedIn={isLoggedIn}
+                    onTryFreeMock={openAuthForTest}
+                  />
+                </div>
               );
-            }
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* 7. EVERYTHING YOU NEED TO PRACTICE SMARTER (GENUINE PRODUCT VALUE) */}
+      <section className={styles.sectionBlock}>
+        <div className={styles.productValueHeader}>
+          <div className={styles.sectionPreTitle}>Platform Overview</div>
+          <h2 className={styles.sectionMainHeading}>Everything You Need to Practise Better</h2>
+          <p className={styles.sectionDescription}>
+            Prepare for Himachal Pradesh competitive exams with focused practice, review your mistakes, and track your performance.
+          </p>
+        </div>
+
+        <div className={styles.productValueGrid}>
+          {PRODUCT_VALUE_FEATURES.map((feat) => {
+            const Icon = feat.icon;
             return (
-              <ExamCard
-                key={item.exam.id}
-                exam={item.exam}
-                isLoggedIn={isLoggedIn}
-                onTryFreeMock={openAuthForTest}
-              />
+              <div key={feat.id} className={styles.productValueCard}>
+                <div className={styles.productValueIconBox}>
+                  <Icon size={20} />
+                </div>
+                <h3 className={styles.productValueTitle}>{feat.title}</h3>
+                <p className={styles.productValueDesc}>{feat.desc}</p>
+              </div>
             );
           })}
         </div>
       </section>
 
-      {/* 5. TRANSPARENT COMPARISON & FAIR PRICING STRIP */}
-      <section className={styles.sectionBlock}>
-        <div className={styles.pricingStripCard}>
-          <div className={styles.pricingDetails}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <span className={styles.pricingTag}>Transparent Student Pricing</span>
-              <span style={{ fontSize: '0.785rem', color: '#94A3B8' }}>365 Days Full Validity</span>
-            </div>
-            <div className={styles.pricingPriceRow}>
-              <span className={styles.pricingBig}>₹199</span>
-              <span className={styles.pricingOriginal}>₹599</span>
-              <span style={{ fontSize: '0.85rem', color: '#E2E8F0', fontWeight: 600 }}>/ Full Series Pass</span>
-            </div>
-            <p style={{ fontSize: '0.875rem', color: '#94A3B8', margin: 0 }}>
-              Includes 10 Full-Length Mocks, 1,000 Questions, Detailed Explanations &amp; Automated Mistake Book. No hidden monthly renewals.
-            </p>
-          </div>
-
-          <Button
-            variant="accent"
-            size="lg"
-            rightIcon={<ArrowRight size={18} />}
-            onClick={() => openAuthForTest(FREE_MOCK_URL)}
-          >
-            Start With Free Mock 1
-          </Button>
-        </div>
-
-        {/* Comparison Table */}
-        <div className={styles.comparisonTableCard}>
-          <table className={styles.compTable}>
-            <thead>
-              <tr>
-                <th style={{ width: '40%' }}>Feature / Standard</th>
-                <th style={{ width: '35%' }} className={styles.compColMock}>MockShikhar CBT Platform</th>
-                <th style={{ width: '25%' }}>Generic National Apps / PDFs</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Himachal Pradesh GK Syllabus</strong></td>
-                <td className={styles.compColMock}>✓ 100% Focused on HP Rivers, History, Passes &amp; Districts</td>
-                <td>❌ All-India GK with zero state depth</td>
-              </tr>
-              <tr>
-                <td><strong>Examination Engine</strong></td>
-                <td className={styles.compColMock}>✓ TCS iON CBT Console with Official -0.25 Negative Marking</td>
-                <td>❌ Static PDFs or Google forms</td>
-              </tr>
-              <tr>
-                <td><strong>Smart Mistake Book (गलती कॉपी)</strong></td>
-                <td className={styles.compColMock}>✓ Auto catalogs wrong answers for targeted re-attempts</td>
-                <td>❌ No mistake tracking</td>
-              </tr>
-              <tr>
-                <td><strong>Language Flexibility</strong></td>
-                <td className={styles.compColMock}>✓ Instant 1-Click Bilingual Switch (हिन्दी ⇄ English)</td>
-                <td>❌ English-only or poor auto-translations</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* 6. VERIFIED ASPIRANT FEEDBACK & COMMUNITY SUPPORT */}
-      <section className={styles.sectionBlock}>
-        <div className={styles.sectionHeaderRow}>
-          <div className={styles.sectionHeaderCol}>
-            <div className={styles.sectionPreTitle}>Verified Aspirant Feedback</div>
-            <h2 className={styles.sectionMainHeading}>Feedback From Test Takers</h2>
-          </div>
-        </div>
-
-        <div className={styles.reviewsRow}>
-          <div className={styles.candidateCard}>
-            <div className={styles.candidateHeader}>
-              <span className={styles.attemptChip}>Verified Mock 1 Attempt</span>
-              <span className={styles.scoreTag}>Score: 78.50 / 100</span>
-            </div>
-            <p className={styles.candidateQuote}>
-              &ldquo;Patwari mock test mein Maths aur HP GK ka level bilkul recent paper pattern ke hisaab se hai. Solutions bilingual hain.&rdquo;
-            </p>
-            <div className={styles.candidateBio}>
-              <span className={styles.candidateName}>Aman Dhiman</span>
-              <span className={styles.districtBadge}>Kangra, HP</span>
-            </div>
-          </div>
-
-          <div className={styles.candidateCard}>
-            <div className={styles.candidateHeader}>
-              <span className={styles.attemptChip}>Verified Mock 1 Attempt</span>
-              <span className={styles.scoreTag}>Score: 82.00 / 100</span>
-            </div>
-            <p className={styles.candidateQuote}>
-              &ldquo;Exam hall jaisa continuous timer aur question palette hone se speed aur accuracy bohot improve hui.&rdquo;
-            </p>
-            <div className={styles.candidateBio}>
-              <span className={styles.candidateName}>Neha Thakur</span>
-              <span className={styles.districtBadge}>Mandi, HP</span>
-            </div>
-          </div>
-
-          <div className={styles.candidateCard}>
-            <div className={styles.candidateHeader}>
-              <span className={styles.attemptChip}>Verified Mock 1 Attempt</span>
-              <span className={styles.scoreTag}>Score: 75.25 / 100</span>
-            </div>
-            <p className={styles.candidateQuote}>
-              &ldquo;Sabse best feature Mistake Book hai — jo question galat hue wo ek jagah save ho jaate hain revision ke liye.&rdquo;
-            </p>
-            <div className={styles.candidateBio}>
-              <span className={styles.candidateName}>Rakesh Sharma</span>
-              <span className={styles.districtBadge}>Shimla, HP</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 7. CONCISE FAQ ACCORDION */}
-      <section className={styles.sectionBlock}>
-        <div className={styles.sectionHeaderRow}>
-          <div className={styles.sectionHeaderCol}>
-            <div className={styles.sectionPreTitle}>Clear Answers</div>
-            <h2 className={styles.sectionMainHeading}>Frequently Asked Questions</h2>
-          </div>
+      {/* 8. CONCISE FAQ ACCORDION (PROPERLY CENTERED) */}
+      <section className={styles.faqSection} id="faq">
+        <div className={styles.faqHeader}>
+          <div className={styles.sectionPreTitle}>Clear Answers</div>
+          <h2 className={styles.sectionMainHeading}>Frequently Asked Questions</h2>
+          <p className={styles.sectionDescription}>
+            Everything you need to know about our test engine and content authenticity.
+          </p>
         </div>
 
         <div className={styles.faqStack}>
@@ -833,21 +1136,22 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
                   type="button"
                   className={styles.faqToggleBtn}
                   onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                  aria-expanded={isOpen}
                 >
-                  <span>{faq.qHi}</span>
+                  <span className={styles.faqQuestionText}>{faq.question}</span>
                   <ChevronDown
                     size={18}
                     style={{
                       transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                       transition: 'transform 0.2s ease',
                       flexShrink: 0,
+                      color: isOpen ? '#F59E0B' : '#94A3B8',
                     }}
                   />
                 </button>
                 {isOpen && (
                   <div className={styles.faqContent}>
-                    <p style={{ margin: '0 0 0.5rem 0', color: '#F1F5F9' }}>{faq.aHi}</p>
-                    <p style={{ margin: 0, color: '#94A3B8', fontSize: '0.8rem' }}>{faq.aEn}</p>
+                    <p style={{ margin: 0, color: '#CBD5E1', fontSize: '0.875rem', lineHeight: 1.6 }}>{faq.answer}</p>
                   </div>
                 )}
               </div>
@@ -856,8 +1160,8 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
         </div>
       </section>
 
-      {/* 8. COMMUNITY & DIRECT SUPPORT */}
-      <section className={styles.sectionBlock}>
+      {/* 9. COMMUNITY & DIRECT SUPPORT */}
+      <section className={styles.sectionBlock} id="community-hub">
         <WhatsAppUpdatesSection sourceContext="homepage" />
 
         <div className={styles.supportBox} style={{ marginTop: '1.5rem' }}>
@@ -892,6 +1196,18 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
                 <div style={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 600 }}>Phone / WhatsApp</div>
                 <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF' }}>
                   +91 78767 25758
+                </div>
+              </div>
+            </a>
+
+            <a href="tel:+918262910464" className={styles.supportItem}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10B981', flexShrink: 0 }}>
+                <Phone size={18} />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 600 }}>Support Helpline</div>
+                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF' }}>
+                  +91 82629 10464
                 </div>
               </div>
             </a>

@@ -44,6 +44,15 @@ export const metadata: Metadata = {
     'online mock test Hindi English',
   ],
   authors: [{ name: 'Mockshikhar' }],
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
   openGraph: {
     type: 'website',
     locale: 'en_IN',
@@ -52,12 +61,21 @@ export const metadata: Metadata = {
     title: 'Mockshikhar — Government Exam Mock Test Series',
     description:
       'Prepare smarter for HP government exams with realistic bilingual mock tests, instant rank analysis, and step-by-step solutions.',
+    images: [
+      {
+        url: 'https://mockshikhar.com/logo-square.png',
+        width: 512,
+        height: 512,
+        alt: 'MockShikhar Logo',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Mockshikhar — Government Exam Mock Test Series',
     description:
       'Affordable bilingual mock test series for Himachal Pradesh competitive exams. Free sample mocks available.',
+    images: ['https://mockshikhar.com/logo-square.png'],
   },
   robots: {
     index: true,

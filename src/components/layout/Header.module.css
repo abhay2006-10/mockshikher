@@ -33,47 +33,35 @@
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
   text-decoration: none;
   flex-shrink: 0;
-  transition: transform 0.2s ease;
+  transition: opacity var(--transition-fast, 0.2s ease);
 }
 
 .logo:hover {
-  transform: scale(1.02);
+  opacity: 0.92;
 }
 
-.logoIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
+.logoImage {
   height: 38px;
-  background: linear-gradient(135deg, #f5b301 0%, #d97706 100%);
-  border-radius: 10px;
-  color: #0b0c16;
-  box-shadow: 0 4px 14px rgba(245, 179, 1, 0.3);
+  width: auto;
+  max-width: 185px;
+  object-fit: contain;
+  display: block;
 }
 
-.logoText {
-  font-family: var(--font-display, var(--font-heading));
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: -0.025em;
-  display: flex;
-  align-items: center;
+@media (max-width: 640px) {
+  .logoImage {
+    height: 32px;
+    max-width: 155px;
+  }
 }
 
-.logoText::after {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  background: #f5b301;
-  border-radius: 50%;
-  margin-left: 3px;
-  box-shadow: 0 0 8px #f5b301;
+@media (max-width: 380px) {
+  .logoImage {
+    height: 28px;
+    max-width: 135px;
+  }
 }
 
 /* Desktop Navigation */
