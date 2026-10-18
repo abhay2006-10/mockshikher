@@ -6,11 +6,9 @@ import { useSession } from 'next-auth/react';
 import {
   ArrowRight,
   Check,
-  X,
   CheckCircle2,
   Clock,
   BookOpen,
-  Zap,
   Mail,
   Phone,
   ChevronDown,
@@ -18,18 +16,11 @@ import {
   ChevronRight,
   Sparkles,
   RotateCcw,
-  Sliders,
   ShieldCheck,
   Languages,
-  Award,
-  Layers,
-  GraduationCap,
-  History,
-  AlertTriangle,
-  Landmark,
   BarChart2,
-  Filter,
   TrendingUp,
+  Target,
 } from 'lucide-react';
 import ExamCard from '@/components/exam/ExamCard';
 import ComingSoonExamCard from '@/components/exam/ComingSoonExamCard';
@@ -114,43 +105,6 @@ const CONSOLE_QUESTIONS: MiniMockQuestion[] = [
   },
 ];
 
-interface HistoricalCutoffData {
-  examName: string;
-  totalMarks: number;
-  markingScheme: string;
-  cutoffs: {
-    UR: number;
-    OBC: number;
-    SC_ST: number;
-    EWS: number;
-  };
-  recruitmentRef: string;
-}
-
-const HISTORICAL_CUTOFF_DB: Record<string, HistoricalCutoffData> = {
-  patwari: {
-    examName: 'HP Patwari Examination',
-    totalMarks: 100,
-    markingScheme: '100 Qs • 100 Marks • Negative Marking: -0.25 (as applicable)',
-    cutoffs: { UR: 72.5, OBC: 68.0, SC_ST: 63.5, EWS: 66.0 },
-    recruitmentRef: '2019-2022 Revenue Dept Closing Marks (Reference)',
-  },
-  police: {
-    examName: 'HP Police Constable Examination',
-    totalMarks: 100,
-    markingScheme: '100 Qs • 100 Marks • Negative Marking: -0.25 (as applicable)',
-    cutoffs: { UR: 69.0, OBC: 65.5, SC_ST: 60.0, EWS: 63.5 },
-    recruitmentRef: '2021-2023 Shimla Police HQ Notification Reference',
-  },
-  judiciary: {
-    examName: 'HP High Court & District Judiciary Clerk',
-    totalMarks: 100,
-    markingScheme: '100 Qs • 100 Marks • Sectional Evaluation',
-    cutoffs: { UR: 74.0, OBC: 70.0, SC_ST: 65.0, EWS: 67.5 },
-    recruitmentRef: '2022-2024 High Court Shimla Result Reference',
-  },
-};
-
 interface ScoreTip {
   id: string;
   badge: string;
@@ -158,40 +112,55 @@ interface ScoreTip {
   desc: string;
   focusArea: string;
   accentColor: string;
+  icon: React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>;
+  actionLabel: string;
+  actionHref: string;
 }
 
 const SCORE_TIPS: ScoreTip[] = [
   {
-    id: 'tip-1',
-    badge: 'Marking Strategy',
-    title: 'Negative Marking Awareness',
-    desc: 'Check the marking rules for your selected examination and avoid guessing when you cannot eliminate options confidently.',
+    id: 'tip-accuracy',
+    badge: 'Core Accuracy',
+    title: 'Improve Accuracy Before Speed',
+    desc: 'Practise questions carefully and understand why an answer is correct or incorrect. Build accuracy first, then work on answering faster.',
     focusArea: 'Accuracy Focus',
-    accentColor: '#3B82F6',
-  },
-  {
-    id: 'tip-2',
-    badge: 'State Syllabus',
-    title: 'HP GK Revision',
-    desc: 'Revise Himachal Pradesh history, geography, districts and other syllabus-relevant topics based on your selected examination.',
-    focusArea: 'Syllabus Alignment',
     accentColor: '#F59E0B',
+    icon: Target,
+    actionLabel: 'Explore Test Series',
+    actionHref: '#series-catalog',
   },
   {
-    id: 'tip-3',
-    badge: 'Pacing',
-    title: 'Time Management',
-    desc: 'Practise allocating time across questions and review your timing after completing a mock test.',
-    focusArea: 'Pacing Discipline',
-    accentColor: '#38BDF8',
-  },
-  {
-    id: 'tip-4',
+    id: 'tip-mistakes',
     badge: 'Smart Revision',
-    title: 'Review Incorrect Answers',
-    desc: 'Revisit questions you answered incorrectly and practise similar questions to strengthen your understanding.',
-    focusArea: 'Targeted Review',
+    title: 'Turn Mistakes into Learning',
+    desc: 'Revisit questions you answered incorrectly. Understand the correct answer, revise the underlying concept, and practise similar questions again.',
+    focusArea: 'Error Revision',
+    accentColor: '#3B82F6',
+    icon: RotateCcw,
+    actionLabel: 'Open Mistake Book',
+    actionHref: '#mistake-book',
+  },
+  {
+    id: 'tip-timer',
+    badge: 'Exam Pacing',
+    title: 'Practise with a Timer',
+    desc: 'Attempt timed mock tests to develop a steady pace. Learn when to move on from a difficult question and return to it if time permits.',
+    focusArea: 'Time Management',
+    accentColor: '#38BDF8',
+    icon: Clock,
+    actionLabel: 'Try Timed Mock',
+    actionHref: FREE_MOCK_URL,
+  },
+  {
+    id: 'tip-progress',
+    badge: 'Targeted Review',
+    title: 'Track Progress, Target Weak Areas',
+    desc: 'Review your available test results to identify subjects that need more practice. Use those insights to plan your next revision session.',
+    focusArea: 'Performance',
     accentColor: '#10B981',
+    icon: TrendingUp,
+    actionLabel: 'View Dashboard',
+    actionHref: '/dashboard',
   },
 ];
 
@@ -277,10 +246,6 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
   // Mistake Book Interactive Demo
   const [reAttemptState, setReAttemptState] = useState<'initial' | 'solved'>('initial');
 
-  // Cutoff Benchmark Selectors & Slider
-  const [targetExam, setTargetExam] = useState<'patwari' | 'police' | 'judiciary'>('patwari');
-  const [targetCategory, setTargetCategory] = useState<'UR' | 'OBC' | 'SC_ST' | 'EWS'>('UR');
-  const [sliderMarks, setSliderMarks] = useState(76);
 
   // Live timer tick
   useEffect(() => {
@@ -341,46 +306,6 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
     }
   };
 
-  // Dynamic Cutoff Metrics calculation based on selected exam & category
-  const selectedCutoffData = HISTORICAL_CUTOFF_DB[targetExam];
-  const officialClosingCutoff = selectedCutoffData.cutoffs[targetCategory];
-  const delta = sliderMarks - officialClosingCutoff;
-
-  const getCutoffMetrics = () => {
-    if (delta >= 4.0) {
-      const safeWrongQs = Math.floor(delta / 0.25);
-      return {
-        deltaText: `+${delta.toFixed(2)}`,
-        deltaColor: '#10B981',
-        status: 'ABOVE REFERENCE THRESHOLD (+Margin)',
-        statusColor: '#10B981',
-        penaltyCushion: `${safeWrongQs} Question Cushion`,
-        penaltyNote: `Your target score exceeds the historical reference mark by ${delta.toFixed(2)} marks.`,
-      };
-    }
-    if (delta >= 0.0) {
-      const safeWrongQs = Math.max(0, Math.floor(delta / 0.25));
-      return {
-        deltaText: `+${delta.toFixed(2)}`,
-        deltaColor: '#F59E0B',
-        status: 'NEAR REFERENCE THRESHOLD (Tight Margin)',
-        statusColor: '#F59E0B',
-        penaltyCushion: `${safeWrongQs} Question Margin`,
-        penaltyNote: `Your target score is within ${delta.toFixed(2)} marks of the reference cutoff mark.`,
-      };
-    }
-    const neededMarks = Math.abs(delta).toFixed(2);
-    return {
-      deltaText: `${delta.toFixed(2)}`,
-      deltaColor: '#F43F5E',
-      status: 'BELOW REFERENCE THRESHOLD (Score Gap)',
-      statusColor: '#F43F5E',
-      penaltyCushion: `-${neededMarks} Marks Gap`,
-      penaltyNote: `Target score gap of ${neededMarks} marks relative to the historical reference mark.`,
-    };
-  };
-
-  const cutoff = getCutoffMetrics();
 
   const filteredLandingExams = landingExams.filter((item) => {
     if (examCategoryFilter === 'all') return true;
@@ -621,169 +546,6 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
         </div>
       </section>
 
-      {/* 2. SECTION: CUTOFF REFERENCE & MOCK SCORE CALCULATOR */}
-      <section className={styles.sectionBlock} id="cutoff-radar">
-        <div className={styles.benchmarkWrapper}>
-          <div className={styles.benchmarkHeader}>
-            <div className={styles.benchmarkPill}>
-              <Landmark size={14} /> EXAM SCORE PLANNER
-            </div>
-            <h2 className={styles.benchmarkTitle}>
-              Cutoff Reference &amp; Mock Score Calculator
-            </h2>
-            <p className={styles.benchmarkSubtitle}>
-              Compare your practice score with available historical cutoff references and calculate your expected score using the selected examination&apos;s marking scheme.
-            </p>
-            <div className={styles.benchmarkCredibilityRow}>
-              <span className={styles.credibilityTag}>
-                <History size={13} /> Historical Reference Data (2018–2024 Exam Trends)
-              </span>
-              <span className={styles.credibilityTag}>
-                <ShieldCheck size={13} /> Illustrative Estimate: Based on Exam Marking Schemes
-              </span>
-            </div>
-          </div>
-
-          <div className={styles.benchmarkMatrixCard}>
-            {/* Exam & Category Selectors */}
-            <div className={styles.benchmarkControlsGrid}>
-              <div className={styles.controlField}>
-                <label htmlFor="benchmark-exam-select" className={styles.controlLabel}>
-                  1. Select Target Himachal Examination:
-                </label>
-                <select
-                  id="benchmark-exam-select"
-                  className={styles.controlSelect}
-                  value={targetExam}
-                  onChange={(e) => setTargetExam(e.target.value as any)}
-                >
-                  <option value="patwari">HP Patwari Examination (100 Marks)</option>
-                  <option value="police">HP Police Constable Examination (100 Marks)</option>
-                  <option value="judiciary">HP High Court Clerk (100 Marks)</option>
-                </select>
-              </div>
-
-              <div className={styles.controlField}>
-                <label htmlFor="benchmark-cat-select" className={styles.controlLabel}>
-                  2. Select Reservation Category:
-                </label>
-                <select
-                  id="benchmark-cat-select"
-                  className={styles.controlSelect}
-                  value={targetCategory}
-                  onChange={(e) => setTargetCategory(e.target.value as any)}
-                >
-                  <option value="UR">General / Unreserved (UR)</option>
-                  <option value="OBC">Other Backward Classes (OBC)</option>
-                  <option value="SC_ST">Scheduled Caste / Tribe (SC / ST)</option>
-                  <option value="EWS">Economically Weaker Section (EWS)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Slider Header & Live Value */}
-            <div className={styles.sliderHeaderRow}>
-              <div>
-                <label htmlFor="marks-slider" className={styles.sliderLabel}>
-                  Simulate Your Mock Target Score:
-                </label>
-                <p className={styles.sliderHint}>
-                  Marking Scheme: {selectedCutoffData.markingScheme}
-                </p>
-              </div>
-              <div className={styles.sliderValueBox}>
-                <span className={styles.sliderValueNum}>{sliderMarks}</span>
-                <span className={styles.sliderValueUnit}>/ 100 Marks</span>
-              </div>
-            </div>
-
-            {/* Interactive Slider */}
-            <div className={styles.sliderContainer}>
-              <input
-                id="marks-slider"
-                type="range"
-                min="40"
-                max="100"
-                step="0.5"
-                value={sliderMarks}
-                onChange={(e) => setSliderMarks(Number(e.target.value))}
-                className={styles.benchmarkRangeInput}
-              />
-              <div className={styles.sliderScaleTicks}>
-                <span>40 (Qualifying)</span>
-                <span>55 (Average Pool)</span>
-                <span className={styles.anchorHighlight}>
-                  {officialClosingCutoff} ({targetCategory} Reference)
-                </span>
-                <span className={styles.anchorSafe}>85+ (Merit Safe Harbor)</span>
-                <span>100</span>
-              </div>
-            </div>
-
-            {/* 3 Transparent Historical Metric Cards */}
-            <div className={styles.metricsTripleGrid}>
-              {/* Metric 1: Historical Cutoff Reference */}
-              <div className={styles.metricCard}>
-                <div className={styles.metricCardTop}>
-                  <span>Historical Cutoff Reference</span>
-                  <History size={16} className={styles.metricIconGold} />
-                </div>
-                <div className={styles.metricCardMid}>
-                  <span className={styles.metricValBig}>{officialClosingCutoff.toFixed(1)}</span>
-                  <span className={styles.metricValSub}> / 100</span>
-                </div>
-                <p className={styles.metricCardNote}>
-                  {selectedCutoffData.examName} ({targetCategory}) • {selectedCutoffData.recruitmentRef}
-                </p>
-              </div>
-
-              {/* Metric 2: Safe Margin Delta */}
-              <div className={styles.metricCard} style={{ borderColor: `${cutoff.deltaColor}55`, background: `${cutoff.deltaColor}10` }}>
-                <div className={styles.metricCardTop}>
-                  <span>Score Margin Delta</span>
-                  <ShieldCheck size={16} style={{ color: cutoff.deltaColor }} />
-                </div>
-                <div className={styles.metricCardMid}>
-                  <span className={styles.metricValBig} style={{ color: cutoff.deltaColor }}>
-                    {cutoff.deltaText}
-                  </span>
-                  <span className={styles.metricValSub}> Marks vs Reference</span>
-                </div>
-                <p className={styles.metricCardStatus} style={{ color: cutoff.statusColor }}>
-                  {cutoff.status}
-                </p>
-              </div>
-
-              {/* Metric 3: Exam Penalty Buffer */}
-              <div className={styles.metricCard}>
-                <div className={styles.metricCardTop}>
-                  <span>Exam Marking Scheme</span>
-                  <AlertTriangle size={16} className={styles.metricIconRose} />
-                </div>
-                <div className={styles.metricCardMid}>
-                  <span className={styles.metricValBig} style={{ color: cutoff.deltaColor }}>
-                    {cutoff.penaltyCushion}
-                  </span>
-                </div>
-                <p className={styles.metricCardNote}>
-                  {cutoff.penaltyNote}
-                </p>
-              </div>
-            </div>
-
-            {/* Transparency Methodology Box */}
-            <div className={styles.transparencyBox}>
-              <div className={styles.transparencyTitle}>
-                <CheckCircle2 size={16} className={styles.trustIconGreen} />
-                <span>Reference Methodology &amp; Data Transparency</span>
-              </div>
-              <p className={styles.transparencyText}>
-                Historical cutoff figures are compiled from publicly available previous exam notifications and merit lists (2018–2024). Scores are calculated using the specific examination&apos;s published marking scheme to assist study planning. This estimate represents a study reference, not a guaranteed selection score.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* 3. SECTION: SMART MISTAKE BOOK */}
       <section className={styles.sectionBlock} id="mistake-book">
@@ -910,23 +672,23 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
         </div>
       </section>
 
-      {/* 5. SECTION: SCORE OPTIMIZATION (TIPS CAROUSEL) */}
+      {/* SECTION: SCORE OPTIMIZATION (TIPS TO IMPROVE) */}
       <section className={styles.sectionBlock} id="tips-to-improve">
         <div className={styles.sectionHeaderRow}>
           <div className={styles.sectionHeaderCol}>
             <div className={styles.sectionPreTitle}>Preparation Strategy</div>
             <h2 className={styles.sectionMainHeading}>
-              Score Optimization: <span className={styles.goldText}>Tips to Boost Your Score &amp; Accuracy</span>
+              Score Optimization: <span className={styles.goldText}>Tips to Improve</span>
             </h2>
             <p className={styles.sectionDescription}>
-              Practical preparation guidance calibrated for Himachal Pradesh competitive examinations.
+              Practical, aspirant-focused guidance to build accuracy, master pacing, and prepare effectively for Himachal Pradesh examinations.
             </p>
           </div>
-          <div className={styles.carouselNavButtons}>
+          <div className={`${styles.carouselNavButtons} ${styles.tipsNavControls}`}>
             <button
               type="button"
               className={styles.carouselArrowBtn}
-              onClick={() => scrollCarousel(tipsCarouselRef, -340)}
+              onClick={() => scrollCarousel(tipsCarouselRef, -300)}
               aria-label="Previous tips"
             >
               <ChevronLeft size={18} />
@@ -934,7 +696,7 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
             <button
               type="button"
               className={styles.carouselArrowBtn}
-              onClick={() => scrollCarousel(tipsCarouselRef, 340)}
+              onClick={() => scrollCarousel(tipsCarouselRef, 300)}
               aria-label="Next tips"
             >
               <ChevronRight size={18} />
@@ -942,37 +704,60 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
           </div>
         </div>
 
-        <div className={styles.carouselWrapper}>
+        <div className={styles.tipsContainer}>
           <div
             ref={tipsCarouselRef}
-            className={styles.carouselTrack}
+            className={styles.tipsTrack}
             tabIndex={0}
             role="region"
-            aria-label="Preparation tips carousel"
+            aria-label="Tips to improve carousel"
           >
-            {SCORE_TIPS.map((tip) => (
-              <div key={tip.id} className={styles.carouselTipCardItem}>
-                <div className={styles.tipCard}>
-                  <div className={styles.tipCardTop}>
-                    <span
-                      className={styles.tipBadge}
-                      style={{
-                        borderColor: `${tip.accentColor}55`,
-                        color: tip.accentColor,
-                        background: `${tip.accentColor}18`,
-                      }}
-                    >
-                      {tip.badge}
-                    </span>
-                    <span className={styles.tipFocusArea}>{tip.focusArea}</span>
+            {SCORE_TIPS.map((tip) => {
+              const Icon = tip.icon;
+              return (
+                <div key={tip.id} className={styles.tipCardItem}>
+                  <div className={styles.tipCard}>
+                    <div>
+                      <div className={styles.tipCardTop}>
+                        <div
+                          className={styles.tipIconBox}
+                          style={{
+                            color: tip.accentColor,
+                            borderColor: `${tip.accentColor}45`,
+                            background: `${tip.accentColor}18`,
+                          }}
+                        >
+                          <Icon size={18} />
+                        </div>
+                        <span
+                          className={styles.tipBadge}
+                          style={{
+                            borderColor: `${tip.accentColor}55`,
+                            color: tip.accentColor,
+                            background: `${tip.accentColor}14`,
+                          }}
+                        >
+                          {tip.badge}
+                        </span>
+                      </div>
+
+                      <div className={styles.tipTitleBox}>
+                        <h3 className={styles.tipTitle}>{tip.title}</h3>
+                      </div>
+
+                      <p className={styles.tipDesc}>{tip.desc}</p>
+                    </div>
+
+                    <div className={styles.tipFooter}>
+                      <Link href={tip.actionHref} className={styles.tipActionLink}>
+                        <span>{tip.actionLabel}</span>
+                        <ArrowRight size={14} className={styles.tipActionArrow} />
+                      </Link>
+                    </div>
                   </div>
-                  <div style={{ marginTop: '0.65rem', marginBottom: '0.35rem' }}>
-                    <h3 className={styles.tipTitle}>{tip.title}</h3>
-                  </div>
-                  <p className={styles.tipDesc}>{tip.desc}</p>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
