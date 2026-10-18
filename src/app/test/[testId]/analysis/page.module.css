@@ -72,8 +72,9 @@
 }
 
 .tabBtnActive {
-  background: var(--color-bg-primary);
-  color: var(--color-primary-700);
+  background: rgba(37, 99, 235, 0.22);
+  color: #93C5FD;
+  border: 1px solid rgba(59, 130, 246, 0.4);
   box-shadow: var(--shadow-sm);
 }
 
@@ -287,14 +288,15 @@
 }
 
 .recommendationBox {
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e1b4b 100%);
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  border: 1px solid rgba(59, 130, 246, 0.3);
   color: white;
   border-radius: var(--radius-xl);
   padding: var(--space-6);
   display: flex;
   align-items: flex-start;
   gap: var(--space-4);
-  box-shadow: 0 10px 20px -5px rgba(30, 58, 138, 0.3);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
 }
 
 .recIcon {

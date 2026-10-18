@@ -44,6 +44,10 @@ export default function Footer() {
                 <Phone size={14} />
                 <span>+91 78767 25758</span>
               </a>
+              <a href="tel:+918262910464" className={styles.contactItem} style={{ textDecoration: 'none', color: 'inherit', marginTop: '0.35rem' }}>
+                <Phone size={14} />
+                <span>+91 82629 10464</span>
+              </a>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.65rem' }}>
                 <a
                   href="https://whatsapp.com/channel/0029Va5I0zx0VycNW93eqO2P"

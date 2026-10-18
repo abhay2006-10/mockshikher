@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 480" width="500" height="480" fill="none">
+  <defs>
+    <!-- Purple Gradients for Left Mountain & Book Pages -->
+    <linearGradient id="vMtnPurple" x1="16" y1="42" x2="32" y2="12" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E0B4B"/>
+      <stop offset="45%" stop-color="#3B187B"/>
+      <stop offset="100%" stop-color="#5822B0"/>
+    </linearGradient>
+
+    <!-- Gold Gradients for Right Mountain Face -->
+    <linearGradient id="vMtnGold" x1="32" y1="12" x2="52" y2="42" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFBEB"/>
+      <stop offset="25%" stop-color="#FDE047"/>
+      <stop offset="70%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+
+    <!-- Star Glow & Radiant Gold -->
+    <radialGradient id="vSummitGlow" cx="32" cy="10" r="16" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FDE047" stop-opacity="0.65"/>
+      <stop offset="50%" stop-color="#F59E0B" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="vStarGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FEF08A"/>
+      <stop offset="40%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+
+    <linearGradient id="vWordGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="45%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+
+    <!-- Book Gold 3D Cover / Foundation -->
+    <linearGradient id="vBookGoldBase" x1="8" y1="58" x2="56" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="35%" stop-color="#FDE047"/>
+      <stop offset="65%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#92400E"/>
+    </linearGradient>
+    <linearGradient id="vBookGoldTrim" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="50%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+
+    <!-- Book Page Vibrant Royal Violet -->
+    <linearGradient id="vBookPageLeft" x1="12" y1="46" x2="30" y2="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#311068"/>
+      <stop offset="40%" stop-color="#5B21B6"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="vBookPageRight" x1="52" y1="46" x2="34" y2="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B127D"/>
+      <stop offset="40%" stop-color="#6D28D9"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+
+    <!-- Leaf Slit Cutouts Shadow -->
+    <linearGradient id="vSlitLeft" x1="18" y1="28" x2="28" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#180731"/>
+      <stop offset="100%" stop-color="#311068"/>
+    </linearGradient>
+    <linearGradient id="vSlitRight" x1="46" y1="28" x2="36" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#180731"/>
+      <stop offset="100%" stop-color="#311068"/>
+    </linearGradient>
+
+    <!-- Page Highlight Rim -->
+    <linearGradient id="vPageRimLeft" x1="12" y1="24" x2="32" y2="42" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#A78BFA"/>
+      <stop offset="100%" stop-color="#6D28D9"/>
+    </linearGradient>
+    <linearGradient id="vPageRimRight" x1="52" y1="24" x2="32" y2="42" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#C4B5FD"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ==================== CENTERED EMBLEM (Scale: 4.8x) ==================== -->
+  <g transform="translate(96, 20) scale(4.8)">
+    <!-- Ambient Summit Glow -->
+    <circle cx="32" cy="10" r="16" fill="url(#vSummitGlow)"/>
+
+    <!-- Mountain Left Face -->
+    <path d="M32 10.5 L19 32 L32 38 Z" fill="url(#vMtnPurple)"/>
+    <path d="M19 32 L32 38 L32 40 L17 33 Z" fill="#150628" opacity="0.6"/>
+
+    <!-- Mountain Right Face -->
+    <path d="M32 10.5 L32 38 L45 32 Z" fill="url(#vMtnGold)"/>
+    <path d="M45 32 L32 38 L32 40 L47 33 Z" fill="#92400E" opacity="0.5"/>
+    <line x1="32" y1="10.5" x2="32" y2="38" stroke="#FEF08A" stroke-width="0.75" opacity="0.8"/>
+
+    <!-- 3D Outer Gold Cover -->
+    <path d="M9 49 C18 55 25 54 32 48.5 C39 54 46 55 55 49 L55 52.5 C46 58.5 39 57.5 32 52 C25 57.5 18 58.5 9 52.5 Z" fill="url(#vBookGoldBase)"/>
+    <path d="M8 32 C8 32 8.5 44 9 49 C18 55 25 54 32 48.5 L32 46 C25 51 18 52 10.5 47 C10 42 9.5 33 9.5 33 Z" fill="url(#vBookGoldTrim)"/>
+    <path d="M56 32 C56 32 55.5 44 55 49 C46 55 39 54 32 48.5 L32 46 C39 51 46 52 53.5 47 C54 42 54.5 33 54.5 33 Z" fill="url(#vBookGoldTrim)"/>
+
+    <!-- Purple Book Pages -->
+    <path d="M31.5 47.5 C25 52 17 50.5 11 46.5 C10.5 40 10.5 31 11.5 25.5 C19 28.5 26 36 31.5 47.5 Z" fill="url(#vBookPageLeft)"/>
+    <path d="M11.5 25.5 C19 28.5 26 36 31.5 47.5" stroke="url(#vPageRimLeft)" stroke-width="0.8" fill="none"/>
+
+    <path d="M32.5 47.5 C39 52 47 50.5 53 46.5 C53.5 40 53.5 31 52.5 25.5 C45 28.5 38 36 32.5 47.5 Z" fill="url(#vBookPageRight)"/>
+    <path d="M52.5 25.5 C45 28.5 38 36 32.5 47.5" stroke="url(#vPageRimRight)" stroke-width="0.8" fill="none"/>
+
+    <!-- Curved Leaf Slits -->
+    <path d="M14.5 31 C17 33 21 37 23.5 42 C20 40 16.5 36 14.5 31 Z" fill="url(#vSlitLeft)"/>
+    <path d="M14.5 31 C17 33 21 37 23.5 42" stroke="#8B5CF6" stroke-width="0.6" fill="none"/>
+    <path d="M14 38 C17 41 21 44.5 25.5 46.5 C22 45.5 18 43.5 14 38 Z" fill="url(#vSlitLeft)"/>
+    <path d="M14 38 C17 41 21 44.5 25.5 46.5" stroke="#7C3AED" stroke-width="0.6" fill="none"/>
+
+    <path d="M49.5 31 C47 33 43 37 40.5 42 C44 40 47.5 36 49.5 31 Z" fill="url(#vSlitRight)"/>
+    <path d="M49.5 31 C47 33 43 37 40.5 42" stroke="#A78BFA" stroke-width="0.6" fill="none"/>
+    <path d="M50 38 C47 41 43 44.5 38.5 46.5 C42 45.5 46 43.5 50 38 Z" fill="url(#vSlitRight)"/>
+    <path d="M50 38 C47 41 43 44.5 38.5 46.5" stroke="#8B5CF6" stroke-width="0.6" fill="none"/>
+
+    <!-- Book Center Crease -->
+    <path d="M31.2 48.5 L31.5 27 L32.5 27 L32.8 48.5 Z" fill="#150628"/>
+
+    <!-- Summit Star -->
+    <ellipse cx="32" cy="10" rx="9" ry="0.9" fill="#FEF08A" opacity="0.8"/>
+    <path d="M32 1.5 L34 7.8 L40.5 10 L34 12.2 L32 18.5 L30 12.2 L23.5 10 L30 7.8 Z" fill="url(#vStarGold)"/>
+    <path d="M32 1.5 L34 7.8 L40.5 10 L32 10 Z" fill="#FFFBEB" opacity="0.9"/>
+    <path d="M32 18.5 L30 12.2 L23.5 10 L32 10 Z" fill="#D97706" opacity="0.9"/>
+    <circle cx="32" cy="10" r="1.5" fill="#FFFFFF"/>
+  </g>
+
+  <!-- ==================== CENTERED WORDMARK ==================== -->
+  <g transform="translate(250, 360)" text-anchor="middle">
+    <text font-family="'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="54" font-weight="800" letter-spacing="-1px">
+      <tspan fill="#FFFFFF">Mock</tspan><tspan fill="url(#vWordGold)" dx="2">Shikhar</tspan>
+    </text>
+    <text x="175" y="-28" font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700" fill="#E2E8F0" text-anchor="start">TM</text>
+  </g>
+
+  <!-- ==================== CENTERED TAGLINE ==================== -->
+  <g transform="translate(250, 415)" text-anchor="middle">
+    <text font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" letter-spacing="3.5px">
+      <tspan fill="#F8FAFC">PRACTICE</tspan>
+      <tspan fill="#F59E0B" font-size="14" dy="-1"> • </tspan>
+      <tspan dy="1" fill="#F8FAFC">ANALYZE</tspan>
+      <tspan fill="#F59E0B" font-size="14" dy="-1"> • </tspan>
+      <tspan dy="1" fill="#F8FAFC">IMPROVE</tspan>
+      <tspan fill="#F59E0B" font-size="14" dy="-1"> • </tspan>
+      <tspan dy="1" fill="#F8FAFC">SUCCEED</tspan>
+    </text>
+  </g>
+</svg>

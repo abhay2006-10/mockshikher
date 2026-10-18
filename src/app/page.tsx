@@ -105,11 +105,36 @@ export default async function HomePage() {
     return { isComingSoon: false as const, exam: mockExam };
   });
 
+  const organizationJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'MockShikhar',
+    url: 'https://mockshikhar.com',
+    logo: 'https://mockshikhar.com/logo-square.png',
+    image: 'https://mockshikhar.com/logo.svg',
+    description:
+      'Premier mock test series for Himachal Pradesh government exams (HP Patwari, HP Police, HP Judiciary Clerk & Process Server).',
+    sameAs: ['https://www.instagram.com/himshikhar8262'],
+    contactPoint: {
+      '@type': 'ContactPoint',
+      telephone: '+91-7876725758, +91-8262910464',
+      contactType: 'customer support',
+      email: 'mockshikhar@gmail.com',
+      availableLanguage: ['English', 'Hindi'],
+    },
+  };
+
   return (
-    <HomePageClient
-      landingExams={landingExams}
-      publishedExamCount={publishedExamCount}
-      showGoogle={!!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
+      <HomePageClient
+        landingExams={landingExams}
+        publishedExamCount={publishedExamCount}
+        showGoogle={!!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)}
+      />
+    </>
   );
 }

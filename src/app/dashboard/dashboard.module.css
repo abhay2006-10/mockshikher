@@ -228,8 +228,8 @@
 }
 
 .scoreHighlight {
-  font-weight: 700;
-  color: var(--color-primary-800);
+  font-weight: 800;
+  color: #FBBF24;
 }
 
 .rowActions {

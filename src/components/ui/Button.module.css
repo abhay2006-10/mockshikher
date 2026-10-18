@@ -59,24 +59,52 @@
 }
 
 /* =========================================================================
-   Primary & Accent Variant (Brand Amber/Gold CTA with WCAG AA/AAA Contrast)
+   Primary Variant (Electric Cobalt with Inset Highlight)
    ========================================================================= */
-.primary,
+.primary {
+  background-color: #2563EB;
+  background-image: linear-gradient(135deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%);
+  color: #FFFFFF !important;
+  border: 1px solid rgba(147, 197, 253, 0.3);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+
+.primary * {
+  color: inherit !important;
+}
+
+.primary:hover:not(:disabled) {
+  background-color: #3B82F6;
+  background-image: linear-gradient(135deg, #60A5FA 0%, #3B82F6 50%, #2563EB 100%);
+  color: #FFFFFF !important;
+  border-color: rgba(147, 197, 253, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+}
+
+.primary:active:not(:disabled) {
+  background-color: #1D4ED8;
+  background-image: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+/* =========================================================================
+   Accent Variant (Brand Amber/Gold Peak CTA with WCAG AAA Contrast)
+   ========================================================================= */
 .accent {
   background-color: #F5B301;
   background-image: linear-gradient(135deg, #FCD34D 0%, #F5B301 50%, #D97706 100%);
-  color: #111827 !important;
+  color: #0F172A !important;
   border: 1px solid #D97706;
   box-shadow: 0 4px 14px rgba(245, 179, 1, 0.35);
 }
 
-.primary *,
 .accent * {
   color: inherit !important;
   fill: currentColor;
 }
 
-.primary:hover:not(:disabled),
 .accent:hover:not(:disabled) {
   background-color: #FCD34D;
   background-image: linear-gradient(135deg, #FDE68A 0%, #FCD34D 50%, #F5B301 100%);
@@ -86,7 +114,6 @@
   box-shadow: 0 6px 20px rgba(245, 179, 1, 0.5);
 }
 
-.primary:active:not(:disabled),
 .accent:active:not(:disabled) {
   background-color: #D97706;
   background-image: linear-gradient(135deg, #F5B301 0%, #D97706 100%);

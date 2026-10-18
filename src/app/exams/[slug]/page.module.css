@@ -97,7 +97,7 @@
 
 /* Pricing Card */
 .pricingCard {
-  background: #151528;
+  background: var(--color-bg-card);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-xl);
   padding: var(--space-6);

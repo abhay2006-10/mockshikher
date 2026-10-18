@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import {
@@ -147,11 +148,15 @@ export default function Header({ initialUser, user: legacyUser }: HeaderProps) {
       <header className={styles.header}>
         <div className={styles.headerInner}>
           {/* Logo */}
-          <Link href="/" className={styles.logo}>
-            <div className={styles.logoIcon}>
-              <GraduationCap size={22} />
-            </div>
-            <span className={styles.logoText}>Mockshikhar</span>
+          <Link href="/" className={styles.logo} aria-label="MockShikhar Home">
+            <Image
+              src="/logo.svg"
+              alt="MockShikhar - Practice • Analyze • Improve • Succeed"
+              width={184}
+              height={38}
+              priority
+              className={styles.logoImage}
+            />
           </Link>
 
           {/* Desktop Navigation (md+) */}
