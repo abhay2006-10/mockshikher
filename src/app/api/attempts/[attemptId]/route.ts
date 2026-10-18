@@ -109,7 +109,7 @@ export async function GET(
       examId: attempt.mockTest.examId,
       examName: attempt.mockTest.exam?.name || 'HP Competitive Exam',
       examSlug: attempt.mockTest.exam?.slug || 'hp-patwari',
-      examPrice: attempt.mockTest.exam?.price || 200,
+      examPrice: attempt.mockTest.exam?.price || 199,
       examTotalMocks: (attempt.mockTest.exam as any)?.totalMocks || 10,
       startedAt: attempt.startedAt.toISOString(),
       submittedAt: attempt.submittedAt?.toISOString() || attempt.startedAt.toISOString(),

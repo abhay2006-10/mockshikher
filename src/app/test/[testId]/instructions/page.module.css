@@ -149,7 +149,7 @@
   flex-wrap: wrap;
   margin-top: var(--space-3);
   background: var(--color-bg-secondary);
-  padding: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border-subtle);
 }
@@ -170,28 +170,28 @@
 }
 
 .dotNotVisited {
-  background: #e2e8f0;
-  border: 1px solid #cbd5e1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .dotNotAnswered {
-  background: #fee2e2;
-  border: 1px solid #ef4444;
+  background: rgba(244, 63, 94, 0.2);
+  border: 1px solid rgba(244, 63, 94, 0.4);
 }
 
 .dotAnswered {
-  background: #dcfce7;
-  border: 1px solid #22c55e;
+  background: #10B981;
+  border: 1px solid #059669;
 }
 
 .dotMarked {
-  background: #ede9fe;
-  border: 1px solid #8b5cf6;
+  background: #6366F1;
+  border: 1px solid #4F46E5;
 }
 
 .dotAnsweredMarked {
-  background: #8b5cf6;
-  border: 2px solid #22c55e;
+  background: #6366F1;
+  border: 2px solid #10B981;
 }
 
 .controlsSection {
@@ -239,9 +239,9 @@
 }
 
 .langBtnActive {
-  background: var(--color-primary-50);
-  border-color: var(--color-primary-600);
-  color: var(--color-primary-700);
+  background: rgba(37, 99, 235, 0.16);
+  border-color: #3B82F6;
+  color: #93C5FD;
 }
 
 .declarationBox {

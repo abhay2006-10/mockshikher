@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const basePrice = Math.max(1, Number(dbExam.price) || 200);
+    const basePrice = Math.max(1, Number(dbExam.price) || 199);
 
     // 4. Duplicate protection: Prevent re-purchasing an already unlocked exam
     const existingPurchase = await prisma.purchase.findUnique({

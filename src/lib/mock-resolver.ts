@@ -75,7 +75,7 @@ export async function resolveOrCreateMockTest(options: ResolveMockOptions) {
         totalQuestions: 90,
         durationMinutes: 60,
         difficulty: 'MEDIUM',
-        price: 200,
+        price: 199,
         category: 'HP Exams',
       },
     });

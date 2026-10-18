@@ -31,16 +31,29 @@
 
 /* ============ SCORE HERO ============ */
 .scoreHero {
-  background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+  background: linear-gradient(145deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
+  border: 1px solid rgba(59, 130, 246, 0.35);
   border-radius: var(--radius-2xl);
   padding: var(--space-8);
   color: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 15px 30px -10px rgba(30, 58, 138, 0.4);
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.7), 0 0 30px rgba(37, 99, 235, 0.15);
   gap: var(--space-6);
   flex-wrap: wrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.scoreHero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #F59E0B 0%, #3B82F6 100%);
 }
 
 .scoreLeft {

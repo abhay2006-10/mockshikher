@@ -234,7 +234,7 @@ export default function AdminPromoCodesPage() {
             Promo Codes &amp; Discounts
           </h1>
           <p className={styles.pageSubtitle}>
-            Create and manage promotional discount codes across all exam test series. Baseline test series price is ₹200; e.g. ₹51 discount gives ₹149 price.
+            Create and manage promotional discount codes across all exam test series. Baseline test series price is ₹199; e.g. ₹50 discount gives ₹149 price.
           </p>
         </div>
 
@@ -368,7 +368,7 @@ export default function AdminPromoCodesPage() {
             <tr>
               <th>Promo Code</th>
               <th>Discount Amount</th>
-              <th>Effective Price (₹200 Base)</th>
+              <th>Effective Price (₹199 Base)</th>
               <th>Status</th>
               <th>Usage Count</th>
               <th>Created</th>
@@ -390,7 +390,7 @@ export default function AdminPromoCodesPage() {
               </tr>
             ) : (
               filtered.map((item) => {
-                const effectivePrice = Math.max(0, 200 - item.discount);
+                const effectivePrice = Math.max(0, 199 - item.discount);
                 return (
                   <tr key={item.id}>
                     <td>
@@ -420,7 +420,7 @@ export default function AdminPromoCodesPage() {
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <span style={{ textDecoration: 'line-through', color: 'var(--color-text-tertiary)', fontSize: '0.85rem' }}>
-                          ₹200
+                          ₹199
                         </span>
                         <strong style={{ color: '#F5B301', fontSize: '0.95rem' }}>
                           ₹{effectivePrice}
@@ -575,14 +575,14 @@ export default function AdminPromoCodesPage() {
             <Input
               type="number"
               min="1"
-              max="200"
-              placeholder="e.g. 51"
+              max="199"
+              placeholder="e.g. 50"
               value={formData.discount}
               onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
               required
             />
             <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem', display: 'block' }}>
-              With ₹200 test series price, ₹51 discount gives final promotional price of ₹149.
+              With ₹199 test series price, ₹50 discount gives final promotional price of ₹149.
             </span>
           </div>
 
