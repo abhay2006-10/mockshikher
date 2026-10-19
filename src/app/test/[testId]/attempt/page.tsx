@@ -120,35 +120,72 @@ function TestAttemptInner() {
 
   // Fetch questions and start/resume server-owned attempt
   useEffect(() => {
+    let isMounted = true;
+
     const loadQuestionsAndAttempt = async () => {
-      setIsLoading(true);
       setLoadError(null);
+
+      // Fast-path: Check pre-fetched questions from sessionStorage for instant 0ms render
+      let questionsPayload: { test: TestMeta; questions: StudentQuestion[] } | null = null;
       try {
-        // 1. Fetch questions (never exposes correctOption or explanation)
-        const res = await fetch(`/api/tests/${encodeURIComponent(testId)}/questions`, {
-          cache: 'no-store',
-        });
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || `Failed to load test (HTTP ${res.status})`);
+        const cachedRaw = sessionStorage.getItem(`mockshikhar_questions_${testId}`);
+        if (cachedRaw) {
+          const parsed = JSON.parse(cachedRaw);
+          if (parsed?.questions?.length && isMounted) {
+            questionsPayload = parsed;
+            setTest(parsed.test);
+            setQuestions(parsed.questions);
+            setIsLoading(false); // Instant display of questions!
+          }
         }
-        const data = await res.json();
+      } catch {
+        // ignore cache parse error
+      }
 
-        if (!data.questions || data.questions.length === 0) {
-          setLoadError('This test has no questions yet. Please contact the admin.');
+      if (!questionsPayload) {
+        setIsLoading(true);
+      }
+
+      try {
+        // Run both requests in parallel over HTTP/2 (cuts load time in half)
+        const [questionsRes, startRes] = await Promise.all([
+          questionsPayload
+            ? Promise.resolve(null)
+            : fetch(`/api/tests/${encodeURIComponent(testId)}/questions`, {
+                cache: 'no-store',
+              }),
+          fetch(`/api/tests/${encodeURIComponent(testId)}/attempt/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+          }),
+        ]);
+
+        if (!isMounted) return;
+
+        // If questions weren't pre-fetched, parse questions network response
+        if (questionsRes) {
+          if (!questionsRes.ok) {
+            const errData = await questionsRes.json().catch(() => ({}));
+            throw new Error(errData.error || `Failed to load test (HTTP ${questionsRes.status})`);
+          }
+          const data = await questionsRes.json();
+          if (!data.questions || data.questions.length === 0) {
+            setLoadError('This test has no questions yet. Please contact the admin.');
+            setIsLoading(false);
+            return;
+          }
+          questionsPayload = data;
+          setTest(data.test);
+          setQuestions(data.questions);
           setIsLoading(false);
-          return;
+
+          try {
+            sessionStorage.setItem(`mockshikhar_questions_${testId}`, JSON.stringify(data));
+          } catch {
+            // ignore
+          }
         }
-
-        setTest(data.test);
-        setQuestions(data.questions);
-
-        // 2. Start or resume server-owned attempt
-        const startRes = await fetch(`/api/tests/${encodeURIComponent(testId)}/attempt/start`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
-        });
 
         if (startRes.status === 401) {
           router.push(`/auth/login?callbackUrl=/test/${encodeURIComponent(testId)}/attempt`);
@@ -170,7 +207,9 @@ function TestAttemptInner() {
         // Check local draft keyed by attemptId (temporary in-progress draft only)
         let localDraft: Record<string, UserAnswerState> = {};
         try {
-          const draftStr = localStorage.getItem(`mockshikhar_draft_${activeAttId}`) || localStorage.getItem(`mockprep_draft_${activeAttId}`);
+          const draftStr =
+            localStorage.getItem(`mockshikhar_draft_${activeAttId}`) ||
+            localStorage.getItem(`mockprep_draft_${activeAttId}`);
           if (draftStr) {
             localDraft = JSON.parse(draftStr);
           }
@@ -179,37 +218,47 @@ function TestAttemptInner() {
         }
 
         // Initialize answers from draft or server saved answers or defaults
-        const initial: Record<string, UserAnswerState> = {};
-        data.questions.forEach((q: StudentQuestion, idx: number) => {
-          if (localDraft[q.id]) {
-            initial[q.id] = localDraft[q.id];
-          } else if (startData.savedAnswers && startData.savedAnswers[q.id]) {
-            const saved = startData.savedAnswers[q.id];
-            initial[q.id] = {
-              selectedOption: saved.selectedOption || null,
-              status: saved.status || (saved.selectedOption ? 'ANSWERED' : 'NOT_ANSWERED'),
-              timeSpent: saved.timeSpent || 0,
-            };
-          } else {
-            initial[q.id] = {
-              selectedOption: null,
-              status: idx === 0 ? 'NOT_ANSWERED' : 'NOT_VISITED',
-              timeSpent: 0,
-            };
-          }
-        });
-        setAnswers(initial);
+        if (questionsPayload?.questions) {
+          const initial: Record<string, UserAnswerState> = {};
+          questionsPayload.questions.forEach((q: StudentQuestion, idx: number) => {
+            if (localDraft[q.id]) {
+              initial[q.id] = localDraft[q.id];
+            } else if (startData.savedAnswers && startData.savedAnswers[q.id]) {
+              const saved = startData.savedAnswers[q.id];
+              initial[q.id] = {
+                selectedOption: saved.selectedOption || null,
+                status: saved.status || (saved.selectedOption ? 'ANSWERED' : 'NOT_ANSWERED'),
+                timeSpent: saved.timeSpent || 0,
+              };
+            } else {
+              initial[q.id] = {
+                selectedOption: null,
+                status: idx === 0 ? 'NOT_ANSWERED' : 'NOT_VISITED',
+                timeSpent: 0,
+              };
+            }
+          });
+          setAnswers(initial);
+        }
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Failed to load test session. Please try again.';
+        if (!isMounted) return;
+        const message =
+          err instanceof Error ? err.message : 'Failed to load test session. Please try again.';
         setLoadError(message);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     if (testId) {
       loadQuestionsAndAttempt();
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [testId, router]);
 
   const currentQ = questions[currentIndex];
@@ -285,11 +334,14 @@ function TestAttemptInner() {
       const data = await res.json();
       const submittedAttId = data.attemptId || currentAttemptId;
 
-      // Clean up temporary draft
+      // Clean up temporary draft and pre-fetched questions
       if (currentAttemptId) {
         try {
           localStorage.removeItem(`mockshikhar_draft_${currentAttemptId}`);
           localStorage.removeItem(`mockprep_draft_${currentAttemptId}`);
+          if (currentTest?.id) {
+            sessionStorage.removeItem(`mockshikhar_questions_${currentTest.id}`);
+          }
         } catch {
           // ignore
         }

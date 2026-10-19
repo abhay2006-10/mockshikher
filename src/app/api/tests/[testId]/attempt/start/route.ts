@@ -22,21 +22,23 @@ export async function POST(
     const body = await req.json().catch(() => ({}));
     const forceNew = body.forceNew === true;
 
-    // Find the user in DB
-    let user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-    });
-    if (!user && session.user.email) {
-      user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-      });
-    }
+    // 1. Parallel Pre-flight Lookups: Resolve User and MockTest concurrently
+    const [user, mockTest] = await Promise.all([
+      prisma.user.findFirst({
+        where: {
+          OR: [
+            ...(session.user.id ? [{ id: session.user.id }] : []),
+            ...(session.user.email ? [{ email: session.user.email }] : []),
+          ],
+        },
+        select: { id: true, role: true },
+      }),
+      resolveOrCreateMockTest({ mockTestId: testId }),
+    ]);
+
     if (!user) {
       return NextResponse.json({ error: 'User account not found.' }, { status: 404 });
     }
-
-    // Resolve Mock Test
-    const mockTest = await resolveOrCreateMockTest({ mockTestId: testId });
     if (!mockTest) {
       return NextResponse.json({ error: 'Test not found.' }, { status: 404 });
     }
@@ -60,6 +62,7 @@ export async function POST(
             examId: mockTest.examId,
           },
         },
+        select: { id: true },
       });
 
       if (!purchase) {
@@ -74,10 +77,13 @@ export async function POST(
       }
     }
 
-    // Check real question count in database
-    const questionCount = await prisma.question.count({
-      where: { mockTestId: mockTest.id },
-    });
+    // Check question count: fast path uses mockTest.totalQuestions if present
+    const questionCount =
+      mockTest.totalQuestions && mockTest.totalQuestions > 0
+        ? mockTest.totalQuestions
+        : await prisma.question.count({
+            where: { mockTestId: mockTest.id },
+          });
 
     if (questionCount === 0) {
       return NextResponse.json(
@@ -97,8 +103,18 @@ export async function POST(
           status: 'IN_PROGRESS',
         },
         orderBy: { startedAt: 'desc' },
-        include: {
-          answers: true,
+        select: {
+          id: true,
+          deadline: true,
+          startedAt: true,
+          answers: {
+            select: {
+              questionId: true,
+              selectedOption: true,
+              status: true,
+              timeSpentSeconds: true,
+            },
+          },
         },
       });
 

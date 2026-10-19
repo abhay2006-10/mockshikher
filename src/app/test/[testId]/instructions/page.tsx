@@ -74,6 +74,20 @@ export default function TestInstructionsPage() {
           return;
         }
         setTest(data.test);
+
+        // Pre-fetch questions into sessionStorage while student reads instructions
+        fetch(`/api/tests/${encodeURIComponent(testId)}/questions`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((qData) => {
+            if (qData?.questions?.length && isMounted) {
+              try {
+                sessionStorage.setItem(`mockshikhar_questions_${testId}`, JSON.stringify(qData));
+              } catch {
+                // Ignore storage quota
+              }
+            }
+          })
+          .catch(() => {});
       } catch (err: unknown) {
         if (!isMounted) return;
         const message = err instanceof Error ? err.message : 'Unable to connect to the server. Please try again.';

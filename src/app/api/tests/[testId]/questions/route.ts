@@ -5,6 +5,24 @@ import { resolveOrCreateMockTest } from '@/lib/mock-resolver';
 
 export const dynamic = 'force-dynamic';
 
+interface CachedQuestionsEntry {
+  data: {
+    test: Record<string, unknown>;
+    questions: unknown[];
+    count: number;
+  };
+  cachedAt: number;
+}
+
+const globalForQuestions = globalThis as unknown as {
+  _mockQuestionsCache?: Map<string, CachedQuestionsEntry>;
+};
+if (!globalForQuestions._mockQuestionsCache) {
+  globalForQuestions._mockQuestionsCache = new Map();
+}
+const questionsCache = globalForQuestions._mockQuestionsCache;
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes cache in RAM
+
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ testId: string }> }
@@ -100,6 +118,25 @@ export async function GET(
       );
     }
 
+    // 3. Fast-path: Check in-memory server cache (100x speedup for active tests)
+    const cachedEntry = questionsCache.get(mockTest.id);
+    if (cachedEntry && Date.now() - cachedEntry.cachedAt < CACHE_TTL_MS) {
+      const totalElapsedMs = parseFloat((performance.now() - reqStart).toFixed(2));
+      console.log(
+        JSON.stringify({
+          level: 'info',
+          type: 'QUESTIONS_CACHE_HIT',
+          correlationId,
+          testId: mockTest.id,
+          totalMs: totalElapsedMs,
+          count: cachedEntry.data.count,
+        })
+      );
+      const res = NextResponse.json(cachedEntry.data);
+      res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      return res;
+    }
+
     // Fetch questions strictly belonging to this mock test ID from PostgreSQL
     const tQueryStart = performance.now();
     const dbQuestions = await prisma.question.findMany({
@@ -179,7 +216,7 @@ export async function GET(
       })
     );
 
-    const response = NextResponse.json({
+    const responseData = {
       test: {
         id: mockTest.id,
         name: mockTest.name,
@@ -206,8 +243,15 @@ export async function GET(
       },
       questions: studentQuestions,
       count: studentQuestions.length,
+    };
+
+    // Cache in RAM for 10 minutes
+    questionsCache.set(mockTest.id, {
+      data: responseData,
+      cachedAt: Date.now(),
     });
 
+    const response = NextResponse.json(responseData);
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     return response;
   } catch (err: unknown) {
