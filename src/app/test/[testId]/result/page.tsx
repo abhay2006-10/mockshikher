@@ -82,8 +82,22 @@ function TestResultContent() {
           throw new Error('No test result found. Please complete a test attempt first.');
         }
 
-        // Fetch attempt from database by user & attemptId
-        const res = await fetch(`/api/attempts/${encodeURIComponent(effectiveAttemptId)}`, {
+        // Instant render from client submission cache if available (0ms load time)
+        try {
+          const cached = sessionStorage.getItem(`mockshikhar_scorecard_${effectiveAttemptId}`);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed && typeof parsed.score === 'number' && isMounted) {
+              setResult(parsed);
+              setIsLoading(false);
+            }
+          }
+        } catch {
+          // ignore cache read error
+        }
+
+        // Fetch attempt from database by user & attemptId (summary mode avoids joining 400 options)
+        const res = await fetch(`/api/attempts/${encodeURIComponent(effectiveAttemptId)}?summary=true`, {
           cache: 'no-store',
         });
 
@@ -96,9 +110,10 @@ function TestResultContent() {
         if (isMounted) {
           setResult(data.result);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (isMounted) {
-          setError(err.message || 'Failed to load scorecard from database.');
+          const message = err instanceof Error ? err.message : 'Failed to load scorecard from database.';
+          setError(message);
         }
       } finally {
         if (isMounted) {

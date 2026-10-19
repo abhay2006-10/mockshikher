@@ -16,28 +16,42 @@ export async function GET(
 
     const { attemptId } = await context.params;
 
-    const attempt = await prisma.testAttempt.findUnique({
-      where: { id: attemptId },
-      include: {
-        mockTest: {
-          include: { exam: true },
+    const isSummaryOnly = req.nextUrl.searchParams.get('summary') === 'true';
+
+    let attempt;
+    if (isSummaryOnly) {
+      attempt = await prisma.testAttempt.findUnique({
+        where: { id: attemptId },
+        include: {
+          mockTest: {
+            include: { exam: true },
+          },
         },
-        answers: {
-          include: {
-            question: {
-              include: {
-                options: {
-                  orderBy: { optionLabel: 'asc' },
+      });
+    } else {
+      attempt = await prisma.testAttempt.findUnique({
+        where: { id: attemptId },
+        include: {
+          mockTest: {
+            include: { exam: true },
+          },
+          answers: {
+            include: {
+              question: {
+                include: {
+                  options: {
+                    orderBy: { optionLabel: 'asc' },
+                  },
+                  subject: true,
+                  topic: true,
                 },
-                subject: true,
-                topic: true,
               },
             },
+            orderBy: { question: { questionNumber: 'asc' } },
           },
-          orderBy: { question: { questionNumber: 'asc' } },
         },
-      },
-    });
+      });
+    }
 
     if (!attempt) {
       return NextResponse.json({ error: 'Test attempt not found.' }, { status: 404 });
@@ -59,63 +73,131 @@ export async function GET(
       );
     }
 
-    // Fetch user's bookmarks for these questions
-    const userBookmarks = await prisma.bookmark.findMany({
-      where: {
-        userId: session.user.id,
-        questionId: {
-          in: attempt.answers.map((a) => a.questionId),
+interface OptionItem {
+  id: string;
+  optionLabel: number;
+  optionText: string;
+  optionTextHi: string | null;
+}
+
+interface AttemptAnswerItem {
+  questionId: string;
+  selectedOption: number | null;
+  correctOptionSnapshot: number | null;
+  questionTextSnapshot: string | null;
+  marksSnapshot: number | null;
+  negativeMarksSnapshot: number | null;
+  isCorrect: boolean | null;
+  timeSpentSeconds: number;
+  question: {
+    id: string;
+    questionNumber: number;
+    questionText: string;
+    questionTextHi: string | null;
+    correctOption: number;
+    subjectId: string;
+    marks: number;
+    negativeMarks: number;
+    explanation: string | null;
+    explanationHi: string | null;
+    subject: { name: string } | null;
+    topic: { name: string } | null;
+    options: OptionItem[];
+  };
+}
+
+interface QuestionResultItem {
+  questionId: string;
+  questionNumber: number;
+  questionText: string;
+  questionTextHi: string;
+  subjectId: string;
+  subjectName: string;
+  topicName: string;
+  options: {
+    id: string;
+    label: number;
+    text: string;
+    textHi: string | null;
+  }[];
+  userAnswer: number | null;
+  correctOption: number;
+  isCorrect: boolean;
+  isAnswered: boolean;
+  marks: number;
+  negativeMarks: number;
+  explanation: string;
+  explanationHi: string;
+  timeSpent: number;
+}
+
+    let bookmarkedIds: string[] = [];
+    let questionResults: QuestionResultItem[] = [];
+
+    const attemptWithAnswers = attempt as typeof attempt & { answers?: AttemptAnswerItem[] };
+
+    if (!isSummaryOnly && Array.isArray(attemptWithAnswers.answers)) {
+      const answersList = attemptWithAnswers.answers;
+      // Fetch user's bookmarks for these questions
+      const userBookmarks = await prisma.bookmark.findMany({
+        where: {
+          userId: session.user.id,
+          questionId: {
+            in: answersList.map((a) => a.questionId),
+          },
         },
-      },
-      select: { questionId: true },
-    });
-    const bookmarkedIds = userBookmarks.map((b) => b.questionId);
+        select: { questionId: true },
+      });
+      bookmarkedIds = userBookmarks.map((b) => b.questionId);
 
-    const questionResults = attempt.answers.map((ans) => {
-      const q = ans.question;
-      const isAnswered = ans.selectedOption !== null && ans.selectedOption !== undefined;
-      const correctOpt = ans.correctOptionSnapshot || q.correctOption;
+      questionResults = answersList.map((ans) => {
+        const q = ans.question;
+        const isAnswered = ans.selectedOption !== null && ans.selectedOption !== undefined;
+        const correctOpt = ans.correctOptionSnapshot ?? q.correctOption;
 
-      return {
-        questionId: q.id,
-        questionNumber: q.questionNumber,
-        questionText: ans.questionTextSnapshot || q.questionText,
-        questionTextHi: q.questionTextHi || q.questionText,
-        subjectId: q.subjectId,
-        subjectName: q.subject?.name || 'General Awareness',
-        topicName: q.topic?.name || 'General',
-        options: q.options.map((opt) => ({
-          id: opt.id,
-          label: opt.optionLabel,
-          text: opt.optionText,
-          textHi: opt.optionTextHi,
-        })),
-        userAnswer: ans.selectedOption,
-        correctOption: correctOpt,
-        isCorrect: ans.isCorrect ?? (isAnswered && ans.selectedOption === correctOpt),
-        isAnswered,
-        marks: ans.marksSnapshot ?? q.marks,
-        negativeMarks: ans.negativeMarksSnapshot ?? q.negativeMarks,
-        explanation: q.explanation || '',
-        explanationHi: q.explanationHi || '',
-        timeSpent: ans.timeSpentSeconds,
-      };
-    });
+        return {
+          questionId: q.id,
+          questionNumber: q.questionNumber,
+          questionText: ans.questionTextSnapshot || q.questionText,
+          questionTextHi: q.questionTextHi || q.questionText,
+          subjectId: q.subjectId,
+          subjectName: q.subject?.name || 'General Awareness',
+          topicName: q.topic?.name || 'General',
+          options: q.options.map((opt) => ({
+            id: opt.id,
+            label: opt.optionLabel,
+            text: opt.optionText,
+            textHi: opt.optionTextHi,
+          })),
+          userAnswer: ans.selectedOption,
+          correctOption: correctOpt,
+          isCorrect: ans.isCorrect ?? (isAnswered && ans.selectedOption === correctOpt),
+          isAnswered,
+          marks: ans.marksSnapshot ?? q.marks,
+          negativeMarks: ans.negativeMarksSnapshot ?? q.negativeMarks,
+          explanation: q.explanation || '',
+          explanationHi: q.explanationHi || '',
+          timeSpent: ans.timeSpentSeconds,
+        };
+      });
+    }
+
+    const examData = attempt.mockTest.exam as { name?: string; slug?: string; price?: number; totalMocks?: number } | null;
 
     const result = {
       attemptId: attempt.id,
       testId: attempt.mockTestId,
       testName: attempt.mockTest.name,
       examId: attempt.mockTest.examId,
-      examName: attempt.mockTest.exam?.name || 'HP Competitive Exam',
-      examSlug: attempt.mockTest.exam?.slug || 'hp-patwari',
-      examPrice: attempt.mockTest.exam?.price || 199,
-      examTotalMocks: (attempt.mockTest.exam as any)?.totalMocks || 10,
+      examName: examData?.name || 'HP Competitive Exam',
+      examSlug: examData?.slug || 'hp-patwari',
+      examPrice: examData?.price || 199,
+      examTotalMocks: examData?.totalMocks || 10,
       startedAt: attempt.startedAt.toISOString(),
       submittedAt: attempt.submittedAt?.toISOString() || attempt.startedAt.toISOString(),
       status: attempt.status,
       isAutoSubmit: attempt.status === 'AUTO_SUBMITTED',
-      totalQuestions: questionResults.length,
+      totalQuestions: isSummaryOnly ? attempt.mockTest.totalQuestions : questionResults.length,
       correctCount: attempt.correctCount ?? 0,
       wrongCount: attempt.wrongCount ?? 0,
       unansweredCount: attempt.unansweredCount ?? 0,
@@ -131,10 +213,11 @@ export async function GET(
     const response = NextResponse.json({ success: true, result });
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     return response;
-  } catch (err: any) {
-    console.error('Error fetching attempt:', err);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to fetch test attempt.';
+    console.error('Error fetching attempt:', message);
     return NextResponse.json(
-      { error: err.message || 'Failed to fetch test attempt.' },
+      { error: message },
       { status: 500 }
     );
   }

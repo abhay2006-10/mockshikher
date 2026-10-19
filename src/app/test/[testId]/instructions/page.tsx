@@ -8,7 +8,6 @@ import {
   Clock,
   HelpCircle,
   AlertCircle,
-  ShieldAlert,
   Languages,
   CheckCircle,
   Play,
@@ -29,6 +28,9 @@ interface TestInfo {
   totalMarks: number;
   negativeMarksPerQuestion: number;
   marksPerQuestion: number;
+  examSlug?: string;
+  examName?: string;
+  examPrice?: number;
 }
 
 export default function TestInstructionsPage() {
@@ -45,43 +47,50 @@ export default function TestInstructionsPage() {
 
   const [requiresPurchase, setRequiresPurchase] = useState(false);
   const [requiresAuth, setRequiresAuth] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  const fetchTestDetails = async () => {
-    setIsLoading(true);
-    setError(null);
-    setRequiresPurchase(false);
-    setRequiresAuth(false);
-    try {
-      const res = await fetch(`/api/tests/${encodeURIComponent(testId)}/questions`, {
-        cache: 'no-store',
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+  useEffect(() => {
+    let isMounted = true;
+    if (!testId) return;
+
+    const loadMeta = async () => {
+      try {
+        const res = await fetch(`/api/tests/${encodeURIComponent(testId)}/meta`, {
+          cache: 'no-store',
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!isMounted) return;
+        if (!res.ok) {
+          throw new Error(data.error || `Failed to load test (${res.status})`);
+        }
         if (data.requiresPurchase) {
           setRequiresPurchase(true);
-          setError(data.error || 'This premium mock test is locked.');
+          setError('This premium mock test is locked. Please purchase the test series to unlock access.');
           return;
         }
         if (data.requiresAuth) {
           setRequiresAuth(true);
-          setError(data.error || 'Please log in to access this mock test.');
+          setError('Please log in to access this mock test.');
           return;
         }
-        throw new Error(data.error || `Failed to load test (${res.status})`);
+        setTest(data.test);
+      } catch (err: unknown) {
+        if (!isMounted) return;
+        const message = err instanceof Error ? err.message : 'Unable to connect to the server. Please try again.';
+        setError(message);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-      setTest(data.test);
-    } catch (err: any) {
-      setError(err.message || 'Unable to connect to the server. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
-  useEffect(() => {
-    if (testId) {
-      fetchTestDetails();
-    }
-  }, [testId]);
+    loadMeta();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [testId, reloadKey]);
 
   const handleStartTest = () => {
     if (!hasAgreed || !test || test.totalQuestions === 0) return;
@@ -155,7 +164,7 @@ export default function TestInstructionsPage() {
             <Button variant="outline" size="md" onClick={() => router.back()}>
               Go Back
             </Button>
-            <Button variant="primary" size="md" onClick={fetchTestDetails}>
+            <Button variant="primary" size="md" onClick={() => setReloadKey((k) => k + 1)}>
               Retry
             </Button>
           </div>
@@ -168,7 +177,7 @@ export default function TestInstructionsPage() {
 
   return (
     <div className={styles.container}>
-      <Link href={(test as any)?.examSlug ? `/exams/${(test as any).examSlug}` : '/exams'} className={styles.backLink}>
+      <Link href={test?.examSlug ? `/exams/${test.examSlug}` : '/exams'} className={styles.backLink}>
         <ArrowLeft size={16} />
         <span>Back to Exam Details</span>
       </Link>
@@ -383,7 +392,7 @@ export default function TestInstructionsPage() {
                   >
                     No Questions Added (Cannot Start)
                   </Button>
-                  <Link href={(test as any)?.examSlug ? `/exams/${(test as any).examSlug}` : '/exams'}>
+                  <Link href={test?.examSlug ? `/exams/${test.examSlug}` : '/exams'}>
                     <Button variant="primary" size="lg">
                       Choose Another Mock Test
                     </Button>

@@ -10,6 +10,9 @@ export async function GET(
   context: { params: Promise<{ testId: string }> }
 ) {
   try {
+    const reqStart = performance.now();
+    const correlationId = crypto.randomUUID();
+
     const { testId } = await context.params;
 
     if (!testId) {
@@ -17,50 +20,63 @@ export async function GET(
     }
 
     // Resolve or find the MockTest using shared resolver
+    const tMockStart = performance.now();
     const mockTest = await resolveOrCreateMockTest({ mockTestId: testId });
 
     if (!mockTest) {
       return NextResponse.json({ error: 'Test not found.' }, { status: 404 });
     }
+    const tMockMs = parseFloat((performance.now() - tMockStart).toFixed(2));
 
     // Access Control: Enforce verified purchase for non-free mock tests
+    const tAuthStart = performance.now();
     const session = await auth();
     // @ts-expect-error user role in token
     let isAdmin = session?.user?.role === 'ADMIN';
+    let isPurchased = mockTest.isFree || isAdmin;
 
-    if (!isAdmin && session?.user) {
-      const email = session.user.email?.toLowerCase().trim();
-      const id = session.user.id;
-      const dbUser = await prisma.user.findFirst({
-        where: {
-          OR: [
-            ...(id ? [{ id }] : []),
-            ...(email ? [{ email }] : []),
-          ],
-        },
-        select: { role: true },
-      });
+    if (session?.user?.id && !isPurchased) {
+      const [dbUser, purchase] = await Promise.all([
+        !isAdmin
+          ? prisma.user.findFirst({
+              where: {
+                OR: [
+                  ...(session.user.id ? [{ id: session.user.id }] : []),
+                  ...(session.user.email ? [{ email: session.user.email.toLowerCase().trim() }] : []),
+                ],
+              },
+              select: { role: true },
+            })
+          : null,
+        prisma.purchase.findUnique({
+          where: {
+            userId_examId: {
+              userId: session.user.id,
+              examId: mockTest.examId,
+            },
+          },
+          select: { id: true },
+        }),
+      ]);
+
       if (dbUser?.role === 'ADMIN') {
         isAdmin = true;
       }
-    }
-
-    let isPurchased = false;
-
-    if (session?.user?.id) {
-      const purchase = await prisma.purchase.findUnique({
-        where: {
-          userId_examId: {
-            userId: session.user.id,
-            examId: mockTest.examId,
-          },
-        },
-      });
-      isPurchased = !!purchase;
+      if (purchase || isAdmin) {
+        isPurchased = true;
+      }
     }
 
     if (isAdmin) {
       isPurchased = true;
+    }
+    const tAuthMs = parseFloat((performance.now() - tAuthStart).toFixed(2));
+
+    if (!mockTest.isPublished && !isAdmin) {
+      return NextResponse.json(
+        { error: 'This mock test is not published yet.' },
+        { status: 403 }
+      );
     }
 
     if (!mockTest.isFree && !isPurchased) {
@@ -85,9 +101,21 @@ export async function GET(
     }
 
     // Fetch questions strictly belonging to this mock test ID from PostgreSQL
+    const tQueryStart = performance.now();
     const dbQuestions = await prisma.question.findMany({
       where: { mockTestId: mockTest.id },
-      include: {
+      select: {
+        id: true,
+        mockTestId: true,
+        questionNumber: true,
+        questionText: true,
+        questionTextHi: true,
+        questionImage: true,
+        marks: true,
+        negativeMarks: true,
+        difficulty: true,
+        subjectId: true,
+        topicId: true,
         options: {
           orderBy: { optionLabel: 'asc' },
           select: {
@@ -106,6 +134,7 @@ export async function GET(
       },
       orderBy: { questionNumber: 'asc' },
     });
+    const tQueryMs = parseFloat((performance.now() - tQueryStart).toFixed(2));
 
     // Format safe student questions: STRICTLY EXCLUDE correctOption, explanation, solutionImage
     const studentQuestions = dbQuestions.map((q) => ({
@@ -131,6 +160,24 @@ export async function GET(
         textHi: opt.optionTextHi || opt.optionText,
       })),
     }));
+
+    const totalElapsedMs = parseFloat((performance.now() - reqStart).toFixed(2));
+
+    console.log(
+      JSON.stringify({
+        level: 'info',
+        type: 'QUESTIONS_LOAD_PERF',
+        correlationId,
+        testId: mockTest.id,
+        timings: {
+          mockResolveMs: tMockMs,
+          authMs: tAuthMs,
+          queryMs: tQueryMs,
+          totalMs: totalElapsedMs,
+        },
+        count: studentQuestions.length,
+      })
+    );
 
     const response = NextResponse.json({
       test: {
@@ -163,10 +210,11 @@ export async function GET(
 
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     return response;
-  } catch (err: any) {
-    console.error('Error in student questions endpoint:', err);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to fetch test questions from database.';
+    console.error('Error in student questions endpoint:', message);
     return NextResponse.json(
-      { error: err.message || 'Failed to fetch test questions from database.' },
+      { error: message },
       { status: 500 }
     );
   }

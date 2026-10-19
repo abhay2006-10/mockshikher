@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 import { resolveOrCreateMockTest } from '@/lib/mock-resolver';
 
 export const dynamic = 'force-dynamic';
@@ -16,9 +17,55 @@ export async function GET(
       return NextResponse.json({ error: 'Mock test not found.' }, { status: 404 });
     }
 
-    const questionCount = await prisma.question.count({
-      where: { mockTestId: mockTest.id },
-    });
+    // Access Control verification
+    const session = await auth();
+    // @ts-expect-error user role in token
+    let isAdmin = session?.user?.role === 'ADMIN';
+    let isPurchased = mockTest.isFree || isAdmin;
+
+    if (session?.user?.id && !isPurchased) {
+      const [dbUser, purchase] = await Promise.all([
+        !isAdmin
+          ? prisma.user.findFirst({
+              where: {
+                OR: [
+                  ...(session.user.id ? [{ id: session.user.id }] : []),
+                  ...(session.user.email ? [{ email: session.user.email.toLowerCase().trim() }] : []),
+                ],
+              },
+              select: { role: true },
+            })
+          : null,
+        prisma.purchase.findUnique({
+          where: {
+            userId_examId: {
+              userId: session.user.id,
+              examId: mockTest.examId,
+            },
+          },
+          select: { id: true },
+        }),
+      ]);
+
+      if (dbUser?.role === 'ADMIN') isAdmin = true;
+      if (purchase || isAdmin) isPurchased = true;
+    }
+
+    if (isAdmin) isPurchased = true;
+
+    if (!mockTest.isPublished && !isAdmin) {
+      return NextResponse.json({ error: 'This mock test is not published yet.' }, { status: 403 });
+    }
+
+    const isLocked = !mockTest.isFree && !isPurchased;
+    const requiresAuth = isLocked && !session?.user?.id;
+    const requiresPurchase = isLocked && !!session?.user?.id;
+
+    // Use stored totalQuestions from mockTest, only count if missing
+    const totalQuestions =
+      mockTest.totalQuestions && mockTest.totalQuestions > 0
+        ? mockTest.totalQuestions
+        : await prisma.question.count({ where: { mockTestId: mockTest.id } });
 
     const response = NextResponse.json({
       test: {
@@ -26,9 +73,9 @@ export async function GET(
         name: mockTest.name,
         testNumber: mockTest.testNumber,
         isFree: mockTest.isFree,
-        totalQuestions: questionCount,
+        totalQuestions,
         durationMinutes: mockTest.durationMinutes || 60,
-        totalMarks: mockTest.totalMarks || questionCount,
+        totalMarks: mockTest.totalMarks || totalQuestions,
         negativeMarksPerQuestion:
           mockTest.name?.toLowerCase().includes('patwari') ||
           mockTest.name?.toLowerCase().includes('clerk') ||
@@ -43,13 +90,18 @@ export async function GET(
         marksPerQuestion: mockTest.marksPerQuestion || 1.0,
         isPublished: mockTest.isPublished,
       },
+      requiresAuth,
+      requiresPurchase,
+      isPurchased,
+      examId: mockTest.examId,
     });
 
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     return response;
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to fetch test metadata.';
     return NextResponse.json(
-      { error: err.message || 'Failed to fetch test metadata.' },
+      { error: message },
       { status: 500 }
     );
   }

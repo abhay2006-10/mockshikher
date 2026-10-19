@@ -6,48 +6,57 @@ import { LANDING_EXAMS } from '@/lib/landing-exams';
 import { POPULAR_EXAMS, type MockExam } from '@/lib/mock-data';
 import HomePageClient from './HomePageClient';
 
+export const revalidate = 60;
+
 /**
  * Fetch real exam data from DB for the 6 landing exams config.
  * Returns the count of published exams (isArchived=false) and per-slug data.
  */
 async function getLandingPageData() {
   try {
-    // Count all real published (non-archived) exams
-    const publishedExamCount = await prisma.exam.count({
-      where: { isArchived: false },
-    });
-
-    // Fetch all exams that match our landing config slugs
-    const dbExams = await prisma.exam.findMany({
-      where: {
-        slug: { in: LANDING_EXAMS.map((e) => e.slug) },
-        isArchived: false,
-      },
-      include: {
-        subjects: {
-          select: { id: true, name: true, nameHi: true },
-          orderBy: { sortOrder: 'asc' },
+    const [publishedExamCount, dbExams, archivedExams] = await Promise.all([
+      prisma.exam.count({
+        where: { isArchived: false },
+      }),
+      prisma.exam.findMany({
+        where: {
+          slug: { in: LANDING_EXAMS.map((e) => e.slug) },
+          isArchived: false,
         },
-        mockTests: {
-          where: { isPublished: true },
-          select: { id: true, isFree: true, totalQuestions: true, durationMinutes: true },
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          description: true,
+          category: true,
+          price: true,
+          totalQuestions: true,
+          durationMinutes: true,
+          difficulty: true,
+          isPopular: true,
+          subjects: {
+            select: { id: true, name: true, nameHi: true },
+            orderBy: { sortOrder: 'asc' },
+          },
+          mockTests: {
+            where: { isPublished: true },
+            select: { id: true, isFree: true, totalQuestions: true, durationMinutes: true },
+          },
         },
-      },
-    });
+      }),
+      prisma.exam.findMany({
+        where: { isArchived: true },
+        select: { slug: true },
+      }),
+    ]);
 
-    const archivedExams = await prisma.exam.findMany({
-      where: { isArchived: true },
-      select: { slug: true },
-    });
     const archivedSlugs = new Set(archivedExams.map((e) => e.slug));
-
-    // Build a lookup map slug → db exam
     const dbMap = new Map(dbExams.map((e) => [e.slug, e]));
 
     return { publishedExamCount, dbMap, archivedSlugs };
   } catch {
     // If DB is unreachable, fall back to static mock data gracefully
-    const dbMap = new Map<string, any>();
+    const dbMap = new Map<string, (typeof POPULAR_EXAMS)[0]>();
     return { publishedExamCount: POPULAR_EXAMS.length, dbMap, archivedSlugs: new Set<string>() };
   }
 }
@@ -70,14 +79,16 @@ export default async function HomePage() {
     }
 
     // Build a MockExam-like object from DB data
-    const freeMocks = db.mockTests.filter((t: any) => t.isFree).length;
-    const totalMocks = db.mockTests.length;
+    const mockTests = 'mockTests' in db && Array.isArray(db.mockTests) ? db.mockTests : [];
+    const freeMocks = mockTests.filter((t: { isFree: boolean }) => t.isFree).length;
+    const totalMocks = mockTests.length;
 
     // Fallback: if no subjects in DB, use mock-data subjects
     const staticExam = POPULAR_EXAMS.find((e) => e.slug === config.slug);
+    const dbSubjects = 'subjects' in db && Array.isArray(db.subjects) ? db.subjects : [];
     const subjects =
-      db.subjects.length > 0
-        ? db.subjects.map((s: any) => ({
+      dbSubjects.length > 0
+        ? dbSubjects.map((s: { id: string; name: string; nameHi?: string | null }) => ({
             id: s.id,
             name: s.name,
             nameHi: s.nameHi || s.name,

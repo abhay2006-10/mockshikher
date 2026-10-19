@@ -4,7 +4,7 @@ import { LANDING_EXAMS } from '@/lib/landing-exams';
 import { POPULAR_EXAMS, type MockExam } from '@/lib/mock-data';
 import ExamsPageClient, { type ExamItem } from './ExamsPageClient';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'All HP Government Exam Mock Tests — Mockshikhar',
@@ -14,33 +14,44 @@ export const metadata: Metadata = {
 
 async function getExamsPageData() {
   try {
-    const dbExams = await prisma.exam.findMany({
-      where: { isArchived: false },
-      include: {
-        subjects: {
-          select: { id: true, name: true, nameHi: true },
-          orderBy: { sortOrder: 'asc' },
-        },
-        mockTests: {
-          where: { isPublished: true },
-          select: {
-            id: true,
-            isFree: true,
-            testNumber: true,
-            totalQuestions: true,
-            durationMinutes: true,
+    const [dbExams, archivedExams] = await Promise.all([
+      prisma.exam.findMany({
+        where: { isArchived: false },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          category: true,
+          price: true,
+          totalQuestions: true,
+          durationMinutes: true,
+          difficulty: true,
+          isPopular: true,
+          subjects: {
+            select: { id: true, name: true, nameHi: true },
+            orderBy: { sortOrder: 'asc' },
           },
-          orderBy: { testNumber: 'asc' },
+          mockTests: {
+            where: { isPublished: true },
+            select: {
+              id: true,
+              isFree: true,
+              testNumber: true,
+              totalQuestions: true,
+              durationMinutes: true,
+            },
+            orderBy: { testNumber: 'asc' },
+          },
         },
-      },
-    });
+      }),
+      prisma.exam.findMany({
+        where: { isArchived: true },
+        select: { slug: true },
+      }),
+    ]);
 
-    const archivedExams = await prisma.exam.findMany({
-      where: { isArchived: true },
-      select: { slug: true },
-    });
     const archivedSlugs = new Set(archivedExams.map((e) => e.slug));
-
     const dbMap = new Map(dbExams.map((e) => [e.slug, e]));
 
     // All distinct categories from DB exams and standard config
@@ -89,7 +100,7 @@ async function getExamsPageData() {
         description: db.description,
         totalQuestions: db.totalQuestions,
         durationMinutes: db.durationMinutes,
-        difficulty: (db.difficulty as any) || 'Medium',
+        difficulty: (db.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || 'MEDIUM',
         price: db.price,
         originalPrice: staticExam?.originalPrice ?? db.price * 3,
         isPopular: db.isPopular,
@@ -129,7 +140,7 @@ async function getExamsPageData() {
               description: db.description,
               totalQuestions: db.totalQuestions,
               durationMinutes: db.durationMinutes,
-              difficulty: (db.difficulty as any) || 'Medium',
+              difficulty: (db.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || 'MEDIUM',
               price: db.price,
               originalPrice: db.price * 3,
               isPopular: db.isPopular,

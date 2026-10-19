@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   Clock,
@@ -88,9 +88,24 @@ function TestAttemptInner() {
   const [isMobilePaletteOpen, setIsMobilePaletteOpen] = useState(false);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
   const [answers, setAnswers] = useState<Record<string, UserAnswerState>>({});
   const [attemptId, setAttemptId] = useState<string | null>(null);
+
+  const testRef = useRef(test);
+  const timeLeftRef = useRef(timeLeft);
+  const attemptIdRef = useRef(attemptId);
+  const answersRef = useRef(answers);
+  const bookmarkedIdsRef = useRef(bookmarkedIds);
+
+  useEffect(() => {
+    testRef.current = test;
+    timeLeftRef.current = timeLeft;
+    attemptIdRef.current = attemptId;
+    answersRef.current = answers;
+    bookmarkedIdsRef.current = bookmarkedIds;
+  }, [test, timeLeft, attemptId, answers, bookmarkedIds]);
 
   // Accidental back/refresh prevention warning
   useEffect(() => {
@@ -184,8 +199,9 @@ function TestAttemptInner() {
           }
         });
         setAnswers(initial);
-      } catch (err: any) {
-        setLoadError(err.message || 'Failed to load test session. Please try again.');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Failed to load test session. Please try again.';
+        setLoadError(message);
       } finally {
         setIsLoading(false);
       }
@@ -234,12 +250,80 @@ function TestAttemptInner() {
     return () => clearInterval(timer);
   }, [timeLeft, currentQ?.id, test, questions.length]);
 
+  // Submit: POST to server-side evaluation API
+  const handleFinalSubmit = useCallback(async (isAutoSubmit = false) => {
+    const currentTest = testRef.current;
+    if (!currentTest || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+
+    const currentTimeLeft = timeLeftRef.current;
+    const currentAttemptId = attemptIdRef.current;
+    const currentAnswers = answersRef.current;
+    const currentBookmarks = bookmarkedIdsRef.current;
+
+    const timeTaken = currentTest.durationMinutes * 60 - currentTimeLeft;
+
+    try {
+      const res = await fetch(`/api/tests/${encodeURIComponent(currentTest.id)}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          attemptId: currentAttemptId,
+          answers: currentAnswers,
+          timeTaken,
+          isAutoSubmit,
+          bookmarkedIds: Array.from(currentBookmarks),
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Submission failed');
+      }
+
+      const data = await res.json();
+      const submittedAttId = data.attemptId || currentAttemptId;
+
+      // Clean up temporary draft
+      if (currentAttemptId) {
+        try {
+          localStorage.removeItem(`mockshikhar_draft_${currentAttemptId}`);
+          localStorage.removeItem(`mockprep_draft_${currentAttemptId}`);
+        } catch {
+          // ignore
+        }
+      }
+
+      // Cache the returned scorecard summary for instantaneous 0ms display on the result page
+      if (data.result && submittedAttId) {
+        try {
+          sessionStorage.setItem(
+            `mockshikhar_scorecard_${submittedAttId}`,
+            JSON.stringify(data.result)
+          );
+        } catch {
+          // ignore quota errors
+        }
+      }
+
+      // Immediate navigation to scorecard without artificial timeout delay
+      router.push(`/test/${encodeURIComponent(currentTest.id)}/result?attemptId=${encodeURIComponent(submittedAttId)}`);
+    } catch (err: unknown) {
+      console.error('Submission error:', err);
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
+      const errMsg = err instanceof Error ? err.message : 'Unknown error';
+      alert(`Submission failed: ${errMsg}. Please try again.`);
+    }
+  }, [router]);
+
   // Auto-submit when timer expires
   useEffect(() => {
     if (timeLeft === 0 && test && questions.length > 0) {
       handleFinalSubmit(true);
     }
-  }, [timeLeft]);
+  }, [timeLeft, test, questions.length, handleFinalSubmit]);
 
   const formatTime = (secs: number) => {
     const hours = Math.floor(secs / 3600);
@@ -366,53 +450,7 @@ function TestAttemptInner() {
     }
   }, [answers, attemptId]);
 
-  // Submit: POST to server-side evaluation API
-  const handleFinalSubmit = useCallback(async (isAutoSubmit = false) => {
-    if (!test) return;
-    setIsSubmitting(true);
 
-    const timeTaken = test.durationMinutes * 60 - timeLeft;
-
-    try {
-      const res = await fetch(`/api/tests/${encodeURIComponent(test.id)}/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          attemptId,
-          answers,
-          timeTaken,
-          isAutoSubmit,
-          bookmarkedIds: Array.from(bookmarkedIds),
-        }),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Submission failed');
-      }
-
-      const data = await res.json();
-
-      // Clean up temporary draft — NO mockshikhar_result_* saved to localStorage!
-      if (attemptId) {
-        try {
-          localStorage.removeItem(`mockshikhar_draft_${attemptId}`);
-          localStorage.removeItem(`mockprep_draft_${attemptId}`);
-        } catch {
-          // ignore
-        }
-      }
-
-      setTimeout(() => {
-        const submittedAttId = data.attemptId || attemptId;
-        router.push(`/test/${encodeURIComponent(test.id)}/result?attemptId=${encodeURIComponent(submittedAttId)}`);
-      }, 400);
-    } catch (err: any) {
-      console.error('Submission error:', err);
-      setIsSubmitting(false);
-      alert(`Submission failed: ${err.message}. Please try again.`);
-    }
-  }, [answers, attemptId, bookmarkedIds, test, timeLeft, router]);
 
   const isLowTime = timeLeft < 300;
 

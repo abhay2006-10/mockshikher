@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import {
-  GraduationCap,
   User,
   LogOut,
   ChevronDown,
@@ -47,20 +46,18 @@ const desktopMenuItems = [
   { href: '/dashboard/profile', label: 'Profile', icon: User },
 ];
 
+const emptySubscribe = () => () => {};
+
 export default function Header({ initialUser, user: legacyUser }: HeaderProps) {
   const pathname = usePathname();
   const { data: session, status } = useSession();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
 
   // Auth modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTab, setModalTab] = useState<AuthModalTab>('login');
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Lock body scroll and listen for Escape when bottom sheet is open
   useEffect(() => {
@@ -85,7 +82,7 @@ export default function Header({ initialUser, user: legacyUser }: HeaderProps) {
       ? {
           name: session.user.name || 'User',
           email: session.user.email || '',
-          role: (session.user as any).role || 'USER',
+          role: (session.user as { role?: string })?.role || 'USER',
           image: session.user.image,
         }
       : status === 'unauthenticated'
@@ -150,7 +147,7 @@ export default function Header({ initialUser, user: legacyUser }: HeaderProps) {
           {/* Logo */}
           <Link href="/" className={styles.logo} aria-label="MockShikhar Home">
             <Image
-              src="/logo.svg"
+              src="/logo.png"
               alt="MockShikhar - Practice • Analyze • Improve • Succeed"
               width={184}
               height={38}
