@@ -85,6 +85,7 @@ function TestAttemptInner() {
   const [lang, setLang] = useState<'en' | 'hi'>(initialLang);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [isTimerInitialized, setIsTimerInitialized] = useState(false);
   const [isMobilePaletteOpen, setIsMobilePaletteOpen] = useState(false);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -205,6 +206,7 @@ function TestAttemptInner() {
 
         // Server-owned timer
         setTimeLeft(startData.timeLeftSeconds);
+        setIsTimerInitialized(true);
 
         // Check local draft keyed by attemptId (temporary in-progress draft only)
         let localDraft: Record<string, UserAnswerState> = {};
@@ -376,12 +378,12 @@ function TestAttemptInner() {
     }
   }, [router]);
 
-  // Auto-submit when timer expires
+  // Auto-submit when timer expires (only after timer is legitimately initialized by server)
   useEffect(() => {
-    if (timeLeft === 0 && test && questions.length > 0) {
+    if (isTimerInitialized && timeLeft <= 0 && test && questions.length > 0) {
       handleFinalSubmit(true);
     }
-  }, [timeLeft, test, questions.length, handleFinalSubmit]);
+  }, [timeLeft, isTimerInitialized, test, questions.length, handleFinalSubmit]);
 
   const formatTime = (secs: number) => {
     const hours = Math.floor(secs / 3600);

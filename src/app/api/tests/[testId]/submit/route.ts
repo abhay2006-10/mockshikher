@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma, CorrectOption } from '@prisma/client';
+import { CorrectOption } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { resolveOrCreateMockTest } from '@/lib/mock-resolver';
@@ -17,6 +17,91 @@ function parseCorrectOption(val: unknown): CorrectOption | null {
     if (upper === 'A' || upper === 'B' || upper === 'C' || upper === 'D') return upper as CorrectOption;
   }
   return null;
+}
+
+interface InFlightSubmissionResult {
+  status: number;
+  body: Record<string, unknown>;
+}
+
+// In-flight mutex Map to serialize/join duplicate concurrent requests for the same attempt in this Node process
+const globalForSubmissions = globalThis as unknown as {
+  _inFlightSubmissions?: Map<string, Promise<InFlightSubmissionResult>>;
+};
+if (!globalForSubmissions._inFlightSubmissions) {
+  globalForSubmissions._inFlightSubmissions = new Map();
+}
+const inFlightSubmissions = globalForSubmissions._inFlightSubmissions;
+
+const attemptSelectFields = {
+  id: true,
+  userId: true,
+  mockTestId: true,
+  status: true,
+  deadline: true,
+  score: true,
+  totalMarks: true,
+  correctCount: true,
+  wrongCount: true,
+  unansweredCount: true,
+  accuracy: true,
+  percentage: true,
+  timeTakenSeconds: true,
+  submittedAt: true,
+} as const;
+
+interface AttemptRecord {
+  id: string;
+  userId: string;
+  mockTestId: string;
+  status: string;
+  deadline: Date;
+  score: number | null;
+  totalMarks: number | null;
+  correctCount: number | null;
+  wrongCount: number | null;
+  unansweredCount: number | null;
+  accuracy: number | null;
+  percentage: number | null;
+  timeTakenSeconds: number | null;
+  submittedAt: Date | null;
+}
+
+interface MockTestRecord {
+  id: string;
+  name: string;
+  totalMarks?: number | null;
+  marksPerQuestion?: number | null;
+  negativeMarksPerQuestion?: number | null;
+  exam?: {
+    marksPerQuestion?: number | null;
+    negativeMarking?: number | null;
+  } | null;
+}
+
+function buildScorecardResult(
+  attempt: AttemptRecord,
+  mockTest: MockTestRecord,
+  totalQuestions: number,
+  fallbackTimeTaken: number
+) {
+  return {
+    attemptId: attempt.id,
+    testId: mockTest.id,
+    testName: mockTest.name,
+    submittedAt: attempt.submittedAt?.toISOString() || new Date().toISOString(),
+    status: attempt.status,
+    isAutoSubmit: attempt.status === 'AUTO_SUBMITTED',
+    totalQuestions,
+    correctCount: attempt.correctCount ?? 0,
+    wrongCount: attempt.wrongCount ?? 0,
+    unansweredCount: attempt.unansweredCount ?? 0,
+    score: attempt.score ?? 0,
+    totalPossibleMarks: attempt.totalMarks ?? mockTest.totalMarks ?? 0,
+    percentage: attempt.percentage ?? 0,
+    accuracy: attempt.accuracy ?? 0,
+    timeTaken: attempt.timeTakenSeconds ?? fallbackTimeTaken,
+  };
 }
 
 export async function POST(
@@ -48,10 +133,21 @@ export async function POST(
       bookmarkedIds = [],
     } = body;
 
+    // Diagnostic start log (Zero PII or tokens)
+    console.log(
+      JSON.stringify({
+        level: 'info',
+        type: 'SUBMISSION_START',
+        correlationId,
+        testId,
+        attemptId: reqAttemptId || 'unspecified',
+        isAutoSubmit,
+      })
+    );
+
     // 2. Parallel Pre-flight Lookups: Fetch User, MockTest, Attempt, and Questions concurrently
     const tLookupStart = performance.now();
-    const [userRecord, resolvedMockTest, existingAttempt, dbQuestions] = await Promise.all([
-      // Lookup user
+    const [userRecord, resolvedMockTest, existingAttempt] = await Promise.all([
       prisma.user.findFirst({
         where: {
           OR: [
@@ -61,46 +157,14 @@ export async function POST(
         },
         select: { id: true, email: true },
       }),
-      // Resolve mock test
       resolveOrCreateMockTest({ mockTestId: testId }),
-      // Check attempt if reqAttemptId provided
       reqAttemptId
         ? prisma.testAttempt.findUnique({
             where: { id: reqAttemptId },
-            select: {
-              id: true,
-              userId: true,
-              mockTestId: true,
-              status: true,
-              deadline: true,
-              score: true,
-              totalMarks: true,
-              correctCount: true,
-              wrongCount: true,
-              unansweredCount: true,
-              accuracy: true,
-              percentage: true,
-              timeTakenSeconds: true,
-              submittedAt: true,
-            },
+            select: attemptSelectFields,
           })
         : null,
-      // Fetch questions required for scoring with lean select (avoids heavy 400-option & taxonomy joins)
-      prisma.question.findMany({
-        where: { mockTestId: testId },
-        select: {
-          id: true,
-          questionNumber: true,
-          questionText: true,
-          correctOption: true,
-          marks: true,
-          negativeMarks: true,
-          subjectId: true,
-        },
-        orderBy: { questionNumber: 'asc' },
-      }),
     ]);
-    const tLookupMs = parseFloat((performance.now() - tLookupStart).toFixed(2));
 
     if (!userRecord) {
       return NextResponse.json({ error: 'User record not found.' }, { status: 404 });
@@ -109,8 +173,24 @@ export async function POST(
       return NextResponse.json({ error: 'Test not found.' }, { status: 404 });
     }
 
-    const mockTest = resolvedMockTest;
-    let attempt = existingAttempt;
+    const mockTest = resolvedMockTest as MockTestRecord;
+    let attempt = existingAttempt as AttemptRecord | null;
+
+    // Fetch questions belonging to this resolved mock test ID
+    const dbQuestions = await prisma.question.findMany({
+      where: { mockTestId: mockTest.id },
+      select: {
+        id: true,
+        questionNumber: true,
+        questionText: true,
+        correctOption: true,
+        marks: true,
+        negativeMarks: true,
+        subjectId: true,
+      },
+      orderBy: { questionNumber: 'asc' },
+    });
+    const tLookupMs = parseFloat((performance.now() - tLookupStart).toFixed(2));
 
     // Security: Validate ownership and mockTest association before any idempotency or write execution
     if (attempt) {
@@ -136,34 +216,20 @@ export async function POST(
           level: 'info',
           type: 'SUBMISSION_IDEMPOTENT_HIT',
           correlationId,
-          testId,
+          testId: mockTest.id,
           attemptId: attempt.id,
           status: attempt.status,
+          isDuplicate: true,
           totalElapsedMs,
         })
       );
 
+      const cachedResult = buildScorecardResult(attempt, mockTest, dbQuestions.length, timeTaken);
       const cachedResponse = NextResponse.json({
         success: true,
         attemptId: attempt.id,
         alreadySubmitted: true,
-        result: {
-          attemptId: attempt.id,
-          testId: mockTest.id,
-          testName: mockTest.name,
-          submittedAt: attempt.submittedAt?.toISOString(),
-          status: attempt.status,
-          isAutoSubmit: attempt.status === 'AUTO_SUBMITTED',
-          totalQuestions: dbQuestions.length,
-          correctCount: attempt.correctCount ?? 0,
-          wrongCount: attempt.wrongCount ?? 0,
-          unansweredCount: attempt.unansweredCount ?? 0,
-          score: attempt.score ?? 0,
-          totalPossibleMarks: attempt.totalMarks ?? mockTest.totalMarks,
-          percentage: attempt.percentage ?? 0,
-          accuracy: attempt.accuracy ?? 0,
-          timeTaken: attempt.timeTakenSeconds ?? timeTaken,
-        },
+        result: cachedResult,
       });
       cachedResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
       return cachedResponse;
@@ -171,21 +237,47 @@ export async function POST(
 
     // 4. Fallback attempt resolution if not found by reqAttemptId
     if (!attempt) {
-      attempt = await prisma.testAttempt.findFirst({
+      attempt = (await prisma.testAttempt.findFirst({
         where: {
           userId: userRecord.id,
           mockTestId: mockTest.id,
-          status: 'IN_PROGRESS',
         },
         orderBy: { startedAt: 'desc' },
-      });
+        select: attemptSelectFields,
+      })) as AttemptRecord | null;
+
+      // If the latest attempt is already submitted, return it through the idempotency guard
+      if (attempt && (attempt.status === 'SUBMITTED' || attempt.status === 'AUTO_SUBMITTED')) {
+        const totalElapsedMs = parseFloat((performance.now() - reqStart).toFixed(2));
+        console.log(
+          JSON.stringify({
+            level: 'info',
+            type: 'SUBMISSION_IDEMPOTENT_HIT',
+            correlationId,
+            testId: mockTest.id,
+            attemptId: attempt.id,
+            status: attempt.status,
+            isDuplicate: true,
+            totalElapsedMs,
+          })
+        );
+        const cachedResult = buildScorecardResult(attempt, mockTest, dbQuestions.length, timeTaken);
+        const cachedResponse = NextResponse.json({
+          success: true,
+          attemptId: attempt.id,
+          alreadySubmitted: true,
+          result: cachedResult,
+        });
+        cachedResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+        return cachedResponse;
+      }
     }
 
     const now = new Date();
 
     if (!attempt) {
       // If none existed, create a new attempt record
-      attempt = await prisma.testAttempt.create({
+      attempt = (await prisma.testAttempt.create({
         data: {
           userId: userRecord.id,
           mockTestId: mockTest.id,
@@ -193,215 +285,317 @@ export async function POST(
           deadline: now,
           status: 'IN_PROGRESS',
         },
-      });
+        select: attemptSelectFields,
+      })) as AttemptRecord;
     }
 
-    // 5. Authoritative Evaluation & Deadline Check
-    const tEvalStart = performance.now();
-    const deadline = new Date(attempt.deadline);
-    const isPastDeadline = now.getTime() > deadline.getTime() + 15000; // 15 sec buffer for network
-    const finalStatus = isAutoSubmit || isPastDeadline ? 'AUTO_SUBMITTED' : 'SUBMITTED';
+    const targetAttemptId = attempt.id;
 
-    let correctCount = 0;
-    let wrongCount = 0;
-    let unansweredCount = 0;
-    let rawScore = 0;
-    let totalPossibleMarks = 0;
+    // 5. IN-FLIGHT MUTEX GUARD: Deduplicate concurrent requests for the exact same attempt in this Node process
+    const existingFlight = inFlightSubmissions.get(targetAttemptId);
+    if (existingFlight) {
+      console.log(
+        JSON.stringify({
+          level: 'info',
+          type: 'SUBMISSION_DUPLICATE_IN_FLIGHT_JOIN',
+          correlationId,
+          testId: mockTest.id,
+          attemptId: targetAttemptId,
+          isDuplicate: true,
+          message: 'Concurrent submission detected; joined active in-flight execution',
+        })
+      );
+      const flightResult = await existingFlight;
+      const res = NextResponse.json(flightResult.body, { status: flightResult.status });
+      res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      return res;
+    }
 
-    const defaultMarks = mockTest.marksPerQuestion ?? mockTest.exam?.marksPerQuestion ?? 1;
-    const defaultNegMarks = mockTest.negativeMarksPerQuestion ?? mockTest.exam?.negativeMarking ?? 0.25;
-
-    const evaluatedAnswers = dbQuestions.map((q) => {
-      const userAnsObj = answers[q.id];
-      const rawSelected = userAnsObj?.selectedOption;
-      const selectedOption = parseCorrectOption(rawSelected);
-      const isAnswered = selectedOption !== null;
-      const isCorrect = isAnswered && selectedOption === q.correctOption;
-
-      const effMarks =
-        q.marks !== undefined && q.marks !== null && !isNaN(q.marks) && q.marks > 0
-          ? q.marks
-          : defaultMarks;
-
-      const effNegMarks =
-        q.negativeMarks !== undefined && q.negativeMarks !== null && !isNaN(q.negativeMarks) && q.negativeMarks >= 0
-          ? q.negativeMarks
-          : defaultNegMarks;
-
-      totalPossibleMarks += effMarks;
-
-      if (!isAnswered) {
-        unansweredCount++;
-      } else if (isCorrect) {
-        correctCount++;
-        rawScore += effMarks;
-      } else {
-        wrongCount++;
-        rawScore -= effNegMarks;
-      }
-
-      return {
-        questionId: q.id,
-        selectedOption,
-        isMarkedForReview:
-          userAnsObj?.status === 'MARKED_FOR_REVIEW' ||
-          userAnsObj?.status === 'ANSWERED_AND_MARKED',
-        status: userAnsObj?.status || (isAnswered ? 'ANSWERED' : 'NOT_ANSWERED'),
-        timeSpentSeconds: userAnsObj?.timeSpent || 0,
-        questionTextSnapshot: q.questionText,
-        correctOptionSnapshot: q.correctOption,
-        marksSnapshot: effMarks,
-        negativeMarksSnapshot: effNegMarks,
-        isCorrect,
-        isAnswered,
-      };
+    // Register active in-flight submission promise
+    let resolveFlight!: (val: InFlightSubmissionResult) => void;
+    let rejectFlight!: (err: unknown) => void;
+    const flightPromise = new Promise<InFlightSubmissionResult>((resolve, reject) => {
+      resolveFlight = resolve;
+      rejectFlight = reject;
     });
+    inFlightSubmissions.set(targetAttemptId, flightPromise);
 
-    const finalScore = Math.max(0, parseFloat(rawScore.toFixed(2)));
-    const percentage =
-      totalPossibleMarks > 0
-        ? parseFloat(((finalScore / totalPossibleMarks) * 100).toFixed(1))
-        : 0;
-    const accuracy =
-      correctCount + wrongCount > 0
-        ? parseFloat(((correctCount / (correctCount + wrongCount)) * 100).toFixed(1))
-        : 0;
+    try {
+      // 6. Authoritative Evaluation & Scoring (Performed outside DB transaction to avoid connection holding)
+      const tEvalStart = performance.now();
+      const deadline = new Date(attempt.deadline);
+      const isPastDeadline = now.getTime() > deadline.getTime() + 15000; // 15 sec buffer for network
+      const finalStatus = isAutoSubmit || isPastDeadline ? 'AUTO_SUBMITTED' : 'SUBMITTED';
 
-    const tEvalMs = parseFloat((performance.now() - tEvalStart).toFixed(2));
+      let correctCount = 0;
+      let wrongCount = 0;
+      let unansweredCount = 0;
+      let rawScore = 0;
+      let totalPossibleMarks = 0;
 
-    // 6. Atomic Batched Transaction (Single round-trip pipeline via prisma.$transaction([ ... ]))
-    const tTxStart = performance.now();
-    const userAnswersData = evaluatedAnswers.map((ans) => ({
-      attemptId: attempt.id,
-      questionId: ans.questionId,
-      selectedOption: ans.selectedOption,
-      isMarkedForReview: ans.isMarkedForReview,
-      status: ans.status,
-      timeSpentSeconds: ans.timeSpentSeconds,
-      questionTextSnapshot: ans.questionTextSnapshot,
-      correctOptionSnapshot: ans.correctOptionSnapshot,
-      marksSnapshot: ans.marksSnapshot,
-      negativeMarksSnapshot: ans.negativeMarksSnapshot,
-      isCorrect: ans.isCorrect,
-    }));
+      const defaultMarks = mockTest.marksPerQuestion ?? mockTest.exam?.marksPerQuestion ?? 1;
+      const defaultNegMarks = mockTest.negativeMarksPerQuestion ?? mockTest.exam?.negativeMarking ?? 0.25;
 
-    const wrongResults = evaluatedAnswers.filter((ans) => ans.isAnswered && !ans.isCorrect);
-    const mistakesData = wrongResults.map((res) => ({
-      userId: userRecord.id,
-      questionId: res.questionId,
-      attemptId: attempt.id,
-      isMastered: false,
-    }));
+      const evaluatedAnswers = dbQuestions.map((q) => {
+        const userAnsObj = answers[q.id];
+        const rawSelected = userAnsObj?.selectedOption;
+        const selectedOption = parseCorrectOption(rawSelected);
+        const isAnswered = selectedOption !== null;
+        const isCorrect = isAnswered && selectedOption === q.correctOption;
 
-    const validBookmarks = Array.isArray(bookmarkedIds)
-      ? bookmarkedIds
-          .filter((qId): qId is string => typeof qId === 'string' && qId.length > 0)
-          .map((qId) => ({
-            userId: userRecord.id,
-            questionId: qId,
-          }))
-      : [];
+        const effMarks =
+          q.marks !== undefined && q.marks !== null && !isNaN(q.marks) && q.marks > 0
+            ? q.marks
+            : defaultMarks;
 
-    // Bundle all operations in one non-interactive array transaction to avoid PgBouncer connection holding
-    const txOperations: Prisma.PrismaPromise<unknown>[] = [
-      prisma.testAttempt.update({
-        where: { id: attempt.id },
-        data: {
-          status: finalStatus,
-          submittedAt: now,
-          score: finalScore,
-          totalMarks: totalPossibleMarks,
-          correctCount,
-          wrongCount,
-          unansweredCount,
-          accuracy,
-          percentage,
-          timeTakenSeconds: timeTaken,
+        const effNegMarks =
+          q.negativeMarks !== undefined && q.negativeMarks !== null && !isNaN(q.negativeMarks) && q.negativeMarks >= 0
+            ? q.negativeMarks
+            : defaultNegMarks;
+
+        totalPossibleMarks += effMarks;
+
+        if (!isAnswered) {
+          unansweredCount++;
+        } else if (isCorrect) {
+          correctCount++;
+          rawScore += effMarks;
+        } else {
+          wrongCount++;
+          rawScore -= effNegMarks;
+        }
+
+        return {
+          questionId: q.id,
+          selectedOption,
+          isMarkedForReview:
+            userAnsObj?.status === 'MARKED_FOR_REVIEW' ||
+            userAnsObj?.status === 'ANSWERED_AND_MARKED',
+          status: userAnsObj?.status || (isAnswered ? 'ANSWERED' : 'NOT_ANSWERED'),
+          timeSpentSeconds: userAnsObj?.timeSpent || 0,
+          questionTextSnapshot: q.questionText,
+          correctOptionSnapshot: q.correctOption,
+          marksSnapshot: effMarks,
+          negativeMarksSnapshot: effNegMarks,
+          isCorrect,
+          isAnswered,
+        };
+      });
+
+      const finalScore = Math.max(0, parseFloat(rawScore.toFixed(2)));
+      const percentage =
+        totalPossibleMarks > 0
+          ? parseFloat(((finalScore / totalPossibleMarks) * 100).toFixed(1))
+          : 0;
+      const accuracy =
+        correctCount + wrongCount > 0
+          ? parseFloat(((correctCount / (correctCount + wrongCount)) * 100).toFixed(1))
+          : 0;
+
+      const tEvalMs = parseFloat((performance.now() - tEvalStart).toFixed(2));
+
+      // 7. Atomic Batched Database Transaction
+      const userAnswersData = evaluatedAnswers.map((ans) => ({
+        attemptId: targetAttemptId,
+        questionId: ans.questionId,
+        selectedOption: ans.selectedOption,
+        isMarkedForReview: ans.isMarkedForReview,
+        status: ans.status,
+        timeSpentSeconds: ans.timeSpentSeconds,
+        questionTextSnapshot: ans.questionTextSnapshot,
+        correctOptionSnapshot: ans.correctOptionSnapshot,
+        marksSnapshot: ans.marksSnapshot,
+        negativeMarksSnapshot: ans.negativeMarksSnapshot,
+        isCorrect: ans.isCorrect,
+      }));
+
+      const wrongResults = evaluatedAnswers.filter((ans) => ans.isAnswered && !ans.isCorrect);
+      const mistakesData = wrongResults.map((res) => ({
+        userId: userRecord.id,
+        questionId: res.questionId,
+        attemptId: targetAttemptId,
+        isMastered: false,
+      }));
+
+      const validBookmarks = Array.isArray(bookmarkedIds)
+        ? bookmarkedIds
+            .filter((qId): qId is string => typeof qId === 'string' && qId.length > 0)
+            .map((qId) => ({
+              userId: userRecord.id,
+              questionId: qId,
+            }))
+        : [];
+
+      const tTxStart = performance.now();
+      console.log(
+        JSON.stringify({
+          level: 'info',
+          type: 'SUBMISSION_TX_START',
+          correlationId,
+          attemptId: targetAttemptId,
+        })
+      );
+
+      const txResult = await prisma.$transaction(
+        async (tx) => {
+          // 1. Atomic state transition: Only update if status is still IN_PROGRESS
+          const updateResult = await tx.testAttempt.updateMany({
+            where: {
+              id: targetAttemptId,
+              status: 'IN_PROGRESS',
+            },
+            data: {
+              status: finalStatus,
+              submittedAt: now,
+              score: finalScore,
+              totalMarks: totalPossibleMarks,
+              correctCount,
+              wrongCount,
+              unansweredCount,
+              accuracy,
+              percentage,
+              timeTakenSeconds: timeTaken,
+            },
+          });
+
+          // 2. Concurrency collision check: If another transaction already committed this attempt
+          if (updateResult.count === 0) {
+            const committedAttempt = (await tx.testAttempt.findUnique({
+              where: { id: targetAttemptId },
+              select: attemptSelectFields,
+            })) as AttemptRecord | null;
+            return { isDuplicate: true, committedAttempt };
+          }
+
+          // 3. Atomically persist answers, mistakes, and bookmarks
+          await tx.userAnswer.deleteMany({
+            where: { attemptId: targetAttemptId },
+          });
+
+          await tx.userAnswer.createMany({
+            data: userAnswersData,
+          });
+
+          if (mistakesData.length > 0) {
+            await tx.mistakeBook.createMany({
+              data: mistakesData,
+              skipDuplicates: true,
+            });
+          }
+
+          if (validBookmarks.length > 0) {
+            await tx.bookmark.createMany({
+              data: validBookmarks,
+              skipDuplicates: true,
+            });
+          }
+
+          return { isDuplicate: false, committedAttempt: null };
         },
-      }),
-      prisma.userAnswer.deleteMany({
-        where: { attemptId: attempt.id },
-      }),
-      prisma.userAnswer.createMany({
-        data: userAnswersData,
-      }),
-    ];
-
-    if (mistakesData.length > 0) {
-      txOperations.push(
-        prisma.mistakeBook.createMany({
-          data: mistakesData,
-          skipDuplicates: true,
-        })
+        {
+          timeout: 15000, // 15 seconds max timeout
+          maxWait: 5000,  // 5 seconds max wait to acquire a connection
+        }
       );
-    }
 
-    if (validBookmarks.length > 0) {
-      txOperations.push(
-        prisma.bookmark.createMany({
-          data: validBookmarks,
-          skipDuplicates: true,
-        })
-      );
-    }
-
-    await prisma.$transaction(txOperations);
-    const tTxMs = parseFloat((performance.now() - tTxStart).toFixed(2));
-
-    const totalElapsedMs = parseFloat((performance.now() - reqStart).toFixed(2));
-
-    // Structured performance log for production observability (Zero PII or tokens logged)
-    console.log(
-      JSON.stringify({
-        level: 'info',
-        type: 'SUBMISSION_PERF',
-        correlationId,
-        testId: mockTest.id,
-        attemptId: attempt.id,
-        timings: {
-          authMs: tAuthMs,
-          lookupMs: tLookupMs,
-          evalMs: tEvalMs,
+      const tTxMs = parseFloat((performance.now() - tTxStart).toFixed(2));
+      console.log(
+        JSON.stringify({
+          level: 'info',
+          type: 'SUBMISSION_TX_END',
+          correlationId,
+          attemptId: targetAttemptId,
           transactionMs: tTxMs,
-          totalMs: totalElapsedMs,
-        },
-        counts: {
+          isDuplicate: txResult.isDuplicate,
+        })
+      );
+
+      let responsePayload: Record<string, unknown>;
+
+      if (txResult.isDuplicate && txResult.committedAttempt) {
+        const ca = txResult.committedAttempt;
+        const totalElapsedMs = parseFloat((performance.now() - reqStart).toFixed(2));
+        console.log(
+          JSON.stringify({
+            level: 'info',
+            type: 'SUBMISSION_IDEMPOTENT_COMMITTED_HIT',
+            correlationId,
+            testId: mockTest.id,
+            attemptId: targetAttemptId,
+            isDuplicate: true,
+            totalElapsedMs,
+          })
+        );
+
+        responsePayload = {
+          success: true,
+          attemptId: ca.id,
+          alreadySubmitted: true,
+          result: buildScorecardResult(ca, mockTest, dbQuestions.length, timeTaken),
+        };
+      } else {
+        const totalElapsedMs = parseFloat((performance.now() - reqStart).toFixed(2));
+        console.log(
+          JSON.stringify({
+            level: 'info',
+            type: 'SUBMISSION_SUCCESS',
+            correlationId,
+            testId: mockTest.id,
+            attemptId: targetAttemptId,
+            isDuplicate: false,
+            timings: {
+              authMs: tAuthMs,
+              lookupMs: tLookupMs,
+              evalMs: tEvalMs,
+              transactionMs: tTxMs,
+              totalMs: totalElapsedMs,
+            },
+            counts: {
+              totalQuestions: dbQuestions.length,
+              correctCount,
+              wrongCount,
+              unansweredCount,
+              mistakesRecorded: mistakesData.length,
+              bookmarksRecorded: validBookmarks.length,
+            },
+          })
+        );
+
+        const submissionData = {
+          attemptId: targetAttemptId,
+          testId: mockTest.id,
+          testName: mockTest.name,
+          submittedAt: now.toISOString(),
+          status: finalStatus,
+          isAutoSubmit: finalStatus === 'AUTO_SUBMITTED',
           totalQuestions: dbQuestions.length,
           correctCount,
           wrongCount,
           unansweredCount,
-          mistakesRecorded: mistakesData.length,
-          bookmarksRecorded: validBookmarks.length,
-        },
-      })
-    );
+          score: finalScore,
+          totalPossibleMarks,
+          percentage,
+          accuracy,
+          timeTaken,
+        };
 
-    const submissionData = {
-      attemptId: attempt.id,
-      testId: mockTest.id,
-      testName: mockTest.name,
-      submittedAt: now.toISOString(),
-      status: finalStatus,
-      isAutoSubmit: finalStatus === 'AUTO_SUBMITTED',
-      totalQuestions: dbQuestions.length,
-      correctCount,
-      wrongCount,
-      unansweredCount,
-      score: finalScore,
-      totalPossibleMarks,
-      percentage,
-      accuracy,
-      timeTaken,
-    };
+        responsePayload = {
+          success: true,
+          attemptId: targetAttemptId,
+          result: submissionData,
+        };
+      }
 
-    const response = NextResponse.json({
-      success: true,
-      attemptId: attempt.id,
-      result: submissionData,
-    });
-
-    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    return response;
+      resolveFlight({ status: 200, body: responsePayload });
+      const response = NextResponse.json(responsePayload);
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      return response;
+    } catch (err: unknown) {
+      rejectFlight(err);
+      throw err;
+    } finally {
+      inFlightSubmissions.delete(targetAttemptId);
+    }
   } catch (err: unknown) {
     const totalElapsedMs = parseFloat((performance.now() - reqStart).toFixed(2));
     const errorMessage = err instanceof Error ? err.message : 'Unknown submission error';
