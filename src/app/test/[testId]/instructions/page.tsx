@@ -81,7 +81,14 @@ export default function TestInstructionsPage() {
           .then((qData) => {
             if (qData?.questions?.length && isMounted) {
               try {
-                sessionStorage.setItem(`mockshikhar_questions_${testId}`, JSON.stringify(qData));
+                const str = JSON.stringify(qData);
+                sessionStorage.setItem(`mockshikhar_questions_${testId}`, str);
+                if (qData.test?.id && qData.test.id !== testId) {
+                  sessionStorage.setItem(`mockshikhar_questions_${qData.test.id}`, str);
+                }
+                if (data.test?.id && data.test.id !== testId) {
+                  sessionStorage.setItem(`mockshikhar_questions_${data.test.id}`, str);
+                }
               } catch {
                 // Ignore storage quota
               }
@@ -108,7 +115,7 @@ export default function TestInstructionsPage() {
 
   const handleStartTest = () => {
     if (!hasAgreed || !test || test.totalQuestions === 0) return;
-    router.push(`/test/${encodeURIComponent(test.id)}/attempt?lang=${selectedLanguage}`);
+    router.push(`/test/${encodeURIComponent(testId)}/attempt?lang=${selectedLanguage}`);
   };
 
   if (isLoading) {

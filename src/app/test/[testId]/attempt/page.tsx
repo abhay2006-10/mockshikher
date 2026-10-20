@@ -98,6 +98,8 @@ function TestAttemptInner() {
   const attemptIdRef = useRef(attemptId);
   const answersRef = useRef(answers);
   const bookmarkedIdsRef = useRef(bookmarkedIds);
+  const currentQIdRef = useRef<string | null>(null);
+  const timeSpentMapRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
     testRef.current = test;
@@ -223,6 +225,7 @@ function TestAttemptInner() {
           questionsPayload.questions.forEach((q: StudentQuestion, idx: number) => {
             if (localDraft[q.id]) {
               initial[q.id] = localDraft[q.id];
+              timeSpentMapRef.current[q.id] = localDraft[q.id].timeSpent || 0;
             } else if (startData.savedAnswers && startData.savedAnswers[q.id]) {
               const saved = startData.savedAnswers[q.id];
               initial[q.id] = {
@@ -230,12 +233,14 @@ function TestAttemptInner() {
                 status: saved.status || (saved.selectedOption ? 'ANSWERED' : 'NOT_ANSWERED'),
                 timeSpent: saved.timeSpent || 0,
               };
+              timeSpentMapRef.current[q.id] = saved.timeSpent || 0;
             } else {
               initial[q.id] = {
                 selectedOption: null,
                 status: idx === 0 ? 'NOT_ANSWERED' : 'NOT_VISITED',
                 timeSpent: 0,
               };
+              timeSpentMapRef.current[q.id] = 0;
             }
           });
           setAnswers(initial);
@@ -262,15 +267,17 @@ function TestAttemptInner() {
   }, [testId, router]);
 
   const currentQ = questions[currentIndex];
+  currentQIdRef.current = currentQ?.id || null;
+
   const currentAnswer = currentQ ? (answers[currentQ.id] || {
     selectedOption: null,
     status: 'NOT_VISITED' as QuestionStatus,
-    timeSpent: 0,
+    timeSpent: timeSpentMapRef.current[currentQ.id] || 0,
   }) : null;
 
-  // Timer countdown — only runs after questions are loaded
+  // Timer countdown — single interval, never re-created every second, zero re-renders of answers
   useEffect(() => {
-    if (!test || questions.length === 0 || timeLeft <= 0) return;
+    if (!test || questions.length === 0) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -281,23 +288,14 @@ function TestAttemptInner() {
         return prev - 1;
       });
 
-      if (currentQ) {
-        setAnswers((prev) => {
-          const curr = prev[currentQ.id];
-          if (!curr) return prev;
-          return {
-            ...prev,
-            [currentQ.id]: {
-              ...curr,
-              timeSpent: (curr.timeSpent || 0) + 1,
-            },
-          };
-        });
+      const activeQId = currentQIdRef.current;
+      if (activeQId) {
+        timeSpentMapRef.current[activeQId] = (timeSpentMapRef.current[activeQId] || 0) + 1;
       }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeLeft, currentQ?.id, test, questions.length]);
+  }, [test, questions.length]);
 
   // Submit: POST to server-side evaluation API
   const handleFinalSubmit = useCallback(async (isAutoSubmit = false) => {
@@ -313,13 +311,21 @@ function TestAttemptInner() {
 
     const timeTaken = currentTest.durationMinutes * 60 - currentTimeLeft;
 
+    const finalAnswers: Record<string, UserAnswerState> = {};
+    for (const [qId, state] of Object.entries(currentAnswers)) {
+      finalAnswers[qId] = {
+        ...state,
+        timeSpent: timeSpentMapRef.current[qId] ?? state.timeSpent ?? 0,
+      };
+    }
+
     try {
       const res = await fetch(`/api/tests/${encodeURIComponent(currentTest.id)}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           attemptId: currentAttemptId,
-          answers: currentAnswers,
+          answers: finalAnswers,
           timeTaken,
           isAutoSubmit,
           bookmarkedIds: Array.from(currentBookmarks),
@@ -400,16 +406,18 @@ function TestAttemptInner() {
 
   const handleSelectOption = (option: 'A' | 'B' | 'C' | 'D') => {
     if (!currentQ) return;
+    const spent = timeSpentMapRef.current[currentQ.id] || 0;
     setAnswers((prev) => {
       const existing = prev[currentQ.id];
       const isCurrentlyMarked =
-        existing.status === 'MARKED' || existing.status === 'ANSWERED_MARKED';
+        existing?.status === 'MARKED' || existing?.status === 'ANSWERED_MARKED';
       return {
         ...prev,
         [currentQ.id]: {
           ...existing,
           selectedOption: option,
           status: isCurrentlyMarked ? 'ANSWERED_MARKED' : 'ANSWERED',
+          timeSpent: spent,
         },
       };
     });
@@ -417,26 +425,30 @@ function TestAttemptInner() {
 
   const handleClearResponse = () => {
     if (!currentQ) return;
+    const spent = timeSpentMapRef.current[currentQ.id] || 0;
     setAnswers((prev) => ({
       ...prev,
       [currentQ.id]: {
         ...prev[currentQ.id],
         selectedOption: null,
         status: 'NOT_ANSWERED',
+        timeSpent: spent,
       },
     }));
   };
 
   const handleMarkForReviewAndNext = () => {
     if (!currentQ) return;
+    const spent = timeSpentMapRef.current[currentQ.id] || 0;
     setAnswers((prev) => {
       const existing = prev[currentQ.id];
-      const hasAnswer = existing.selectedOption !== null;
+      const hasAnswer = existing?.selectedOption !== null && existing?.selectedOption !== undefined;
       return {
         ...prev,
         [currentQ.id]: {
           ...existing,
           status: hasAnswer ? 'ANSWERED_MARKED' : 'MARKED',
+          timeSpent: spent,
         },
       };
     });
@@ -445,14 +457,15 @@ function TestAttemptInner() {
 
   const handleSaveAndNext = () => {
     if (!currentQ) return;
+    const spent = timeSpentMapRef.current[currentQ.id] || 0;
     setAnswers((prev) => {
       const existing = prev[currentQ.id];
-      if (existing.selectedOption !== null && existing.status !== 'ANSWERED_MARKED') {
-        return { ...prev, [currentQ.id]: { ...existing, status: 'ANSWERED' } };
-      } else if (existing.selectedOption === null && existing.status !== 'MARKED') {
-        return { ...prev, [currentQ.id]: { ...existing, status: 'NOT_ANSWERED' } };
+      if (existing?.selectedOption !== null && existing?.selectedOption !== undefined && existing?.status !== 'ANSWERED_MARKED') {
+        return { ...prev, [currentQ.id]: { ...existing, status: 'ANSWERED', timeSpent: spent } };
+      } else if ((existing?.selectedOption === null || existing?.selectedOption === undefined) && existing?.status !== 'MARKED') {
+        return { ...prev, [currentQ.id]: { ...existing, status: 'NOT_ANSWERED', timeSpent: spent } };
       }
-      return prev;
+      return { ...prev, [currentQ.id]: { ...existing, timeSpent: spent } };
     });
     handleNext();
   };

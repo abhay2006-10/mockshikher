@@ -37,6 +37,28 @@ export async function GET(
       return NextResponse.json({ error: 'Missing testId parameter.' }, { status: 400 });
     }
 
+    // 0. Super-fast path: Instant RAM cache by requested testId parameter
+    const directCached = questionsCache.get(testId);
+    if (directCached && Date.now() - directCached.cachedAt < CACHE_TTL_MS) {
+      const isFree = (directCached.data.test as { isFree?: boolean })?.isFree;
+      if (isFree) {
+        const totalElapsedMs = parseFloat((performance.now() - reqStart).toFixed(2));
+        console.log(
+          JSON.stringify({
+            level: 'info',
+            type: 'QUESTIONS_DIRECT_CACHE_HIT',
+            correlationId,
+            testId,
+            totalMs: totalElapsedMs,
+            count: directCached.data.count,
+          })
+        );
+        const res = NextResponse.json(directCached.data);
+        res.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+        return res;
+      }
+    }
+
     // Resolve or find the MockTest using shared resolver
     const tMockStart = performance.now();
     const mockTest = await resolveOrCreateMockTest({ mockTestId: testId });
@@ -245,11 +267,18 @@ export async function GET(
       count: studentQuestions.length,
     };
 
-    // Cache in RAM for 10 minutes
-    questionsCache.set(mockTest.id, {
+    // Cache in RAM for 10 minutes under all variations (ID, slug, requested param)
+    const cacheEntry = {
       data: responseData,
       cachedAt: Date.now(),
-    });
+    };
+    questionsCache.set(mockTest.id, cacheEntry);
+    if (testId && testId !== mockTest.id) {
+      questionsCache.set(testId, cacheEntry);
+    }
+    if (mockTest.exam?.slug) {
+      questionsCache.set(`${mockTest.exam.slug}-mock-${mockTest.testNumber}`, cacheEntry);
+    }
 
     const response = NextResponse.json(responseData);
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

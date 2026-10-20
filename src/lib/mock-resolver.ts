@@ -21,6 +21,20 @@ export function normalizeExamSlug(rawSlug?: string): string {
   return 'hp-police-constable';
 }
 
+interface CachedMockTest {
+  data: any;
+  cachedAt: number;
+}
+
+const globalForMockResolver = globalThis as unknown as {
+  _mockResolverCache?: Map<string, CachedMockTest>;
+};
+if (!globalForMockResolver._mockResolverCache) {
+  globalForMockResolver._mockResolverCache = new Map();
+}
+const mockCache = globalForMockResolver._mockResolverCache;
+const MOCK_CACHE_TTL = 10 * 60 * 1000; // 10 minutes RAM cache
+
 /**
  * Resolves or creates a MockTest in the database.
  * Supports finding by ID (e.g. "hp-police-mock-2") or exam slug + test number.
@@ -31,13 +45,24 @@ export async function resolveOrCreateMockTest(options: ResolveMockOptions) {
   let examSlug = normalizeExamSlug(options.examSlug);
   let testNumber = options.testNumber;
 
+  const cacheKey = mockTestId || `${examSlug}:${testNumber || 1}`;
+  const cached = mockCache.get(cacheKey);
+  if (cached && Date.now() - cached.cachedAt < MOCK_CACHE_TTL && cached.data) {
+    return cached.data;
+  }
+
   // 1. Direct lookup by ID if provided
   if (mockTestId) {
     const existing = await prisma.mockTest.findUnique({
       where: { id: mockTestId },
       include: { exam: true },
     });
-    if (existing) return existing;
+    if (existing) {
+      const entry = { data: existing, cachedAt: Date.now() };
+      mockCache.set(cacheKey, entry);
+      mockCache.set(existing.id, entry);
+      return existing;
+    }
 
     // Parse ID like "hp-police-mock-3" or "hp-patwari-mock-1"
     const match = mockTestId.match(/^([a-z-]+)-mock-(\d+)$/i);
@@ -121,6 +146,16 @@ export async function resolveOrCreateMockTest(options: ResolveMockOptions) {
     }
   }
 
+  if (mockTest) {
+    const entry = { data: mockTest, cachedAt: Date.now() };
+    mockCache.set(cacheKey, entry);
+    if (mockTest.id) mockCache.set(mockTest.id, entry);
+    if (mockTest.exam?.slug) {
+      mockCache.set(`${mockTest.exam.slug}:${mockTest.testNumber}`, entry);
+      mockCache.set(`${mockTest.exam.slug}-mock-${mockTest.testNumber}`, entry);
+    }
+  }
+
   return mockTest;
 }
 
@@ -129,6 +164,7 @@ export async function resolveOrCreateMockTest(options: ResolveMockOptions) {
  */
 export async function recalculateMockStats(mockTestId: string) {
   try {
+    mockCache.delete(mockTestId);
     const [count, aggregate] = await Promise.all([
       prisma.question.count({ where: { mockTestId } }),
       prisma.question.aggregate({
