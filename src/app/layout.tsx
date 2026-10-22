@@ -104,7 +104,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
       <body>
-        <AuthProvider>
+        <AuthProvider session={session}>
           <AppShell initialUser={initialUser}>{children}</AppShell>
         </AuthProvider>
       </body>

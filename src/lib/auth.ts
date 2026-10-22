@@ -5,11 +5,30 @@ import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
 
+const THIRTY_DAYS_SECONDS = 30 * 24 * 60 * 60; // 30 days
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'mockshikhar_super_secret_jwt_key_2026_dev',
+  trustHost: true,
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: THIRTY_DAYS_SECONDS,
+    updateAge: 24 * 60 * 60, // Refresh session token once every 24 hours of active use
+  },
+  jwt: {
+    maxAge: THIRTY_DAYS_SECONDS,
+  },
+  cookies: {
+    sessionToken: {
+      name: 'authjs.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: THIRTY_DAYS_SECONDS, // Crucial: sets Max-Age attribute so mobile browsers & PWAs persist session across app restarts
+      },
+    },
   },
   pages: {
     signIn: '/auth/login',
