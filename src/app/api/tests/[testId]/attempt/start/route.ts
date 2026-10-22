@@ -123,40 +123,41 @@ export async function POST(
         const diffMs = deadline.getTime() - now.getTime();
 
         if (diffMs <= 0) {
-          // Deadline expired while away - auto-submit this attempt
-          await prisma.testAttempt.update({
-            where: { id: activeAttempt.id },
+          // Deadline expired while away - auto-submit any expired in-progress attempts for this user and test
+          await prisma.testAttempt.updateMany({
+            where: {
+              userId: user.id,
+              mockTestId: mockTest.id,
+              status: 'IN_PROGRESS',
+              deadline: { lte: now },
+            },
             data: {
               status: 'AUTO_SUBMITTED',
-              submittedAt: deadline,
+              submittedAt: now,
             },
           });
+          // Do not return expired early; fall through to create a fresh attempt with full timer below!
+        } else {
+          // Active within deadline! Return remaining server time
+          const timeLeftSeconds = Math.max(0, Math.floor(diffMs / 1000));
+          const savedAnswers: Record<string, any> = {};
+          activeAttempt.answers.forEach((ans) => {
+            savedAnswers[ans.questionId] = {
+              selectedOption: ans.selectedOption,
+              status: ans.status,
+              timeSpent: ans.timeSpentSeconds,
+            };
+          });
+
           return NextResponse.json({
-            expired: true,
             attemptId: activeAttempt.id,
-            message: 'Your previous attempt time expired and has been auto-submitted.',
+            startedAt: activeAttempt.startedAt.toISOString(),
+            deadline: activeAttempt.deadline.toISOString(),
+            timeLeftSeconds,
+            isResume: true,
+            savedAnswers,
           });
         }
-
-        // Active within deadline! Return remaining server time
-        const timeLeftSeconds = Math.max(0, Math.floor(diffMs / 1000));
-        const savedAnswers: Record<string, any> = {};
-        activeAttempt.answers.forEach((ans) => {
-          savedAnswers[ans.questionId] = {
-            selectedOption: ans.selectedOption,
-            status: ans.status,
-            timeSpent: ans.timeSpentSeconds,
-          };
-        });
-
-        return NextResponse.json({
-          attemptId: activeAttempt.id,
-          startedAt: activeAttempt.startedAt.toISOString(),
-          deadline: activeAttempt.deadline.toISOString(),
-          timeLeftSeconds,
-          isResume: true,
-          savedAnswers,
-        });
       }
     }
 

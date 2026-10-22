@@ -204,8 +204,14 @@ function TestAttemptInner() {
         const activeAttId = startData.attemptId;
         setAttemptId(activeAttId);
 
-        // Server-owned timer
-        setTimeLeft(startData.timeLeftSeconds);
+        // Server-owned timer with robust fallback
+        const fallbackSeconds =
+          ((questionsPayload?.test?.durationMinutes || test?.durationMinutes || 90) * 60);
+        const serverTime =
+          typeof startData?.timeLeftSeconds === 'number' && startData.timeLeftSeconds > 0
+            ? startData.timeLeftSeconds
+            : fallbackSeconds;
+        setTimeLeft(serverTime);
         setIsTimerInitialized(true);
 
         // Check local draft keyed by attemptId (temporary in-progress draft only)
@@ -277,9 +283,9 @@ function TestAttemptInner() {
     timeSpent: timeSpentMapRef.current[currentQ.id] || 0,
   }) : null;
 
-  // Timer countdown — single interval, never re-created every second, zero re-renders of answers
+  // Timer countdown — starts only after timer is initialized by server, runs 1s interval
   useEffect(() => {
-    if (!test || questions.length === 0) return;
+    if (!isTimerInitialized || !test || questions.length === 0 || timeLeft <= 0) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -297,7 +303,7 @@ function TestAttemptInner() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [test, questions.length]);
+  }, [isTimerInitialized, test, questions.length]);
 
   // Submit: POST to server-side evaluation API
   const handleFinalSubmit = useCallback(async (isAutoSubmit = false) => {
@@ -386,9 +392,10 @@ function TestAttemptInner() {
   }, [timeLeft, isTimerInitialized, test, questions.length, handleFinalSubmit]);
 
   const formatTime = (secs: number) => {
-    const hours = Math.floor(secs / 3600);
-    const minutes = Math.floor((secs % 3600) / 60);
-    const seconds = secs % 60;
+    const s = Math.max(0, Math.floor(Number(secs) || 0));
+    const hours = Math.floor(s / 3600);
+    const minutes = Math.floor((s % 3600) / 60);
+    const seconds = s % 60;
     const pad = (n: number) => String(n).padStart(2, '0');
     if (hours > 0) return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
     return `${pad(minutes)}:${pad(seconds)}`;

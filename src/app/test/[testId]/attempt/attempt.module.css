@@ -803,6 +803,30 @@
     min-height: 42px;
     font-size: 0.85rem;
   }
+
+  /* Mobile Submit Confirmation Modal */
+  .modalContent {
+    gap: var(--space-4);
+  }
+
+  .modalActions {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.65rem;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .modalActions button,
+  .modalActions > * {
+    width: 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+    white-space: normal !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.95rem !important;
+    min-height: 46px !important;
+  }
 }
 
 @media (max-width: 360px) {

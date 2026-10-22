@@ -110,3 +110,21 @@
     transform: scale(1);
   }
 }
+
+@media (max-width: 640px) {
+  .backdrop {
+    padding: var(--space-3);
+  }
+
+  .header {
+    padding: var(--space-4);
+  }
+
+  .body {
+    padding: var(--space-4);
+  }
+
+  .footer {
+    padding: var(--space-3) var(--space-4);
+  }
+}
