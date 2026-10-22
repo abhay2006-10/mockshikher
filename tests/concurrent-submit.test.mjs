@@ -1,15 +1,15 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-describe('Mock Test Submission Concurrency & Idempotency Regression Tests', () => {
-  test('Two simultaneous submissions of the same attempt are deduplicated via in-flight mutex', async () => {
+describe('Mock Test Submission Concurrency, Idempotency & Timeout Regression Tests', () => {
+  test('Two simultaneous submissions of the same attempt are deduplicated via early in-flight mutex', async () => {
     const inFlightSubmissions = new Map();
     let writeTransactionCount = 0;
     const attemptId = 'test-attempt-concurrent-1';
 
-    // Mock handler simulating the submit route logic
+    // Mock handler simulating the submit route logic with early entry mutex
     async function submitAttemptHandler(reqCorrelationId, targetAttemptId) {
-      // Check in-flight mutex
+      // Early in-flight mutex check at entry
       const existingFlight = inFlightSubmissions.get(targetAttemptId);
       if (existingFlight) {
         const joinedResult = await existingFlight;
@@ -76,6 +76,82 @@ describe('Mock Test Submission Concurrency & Idempotency Regression Tests', () =
     assert.ok(executionFlags.includes(false), 'One request was the primary execution');
     assert.ok(executionFlags.includes(true), 'The other request joined the in-flight promise');
     assert.strictEqual(inFlightSubmissions.size, 0, 'In-flight map is completely cleared');
+  });
+
+  test('Skip deleteMany round-trip when attempt has zero existing answers', async () => {
+    let deleteManyExecuted = false;
+    let createManyExecuted = false;
+
+    async function simulatePersistAnswers(hasExistingAnswers, answersData) {
+      if (hasExistingAnswers) {
+        deleteManyExecuted = true;
+      }
+      createManyExecuted = true;
+      return { count: answersData.length };
+    }
+
+    // Attempt with 0 existing answers
+    await simulatePersistAnswers(false, [{ questionId: 'q1' }, { questionId: 'q2' }]);
+    assert.strictEqual(deleteManyExecuted, false, 'deleteMany skipped when answers count is 0');
+    assert.strictEqual(createManyExecuted, true, 'createMany executed directly');
+
+    // Attempt with draft answers previously saved
+    deleteManyExecuted = false;
+    createManyExecuted = false;
+    await simulatePersistAnswers(true, [{ questionId: 'q1' }]);
+    assert.strictEqual(deleteManyExecuted, true, 'deleteMany executed when existing answers were present');
+    assert.strictEqual(createManyExecuted, true);
+  });
+
+  test('Error or timeout properly cleans in-flight mutex and does not deadlock subsequent requests', async () => {
+    const inFlightSubmissions = new Map();
+    const attemptId = 'test-attempt-timeout-err';
+    let callCount = 0;
+
+    async function flakySubmissionHandler(failOnFirst) {
+      callCount++;
+      const existingFlight = inFlightSubmissions.get(attemptId);
+      if (existingFlight) {
+        return await existingFlight;
+      }
+
+      let resolveFlight;
+      let rejectFlight;
+      const flightPromise = new Promise((resolve, reject) => {
+        resolveFlight = resolve;
+        rejectFlight = reject;
+      });
+      flightPromise.catch(() => {});
+      inFlightSubmissions.set(attemptId, flightPromise);
+
+      try {
+        if (failOnFirst) {
+          throw new Error('Transaction timeout (simulated)');
+        }
+        const successResult = { success: true, attemptId };
+        resolveFlight(successResult);
+        return successResult;
+      } catch (err) {
+        rejectFlight(err);
+        throw err;
+      } finally {
+        inFlightSubmissions.delete(attemptId);
+      }
+    }
+
+    // Call 1 fails
+    await assert.rejects(
+      () => flakySubmissionHandler(true),
+      /Transaction timeout/
+    );
+
+    // Mutex map must be completely clean
+    assert.strictEqual(inFlightSubmissions.has(attemptId), false, 'Mutex key was cleaned up after failure');
+
+    // Call 2 retry succeeds without being blocked by prior failed in-flight promise
+    const retryResult = await flakySubmissionHandler(false);
+    assert.strictEqual(retryResult.success, true, 'Retry succeeded after previous failure');
+    assert.strictEqual(callCount, 2);
   });
 
   test('Repeat submission on already-submitted attempt hits idempotency guard with zero writes', async () => {
