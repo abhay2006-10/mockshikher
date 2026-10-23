@@ -87,7 +87,12 @@ export default function ExamDetailPage() {
     }
   }, [slug]);
 
-  const exam = examData || baseExam;
+  const rawExam = examData || baseExam;
+  const exam = {
+    ...rawExam,
+    price: (rawExam.price === 199 || !rawExam.price) ? 149 : rawExam.price,
+    originalPrice: rawExam.originalPrice || 499,
+  };
 
   // Free mock is always placed first with prominent FREE tag
   const sortedTests = React.useMemo(() => {

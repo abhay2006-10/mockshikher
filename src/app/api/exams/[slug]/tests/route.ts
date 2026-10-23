@@ -50,6 +50,15 @@ export async function GET(
       return NextResponse.json({ error: 'Exam not found' }, { status: 404 });
     }
 
+    // Auto-migrate legacy 199 price in DB to 149
+    if (exam.price === 199) {
+      await prisma.exam.update({
+        where: { id: exam.id },
+        data: { price: 149 },
+      }).catch(() => {});
+      exam.price = 149;
+    }
+
     // Query tests for this exam from PostgreSQL
     // Unpublished tests are hidden from students (Requirement 3)
     const mockTests = await prisma.mockTest.findMany({
@@ -169,7 +178,7 @@ export async function GET(
         slug: exam.slug,
         description: exam.description,
         category: exam.category,
-        price: exam.price,
+        price: (exam.price === 199 || !exam.price) ? 149 : exam.price,
         durationMinutes: exam.durationMinutes,
         totalQuestions: exam.totalQuestions,
         negativeMarking: exam.negativeMarking,

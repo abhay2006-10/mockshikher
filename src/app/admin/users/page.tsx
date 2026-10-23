@@ -688,7 +688,7 @@ export default function AdminStudentActivityPage() {
                               color: '#34D399',
                             }}
                           >
-                            ₹{pur.payment?.amount || pur.exam?.price || 149} PAID
+                            ₹{pur.payment?.amount || ((pur.exam?.price === 199 || !pur.exam?.price) ? 149 : pur.exam?.price)} PAID
                           </span>
                         </div>
                       </div>

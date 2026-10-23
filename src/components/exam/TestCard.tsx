@@ -133,9 +133,10 @@ export function TestCard({
             fullWidth
             onClick={onUnlockClick}
           >
-            {examPrice
-              ? `Unlock ${totalMocks ? `All ${totalMocks} Mocks` : 'Full Series'} for ₹${examPrice}`
-              : 'Unlock Full Series'}
+            {(() => {
+              const displayPrice = (examPrice === 199 || !examPrice) ? 149 : examPrice;
+              return `Unlock ${totalMocks ? `All ${totalMocks} Mocks` : 'Full Series'} for ₹${displayPrice}`;
+            })()}
           </Button>
         )}
       </div>

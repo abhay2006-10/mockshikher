@@ -294,7 +294,7 @@ function TestResultContent() {
             <span>Targeting Selection?</span>
           </div>
           <h3 className={styles.upgradeTitle}>
-            Unlock {result.examTotalMocks ? `All ${result.examTotalMocks}` : 'All'} Full-Length {result.examName || 'Mock'} Tests for Just ₹{result.examPrice || 149}
+            Unlock {result.examTotalMocks ? `All ${result.examTotalMocks}` : 'All'} Full-Length {result.examName || 'Mock'} Tests for Just ₹{(result.examPrice === 199 || !result.examPrice) ? 149 : result.examPrice}
           </h3>
           <p className={styles.upgradeDesc}>
             Don&apos;t stop with 1 test. Practice the remaining simulation mocks, access your
@@ -304,7 +304,7 @@ function TestResultContent() {
 
         <Link href={result.examSlug ? `/exams/${result.examSlug}` : '/exams'} className={styles.upgradeLink}>
           <Button variant="accent" size="lg" leftIcon={<Zap size={18} />}>
-            Unlock Full Series • ₹{result.examPrice || 149}
+            Unlock Full Series • ₹{(result.examPrice === 199 || !result.examPrice) ? 149 : result.examPrice}
           </Button>
         </Link>
       </section>

@@ -14,6 +14,12 @@ export const metadata: Metadata = {
 
 async function getExamsPageData() {
   try {
+    // Migrate any legacy 199 price rows in PostgreSQL to 149
+    await prisma.exam.updateMany({
+      where: { price: 199 },
+      data: { price: 149 },
+    }).catch(() => {});
+
     const [dbExams, archivedExams] = await Promise.all([
       prisma.exam.findMany({
         where: { isArchived: false },
@@ -101,8 +107,8 @@ async function getExamsPageData() {
         totalQuestions: db.totalQuestions,
         durationMinutes: db.durationMinutes,
         difficulty: (db.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || 'MEDIUM',
-        price: db.price,
-        originalPrice: staticExam?.originalPrice ?? db.price * 3,
+        price: (db.price === 199 || !db.price) ? 149 : db.price,
+        originalPrice: staticExam?.originalPrice ?? 499,
         isPopular: db.isPopular,
         category: db.category || config.category,
         totalMocks: publishedTests.length,
@@ -141,8 +147,8 @@ async function getExamsPageData() {
               totalQuestions: db.totalQuestions,
               durationMinutes: db.durationMinutes,
               difficulty: (db.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || 'MEDIUM',
-              price: db.price,
-              originalPrice: db.price * 3,
+              price: (db.price === 199 || !db.price) ? 149 : db.price,
+              originalPrice: 499,
               isPopular: db.isPopular,
               category: db.category || 'General',
               totalMocks: publishedTests.length,

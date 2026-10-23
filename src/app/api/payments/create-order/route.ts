@@ -70,7 +70,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const basePrice = Math.max(1, Number(dbExam.price) || 149);
+    let examPrice = Number(dbExam.price) || 149;
+    if (examPrice === 199) {
+      examPrice = 149;
+      await prisma.exam.update({
+        where: { id: dbExam.id },
+        data: { price: 149 },
+      }).catch(() => {});
+    }
+    const basePrice = Math.max(1, examPrice);
 
     // 4. Duplicate protection: Prevent re-purchasing an already unlocked exam
     const existingPurchase = await prisma.purchase.findUnique({

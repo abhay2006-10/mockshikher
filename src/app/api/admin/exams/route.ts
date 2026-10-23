@@ -10,6 +10,11 @@ export async function GET() {
   if (authRes instanceof NextResponse) return authRes;
 
   try {
+    await prisma.exam.updateMany({
+      where: { price: 199 },
+      data: { price: 149 },
+    }).catch(() => {});
+
     const exams = await prisma.exam.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
@@ -39,7 +44,12 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ exams });
+    const normalizedExams = exams.map((exam) => ({
+      ...exam,
+      price: (exam.price === 199 || !exam.price) ? 149 : exam.price,
+    }));
+
+    return NextResponse.json({ exams: normalizedExams });
   } catch (error: any) {
     console.error('Error fetching admin exams:', error);
     return NextResponse.json(
