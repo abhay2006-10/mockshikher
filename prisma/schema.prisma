@@ -143,7 +143,7 @@ model Exam {
   totalQuestions   Int
   durationMinutes Int
   difficulty      Difficulty
-  price           Float      @default(199)
+  price           Float      @default(149)
   isPopular       Boolean    @default(false)
   category        String     @default("HP Exams")
   negativeMarking Float      @default(0.25)
