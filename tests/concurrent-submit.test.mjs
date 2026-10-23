@@ -243,4 +243,313 @@ describe('Mock Test Submission Concurrency, Idempotency & Timeout Regression Tes
     assert.strictEqual(attemptState.status, 'SUBMITTED');
     assert.strictEqual(userAnswersTable.length, 1);
   });
+
+  // =========================================================================
+  // UNIT SIMULATIONS VS. PRODUCTION HANDLER:
+  // The tests below are isolated unit simulations testing the asynchronous
+  // state machine, per-request closure scoping, and error-telemetry capture.
+  // They do NOT execute against a live Next.js HTTP server or real PostgreSQL
+  // instance. Production behavior must be verified via deployment server logs.
+  // =========================================================================
+
+  test('Transaction error correctly captures lastActiveStep and diagnostic timing telemetry (Simulation)', async () => {
+    async function simulateInstrumentedTransaction(failStep, options = {}) {
+      const reqStart = performance.now();
+      let currentTxStep = 'pre_transaction';
+      let stepStartMs = reqStart;
+      let tTxStart = 0;
+      let tUpdateMs = 0;
+      let tDeleteAnswersMs = 0;
+      let deletedAnswersCount = 0;
+      let tCreateAnswersMs = 0;
+      let createdAnswersCount = 0;
+      let tMistakesMs = 0;
+      let mistakesInsertedCount = 0;
+      let tBookmarksMs = 0;
+      let bookmarksInsertedCount = 0;
+      let capturedDiagnostic = null;
+
+      try {
+        // Acquisition phase
+        tTxStart = performance.now();
+        currentTxStep = 'tx_acquisition';
+        stepStartMs = tTxStart;
+
+        if (failStep === 'tx_acquisition') {
+          await new Promise((r) => setTimeout(r, 15));
+          throw new Error('Connection pool timeout (maxWait reached)');
+        }
+
+        // Simulated prisma.$transaction wrapper: executes callback, then executes commit
+        async function simulatePrismaTransaction(callback) {
+          const result = await callback();
+          // After callback resolves successfully, Prisma attempts to COMMIT the transaction on Postgres
+          if (failStep === 'commit_duplicate') {
+            await new Promise((r) => setTimeout(r, 10));
+            throw new Error('Prisma transaction commit failed on duplicate attempt branch');
+          }
+          if (failStep === 'commit_normal') {
+            await new Promise((r) => setTimeout(r, 10));
+            throw new Error('Prisma transaction commit failed on normal submission branch');
+          }
+          return result;
+        }
+
+        const txResult = await simulatePrismaTransaction(async () => {
+          // Inside callback
+          currentTxStep = 'tx_entered';
+          stepStartMs = performance.now();
+
+          // Step 1: update_attempt_status
+          currentTxStep = 'update_attempt_status';
+          stepStartMs = performance.now();
+          if (failStep === 'update_attempt_status') {
+            await new Promise((r) => setTimeout(r, 15));
+            throw new Error('Lock timeout during updateMany');
+          }
+          await new Promise((r) => setTimeout(r, 10));
+          tUpdateMs = parseFloat((performance.now() - stepStartMs).toFixed(2));
+
+          // Step 2: Concurrency collision check
+          if (options.isDuplicate) {
+            currentTxStep = 'find_committed_attempt';
+            stepStartMs = performance.now();
+            if (failStep === 'find_committed_attempt') {
+              await new Promise((r) => setTimeout(r, 10));
+              throw new Error('Error querying committed attempt');
+            }
+            await new Promise((r) => setTimeout(r, 10));
+
+            // Immediately before returning duplicate result
+            currentTxStep = 'tx_committing';
+            stepStartMs = performance.now();
+            return { isDuplicate: true };
+          }
+
+          // Step 3: Delete existing answers
+          if (options.hasExistingAnswers) {
+            currentTxStep = 'delete_existing_answers';
+            stepStartMs = performance.now();
+            if (failStep === 'delete_existing_answers') {
+              throw new Error('Lock timeout during deleteMany');
+            }
+            await new Promise((r) => setTimeout(r, 10));
+            tDeleteAnswersMs = parseFloat((performance.now() - stepStartMs).toFixed(2));
+            deletedAnswersCount = 5;
+          }
+
+          // Step 4: Create user answers
+          currentTxStep = 'create_user_answers';
+          stepStartMs = performance.now();
+          if (failStep === 'create_user_answers') {
+            throw new Error('Transaction expired at createMany');
+          }
+          await new Promise((r) => setTimeout(r, 10));
+          tCreateAnswersMs = parseFloat((performance.now() - stepStartMs).toFixed(2));
+          createdAnswersCount = 10;
+
+          // Commit phase setup for normal submission branch
+          currentTxStep = 'tx_committing';
+          stepStartMs = performance.now();
+          return { isDuplicate: false };
+        });
+
+        currentTxStep = 'tx_committed';
+        return txResult;
+      } catch (err) {
+        const activeStepElapsedMs = parseFloat((performance.now() - stepStartMs).toFixed(2));
+        const txElapsedMs = tTxStart > 0 ? parseFloat((performance.now() - tTxStart).toFixed(2)) : 0;
+        capturedDiagnostic = {
+          lastActiveStep: currentTxStep,
+          activeStepElapsedMs,
+          txElapsedMs,
+          operationTimings: {
+            tUpdateMs,
+            tDeleteAnswersMs,
+            tCreateAnswersMs,
+            tMistakesMs,
+            tBookmarksMs,
+          },
+          operationCounts: {
+            deletedAnswersCount,
+            createdAnswersCount,
+            mistakesInsertedCount,
+            bookmarksInsertedCount,
+          },
+        };
+        throw Object.assign(err, { diagnostic: capturedDiagnostic });
+      }
+    }
+
+    // 1. Failure during tx_acquisition (executes once)
+    let diagAcq = null;
+    let acqError = null;
+    try {
+      await simulateInstrumentedTransaction('tx_acquisition');
+    } catch (e) {
+      acqError = e;
+      diagAcq = e.diagnostic;
+    }
+    assert.ok(acqError, 'Acquisition error was thrown');
+    assert.match(acqError.message, /Connection pool timeout/);
+    assert.ok(diagAcq, 'Acquisition diagnostic was captured');
+    assert.strictEqual(diagAcq.lastActiveStep, 'tx_acquisition');
+    assert.ok(diagAcq.activeStepElapsedMs >= 10);
+    assert.ok(diagAcq.txElapsedMs >= 10);
+    // Asserts exact default production timing shapes
+    assert.strictEqual(diagAcq.operationTimings.tUpdateMs, 0);
+    assert.strictEqual(diagAcq.operationTimings.tDeleteAnswersMs, 0);
+    assert.strictEqual(diagAcq.operationTimings.tCreateAnswersMs, 0);
+    assert.strictEqual(diagAcq.operationTimings.tMistakesMs, 0);
+    assert.strictEqual(diagAcq.operationTimings.tBookmarksMs, 0);
+    assert.strictEqual(diagAcq.operationCounts.deletedAnswersCount, 0);
+    assert.strictEqual(diagAcq.operationCounts.createdAnswersCount, 0);
+    assert.strictEqual(diagAcq.operationCounts.mistakesInsertedCount, 0);
+    assert.strictEqual(diagAcq.operationCounts.bookmarksInsertedCount, 0);
+
+    // 2. Failure at create_user_answers (executes once)
+    let diagCreate = null;
+    let createError = null;
+    try {
+      await simulateInstrumentedTransaction('create_user_answers');
+    } catch (e) {
+      createError = e;
+      diagCreate = e.diagnostic;
+    }
+    assert.ok(createError, 'Create answers error was thrown');
+    assert.match(createError.message, /Transaction expired at createMany/);
+    assert.ok(diagCreate, 'Create answers diagnostic was captured');
+    assert.strictEqual(diagCreate.lastActiveStep, 'create_user_answers');
+    assert.ok(diagCreate.activeStepElapsedMs >= 0);
+    assert.ok(diagCreate.operationTimings.tUpdateMs >= 5);
+    assert.strictEqual(diagCreate.operationTimings.tCreateAnswersMs, 0); // Not completed
+    assert.strictEqual(diagCreate.operationCounts.createdAnswersCount, 0);
+
+    // 3. Commit failure on duplicate attempt path (simulates post-callback commit rejection)
+    let diagDupCommit = null;
+    let dupCommitError = null;
+    try {
+      await simulateInstrumentedTransaction('commit_duplicate', { isDuplicate: true });
+    } catch (e) {
+      dupCommitError = e;
+      diagDupCommit = e.diagnostic;
+    }
+    assert.ok(dupCommitError, 'Duplicate commit error was thrown');
+    assert.match(dupCommitError.message, /commit failed on duplicate attempt branch/i);
+    assert.ok(diagDupCommit, 'Duplicate commit diagnostic was captured');
+    assert.strictEqual(diagDupCommit.lastActiveStep, 'tx_committing');
+    assert.ok(diagDupCommit.activeStepElapsedMs >= 5);
+    assert.ok(diagDupCommit.operationTimings.tUpdateMs >= 5);
+    assert.strictEqual(diagDupCommit.operationTimings.tCreateAnswersMs, 0);
+    assert.strictEqual(diagDupCommit.operationCounts.createdAnswersCount, 0);
+  });
+
+  test('Diagnostic state is isolated across concurrent simulated submissions (Simulation)', async () => {
+    // Handler simulating request scope in route.ts
+    async function simulateSubmissionRequest(requestId, failStep) {
+      const reqStart = performance.now();
+      let currentTxStep = 'pre_transaction';
+      let stepStartMs = reqStart;
+      let tTxStart = 0;
+      let tUpdateMs = 0;
+      let tDeleteAnswersMs = 0;
+      let deletedAnswersCount = 0;
+      let tCreateAnswersMs = 0;
+      let createdAnswersCount = 0;
+      let tMistakesMs = 0;
+      let mistakesInsertedCount = 0;
+      let tBookmarksMs = 0;
+      let bookmarksInsertedCount = 0;
+
+      try {
+        tTxStart = performance.now();
+        currentTxStep = 'tx_acquisition';
+        stepStartMs = tTxStart;
+
+        if (failStep === 'tx_acquisition') {
+          await new Promise((r) => setTimeout(r, 20));
+          throw new Error(`[${requestId}] Acquisition timeout`);
+        }
+
+        currentTxStep = 'tx_entered';
+        stepStartMs = performance.now();
+
+        currentTxStep = 'update_attempt_status';
+        stepStartMs = performance.now();
+        if (failStep === 'update_attempt_status') {
+          await new Promise((r) => setTimeout(r, 25));
+          throw new Error(`[${requestId}] Failed at update`);
+        }
+        await new Promise((r) => setTimeout(r, 25));
+        tUpdateMs = parseFloat((performance.now() - stepStartMs).toFixed(2));
+
+        currentTxStep = 'create_user_answers';
+        stepStartMs = performance.now();
+        await new Promise((r) => setTimeout(r, 15));
+        if (failStep === 'create_user_answers') {
+          throw new Error(`[${requestId}] Failed at createMany`);
+        }
+        tCreateAnswersMs = parseFloat((performance.now() - stepStartMs).toFixed(2));
+        createdAnswersCount = 100;
+
+        currentTxStep = 'tx_committing';
+        stepStartMs = performance.now();
+        return { success: true };
+      } catch (err) {
+        const activeStepElapsedMs = parseFloat((performance.now() - stepStartMs).toFixed(2));
+        const txElapsedMs = tTxStart > 0 ? parseFloat((performance.now() - tTxStart).toFixed(2)) : 0;
+        return {
+          requestId,
+          lastActiveStep: currentTxStep,
+          activeStepElapsedMs,
+          txElapsedMs,
+          operationTimings: {
+            tUpdateMs,
+            tDeleteAnswersMs,
+            tCreateAnswersMs,
+            tMistakesMs,
+            tBookmarksMs,
+          },
+          operationCounts: {
+            deletedAnswersCount,
+            createdAnswersCount,
+            mistakesInsertedCount,
+            bookmarksInsertedCount,
+          },
+          error: err.message,
+        };
+      }
+    }
+
+    // Launch 3 distinct submissions concurrently with staggered failure points
+    const [result1, result2, result3] = await Promise.all([
+      simulateSubmissionRequest('req-1', 'tx_acquisition'),
+      simulateSubmissionRequest('req-2', 'update_attempt_status'),
+      simulateSubmissionRequest('req-3', 'create_user_answers'),
+    ]);
+
+    // Verify req-1 diagnostic isolation & default timing shapes
+    assert.strictEqual(result1.requestId, 'req-1');
+    assert.strictEqual(result1.lastActiveStep, 'tx_acquisition');
+    assert.ok(result1.activeStepElapsedMs >= 15);
+    assert.strictEqual(result1.operationTimings.tUpdateMs, 0);
+    assert.strictEqual(result1.operationTimings.tCreateAnswersMs, 0);
+    assert.strictEqual(result1.operationCounts.createdAnswersCount, 0);
+
+    // Verify req-2 diagnostic isolation & default timing shapes
+    assert.strictEqual(result2.requestId, 'req-2');
+    assert.strictEqual(result2.lastActiveStep, 'update_attempt_status');
+    assert.ok(result2.activeStepElapsedMs >= 20);
+    assert.strictEqual(result2.operationTimings.tUpdateMs, 0); // Failed during update
+    assert.strictEqual(result2.operationTimings.tCreateAnswersMs, 0);
+    assert.strictEqual(result2.operationCounts.createdAnswersCount, 0);
+
+    // Verify req-3 diagnostic isolation & default timing shapes
+    assert.strictEqual(result3.requestId, 'req-3');
+    assert.strictEqual(result3.lastActiveStep, 'create_user_answers');
+    assert.ok(result3.activeStepElapsedMs >= 10);
+    assert.ok(result3.operationTimings.tUpdateMs >= 20); // Completed update before failing at create
+    assert.strictEqual(result3.operationTimings.tCreateAnswersMs, 0);
+    assert.strictEqual(result3.operationCounts.createdAnswersCount, 0);
+  });
 });

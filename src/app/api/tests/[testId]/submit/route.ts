@@ -122,6 +122,22 @@ export async function POST(
   let resolveFlight: ((val: InFlightSubmissionResult) => void) | undefined;
   let rejectFlight: ((err: unknown) => void) | undefined;
 
+  let routeTestId = '';
+  let inputAttemptId = '';
+  let targetAttemptId = '';
+  let currentTxStep = 'pre_transaction';
+  let tTxStart = 0;
+  let stepStartMs = reqStart;
+  let tUpdateMs = 0;
+  let tDeleteAnswersMs = 0;
+  let deletedAnswersCount = 0;
+  let tCreateAnswersMs = 0;
+  let createdAnswersCount = 0;
+  let tMistakesMs = 0;
+  let mistakesInsertedCount = 0;
+  let tBookmarksMs = 0;
+  let bookmarksInsertedCount = 0;
+
   try {
     // 1. Authenticate student
     const tAuthStart = performance.now();
@@ -135,6 +151,7 @@ export async function POST(
     const tAuthMs = parseFloat((performance.now() - tAuthStart).toFixed(2));
 
     const { testId } = await context.params;
+    routeTestId = testId;
     const body = await req.json();
     const {
       attemptId: reqAttemptId,
@@ -143,6 +160,7 @@ export async function POST(
       isAutoSubmit = false,
       bookmarkedIds = [],
     } = body;
+    inputAttemptId = typeof reqAttemptId === 'string' ? reqAttemptId : '';
 
     // Diagnostic start log (Zero PII or tokens)
     console.log(
@@ -323,7 +341,7 @@ export async function POST(
       })) as AttemptRecord;
     }
 
-    const targetAttemptId = attempt.id;
+    targetAttemptId = attempt.id;
 
     // 5. IN-FLIGHT MUTEX GUARD: Deduplicate concurrent requests for the exact same attempt in this Node process
     const existingFlight = inFlightSubmissions.get(targetAttemptId);
@@ -467,7 +485,9 @@ export async function POST(
           }))
       : [];
 
-    const tTxStart = performance.now();
+    tTxStart = performance.now();
+    currentTxStep = 'tx_acquisition';
+    stepStartMs = tTxStart;
     console.log(
       JSON.stringify({
         level: 'info',
@@ -483,20 +503,14 @@ export async function POST(
       })
     );
 
-    let tUpdateMs = 0;
-    let tDeleteAnswersMs = 0;
-    let deletedAnswersCount = 0;
-    let tCreateAnswersMs = 0;
-    let createdAnswersCount = 0;
-    let tMistakesMs = 0;
-    let mistakesInsertedCount = 0;
-    let tBookmarksMs = 0;
-    let bookmarksInsertedCount = 0;
-
     const txResult = await prisma.$transaction(
       async (tx) => {
+        currentTxStep = 'tx_entered';
+        stepStartMs = performance.now();
+
         // 1. Atomic state transition: Only update if status is still IN_PROGRESS
-        const tOp1 = performance.now();
+        currentTxStep = 'update_attempt_status';
+        stepStartMs = performance.now();
         const updateResult = await tx.testAttempt.updateMany({
           where: {
             id: targetAttemptId,
@@ -515,54 +529,64 @@ export async function POST(
             timeTakenSeconds: timeTaken,
           },
         });
-        tUpdateMs = parseFloat((performance.now() - tOp1).toFixed(2));
+        tUpdateMs = parseFloat((performance.now() - stepStartMs).toFixed(2));
 
         // 2. Concurrency collision check: If another transaction already committed this attempt
         if (updateResult.count === 0) {
+          currentTxStep = 'find_committed_attempt';
+          stepStartMs = performance.now();
           const committedAttempt = (await tx.testAttempt.findUnique({
             where: { id: targetAttemptId },
             select: attemptSelectFields,
           })) as AttemptRecord | null;
+          currentTxStep = 'tx_committing';
+          stepStartMs = performance.now();
           return { isDuplicate: true, committedAttempt };
         }
 
         // 3. Atomically persist answers: Delete only if draft answers previously existed
         if (hasExistingAnswers) {
-          const tOp2 = performance.now();
+          currentTxStep = 'delete_existing_answers';
+          stepStartMs = performance.now();
           const delRes = await tx.userAnswer.deleteMany({
             where: { attemptId: targetAttemptId },
           });
-          tDeleteAnswersMs = parseFloat((performance.now() - tOp2).toFixed(2));
+          tDeleteAnswersMs = parseFloat((performance.now() - stepStartMs).toFixed(2));
           deletedAnswersCount = delRes.count;
         }
 
-        const tOp3 = performance.now();
+        currentTxStep = 'create_user_answers';
+        stepStartMs = performance.now();
         const createRes = await tx.userAnswer.createMany({
           data: userAnswersData,
         });
-        tCreateAnswersMs = parseFloat((performance.now() - tOp3).toFixed(2));
+        tCreateAnswersMs = parseFloat((performance.now() - stepStartMs).toFixed(2));
         createdAnswersCount = createRes.count;
 
         if (mistakesData.length > 0) {
-          const tOp4 = performance.now();
+          currentTxStep = 'insert_mistakes';
+          stepStartMs = performance.now();
           const mRes = await tx.mistakeBook.createMany({
             data: mistakesData,
             skipDuplicates: true,
           });
-          tMistakesMs = parseFloat((performance.now() - tOp4).toFixed(2));
+          tMistakesMs = parseFloat((performance.now() - stepStartMs).toFixed(2));
           mistakesInsertedCount = mRes.count;
         }
 
         if (validBookmarks.length > 0) {
-          const tOp5 = performance.now();
+          currentTxStep = 'insert_bookmarks';
+          stepStartMs = performance.now();
           const bRes = await tx.bookmark.createMany({
             data: validBookmarks,
             skipDuplicates: true,
           });
-          tBookmarksMs = parseFloat((performance.now() - tOp5).toFixed(2));
+          tBookmarksMs = parseFloat((performance.now() - stepStartMs).toFixed(2));
           bookmarksInsertedCount = bRes.count;
         }
 
+        currentTxStep = 'tx_committing';
+        stepStartMs = performance.now();
         return { isDuplicate: false, committedAttempt: null };
       },
       {
@@ -574,6 +598,7 @@ export async function POST(
     );
 
     const tTxMs = parseFloat((performance.now() - tTxStart).toFixed(2));
+    currentTxStep = 'tx_committed';
     console.log(
       JSON.stringify({
         level: 'info',
@@ -685,14 +710,36 @@ export async function POST(
       rejectFlight(err);
     }
     const totalElapsedMs = parseFloat((performance.now() - reqStart).toFixed(2));
+    const txElapsedMs = tTxStart > 0 ? parseFloat((performance.now() - tTxStart).toFixed(2)) : 0;
+    const activeStepElapsedMs = stepStartMs > 0 ? parseFloat((performance.now() - stepStartMs).toFixed(2)) : 0;
     const errorMessage = err instanceof Error ? err.message : 'Unknown submission error';
     console.error(
       JSON.stringify({
         level: 'error',
         type: 'SUBMISSION_ERROR',
         correlationId,
+        testId: routeTestId || 'unknown',
+        attemptId: targetAttemptId || inputAttemptId || 'unspecified',
         error: errorMessage,
         elapsedMs: totalElapsedMs,
+        diagnostic: {
+          lastActiveStep: currentTxStep,
+          activeStepElapsedMs,
+          txElapsedMs,
+          operationTimings: {
+            tUpdateMs,
+            tDeleteAnswersMs,
+            tCreateAnswersMs,
+            tMistakesMs,
+            tBookmarksMs,
+          },
+          operationCounts: {
+            deletedAnswersCount,
+            createdAnswersCount,
+            mistakesInsertedCount,
+            bookmarksInsertedCount,
+          },
+        },
       })
     );
     return NextResponse.json(
