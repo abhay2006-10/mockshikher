@@ -344,6 +344,18 @@ describe('Mock Test Submission Concurrency, Idempotency & Timeout Regression Tes
           if (failStep === 'create_user_answers') {
             throw new Error('Transaction expired at createMany');
           }
+          if (failStep === 'create_user_answers_lock_timeout') {
+            const err = new Error('canceling statement due to lock timeout');
+            err.code = 'P2010';
+            err.meta = { code: '55P03' };
+            throw err;
+          }
+          if (failStep === 'create_user_answers_statement_timeout') {
+            const err = new Error('canceling statement due to statement timeout');
+            err.code = 'P2010';
+            err.meta = { code: '57014' };
+            throw err;
+          }
           await new Promise((r) => setTimeout(r, 10));
           tCreateAnswersMs = parseFloat((performance.now() - stepStartMs).toFixed(2));
           createdAnswersCount = 10;
@@ -359,10 +371,32 @@ describe('Mock Test Submission Concurrency, Idempotency & Timeout Regression Tes
       } catch (err) {
         const activeStepElapsedMs = parseFloat((performance.now() - stepStartMs).toFixed(2));
         const txElapsedMs = tTxStart > 0 ? parseFloat((performance.now() - tTxStart).toFixed(2)) : 0;
+        const errorMessage = err instanceof Error ? err.message : 'Unknown submission error';
+
+        let dbErrorCode;
+        let prismaErrorCode;
+        if (typeof err === 'object' && err !== null) {
+          if (typeof err.code === 'string') prismaErrorCode = err.code;
+          if (typeof err.meta === 'object' && err.meta !== null) {
+            if (typeof err.meta.code === 'string') dbErrorCode = err.meta.code;
+            else if (typeof err.meta.db_error_code === 'string') dbErrorCode = err.meta.db_error_code;
+          }
+        }
+        const isLockTimeout = errorMessage.includes('55P03') || errorMessage.toLowerCase().includes('lock timeout');
+        const isStatementTimeout = errorMessage.includes('57014') || errorMessage.toLowerCase().includes('statement timeout');
+        if (!dbErrorCode) {
+          if (isLockTimeout) dbErrorCode = '55P03';
+          else if (isStatementTimeout) dbErrorCode = '57014';
+        }
+
         capturedDiagnostic = {
           lastActiveStep: currentTxStep,
           activeStepElapsedMs,
           txElapsedMs,
+          prismaErrorCode,
+          dbErrorCode,
+          isLockTimeout,
+          isStatementTimeout,
           operationTimings: {
             tUpdateMs,
             tDeleteAnswersMs,
@@ -407,7 +441,7 @@ describe('Mock Test Submission Concurrency, Idempotency & Timeout Regression Tes
     assert.strictEqual(diagAcq.operationCounts.mistakesInsertedCount, 0);
     assert.strictEqual(diagAcq.operationCounts.bookmarksInsertedCount, 0);
 
-    // 2. Failure at create_user_answers (executes once)
+    // 2. Failure at create_user_answers with generic transaction expiration (executes once)
     let diagCreate = null;
     let createError = null;
     try {
@@ -425,7 +459,43 @@ describe('Mock Test Submission Concurrency, Idempotency & Timeout Regression Tes
     assert.strictEqual(diagCreate.operationTimings.tCreateAnswersMs, 0); // Not completed
     assert.strictEqual(diagCreate.operationCounts.createdAnswersCount, 0);
 
-    // 3. Commit failure on duplicate attempt path (simulates post-callback commit rejection)
+    // 3. PostgreSQL lock_timeout (55P03) during create_user_answers
+    let diagLock = null;
+    let lockError = null;
+    try {
+      await simulateInstrumentedTransaction('create_user_answers_lock_timeout');
+    } catch (e) {
+      lockError = e;
+      diagLock = e.diagnostic;
+    }
+    assert.ok(lockError, 'Lock timeout error was thrown');
+    assert.match(lockError.message, /lock timeout/);
+    assert.ok(diagLock, 'Lock diagnostic was captured');
+    assert.strictEqual(diagLock.lastActiveStep, 'create_user_answers');
+    assert.strictEqual(diagLock.prismaErrorCode, 'P2010');
+    assert.strictEqual(diagLock.dbErrorCode, '55P03');
+    assert.strictEqual(diagLock.isLockTimeout, true);
+    assert.strictEqual(diagLock.isStatementTimeout, false);
+
+    // 4. PostgreSQL statement_timeout (57014) during create_user_answers
+    let diagStmt = null;
+    let stmtError = null;
+    try {
+      await simulateInstrumentedTransaction('create_user_answers_statement_timeout');
+    } catch (e) {
+      stmtError = e;
+      diagStmt = e.diagnostic;
+    }
+    assert.ok(stmtError, 'Statement timeout error was thrown');
+    assert.match(stmtError.message, /statement timeout/);
+    assert.ok(diagStmt, 'Statement timeout diagnostic was captured');
+    assert.strictEqual(diagStmt.lastActiveStep, 'create_user_answers');
+    assert.strictEqual(diagStmt.prismaErrorCode, 'P2010');
+    assert.strictEqual(diagStmt.dbErrorCode, '57014');
+    assert.strictEqual(diagStmt.isLockTimeout, false);
+    assert.strictEqual(diagStmt.isStatementTimeout, true);
+
+    // 5. Commit failure on duplicate attempt path (simulates post-callback commit rejection)
     let diagDupCommit = null;
     let dupCommitError = null;
     try {

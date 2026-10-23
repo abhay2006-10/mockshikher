@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   Phone,
   Tag,
+  Users,
   Menu,
   X,
 } from 'lucide-react';
@@ -25,6 +26,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navItems = [
     { label: 'Overview', href: '/admin', icon: <LayoutDashboard size={18} />, exact: true },
+    { label: 'Student Activity', href: '/admin/users', icon: <Users size={18} />, exact: false },
     { label: 'Exams & Tests', href: '/admin/exams', icon: <BookOpen size={18} />, exact: false },
     { label: 'Question Bank', href: '/admin/questions', icon: <Layers size={18} />, exact: false },
     { label: 'Promo Codes', href: '/admin/promo-codes', icon: <Tag size={18} />, exact: false },

@@ -102,6 +102,14 @@ export default async function AdminPage() {
 
   const actions = [
     {
+      title: 'Student Activity & Records',
+      description: 'Track which mock tests students attempted, view real scores, accuracy percentages, and inspect purchased exam packs.',
+      href: '/admin/users',
+      label: 'View Student Activity →',
+      icon: <Users size={26} />,
+      color: '#38BDF8',
+    },
+    {
       title: 'Exams & Mock Tests',
       description: 'Manage exam series, test scoring, duration overrides, add tests 1-10, and configure subjects/topics per exam.',
       href: '/admin/exams',

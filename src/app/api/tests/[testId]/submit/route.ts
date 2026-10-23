@@ -508,6 +508,13 @@ export async function POST(
         currentTxStep = 'tx_entered';
         stepStartMs = performance.now();
 
+        // Transaction-local PostgreSQL diagnostic limits:
+        // lock_timeout (5s): fails fast with 55P03 if waiting for a table/row lock
+        // statement_timeout (15s): fails fast with 57014 if individual statement execution stalls
+        // Parameter settings automatically revert on COMMIT or ROLLBACK in PostgreSQL
+        await tx.$executeRawUnsafe(`SET LOCAL lock_timeout = '5s';`);
+        await tx.$executeRawUnsafe(`SET LOCAL statement_timeout = '15s';`);
+
         // 1. Atomic state transition: Only update if status is still IN_PROGRESS
         currentTxStep = 'update_attempt_status';
         stepStartMs = performance.now();
@@ -713,6 +720,30 @@ export async function POST(
     const txElapsedMs = tTxStart > 0 ? parseFloat((performance.now() - tTxStart).toFixed(2)) : 0;
     const activeStepElapsedMs = stepStartMs > 0 ? parseFloat((performance.now() - stepStartMs).toFixed(2)) : 0;
     const errorMessage = err instanceof Error ? err.message : 'Unknown submission error';
+
+    let dbErrorCode: string | undefined;
+    let prismaErrorCode: string | undefined;
+    if (typeof err === 'object' && err !== null) {
+      const errObj = err as Record<string, unknown>;
+      if (typeof errObj.code === 'string') {
+        prismaErrorCode = errObj.code;
+      }
+      if (typeof errObj.meta === 'object' && errObj.meta !== null) {
+        const meta = errObj.meta as Record<string, unknown>;
+        if (typeof meta.code === 'string') {
+          dbErrorCode = meta.code;
+        } else if (typeof meta.db_error_code === 'string') {
+          dbErrorCode = meta.db_error_code;
+        }
+      }
+    }
+    const isLockTimeout = errorMessage.includes('55P03') || errorMessage.toLowerCase().includes('lock timeout');
+    const isStatementTimeout = errorMessage.includes('57014') || errorMessage.toLowerCase().includes('statement timeout');
+    if (!dbErrorCode) {
+      if (isLockTimeout) dbErrorCode = '55P03';
+      else if (isStatementTimeout) dbErrorCode = '57014';
+    }
+
     console.error(
       JSON.stringify({
         level: 'error',
@@ -726,6 +757,10 @@ export async function POST(
           lastActiveStep: currentTxStep,
           activeStepElapsedMs,
           txElapsedMs,
+          prismaErrorCode,
+          dbErrorCode,
+          isLockTimeout,
+          isStatementTimeout,
           operationTimings: {
             tUpdateMs,
             tDeleteAnswersMs,
