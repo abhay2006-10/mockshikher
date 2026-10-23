@@ -1,5 +1,12 @@
 import { auth } from '@/lib/auth';
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
+
+function getRedirectUrl(path: string, req: NextRequest | any): URL {
+  const forwardedHost = req.headers.get('x-forwarded-host') || req.headers.get('host');
+  const forwardedProto = req.headers.get('x-forwarded-proto') || (forwardedHost?.includes('localhost') ? 'http' : 'https');
+  const base = forwardedHost ? `${forwardedProto}://${forwardedHost}` : (process.env.NEXTAUTH_URL || 'https://mockshikhar.com');
+  return new URL(path, base);
+}
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
@@ -10,9 +17,9 @@ export default auth((req) => {
   if (pathname === '/auth/login' || pathname === '/auth/signup') {
     if (isLoggedIn) {
       if (userRole === 'ADMIN') {
-        return NextResponse.redirect(new URL('/admin', req.url));
+        return NextResponse.redirect(getRedirectUrl('/admin', req));
       }
-      return NextResponse.redirect(new URL('/dashboard', req.url));
+      return NextResponse.redirect(getRedirectUrl('/dashboard', req));
     }
     return NextResponse.next();
   }
@@ -30,12 +37,12 @@ export default auth((req) => {
   // Protect admin UI routes
   if (pathname.startsWith('/admin')) {
     if (!isLoggedIn) {
-      const loginUrl = new URL('/auth/login', req.url);
+      const loginUrl = getRedirectUrl('/auth/login', req);
       loginUrl.searchParams.set('callbackUrl', pathname);
       return NextResponse.redirect(loginUrl);
     }
     if (userRole !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
+      return NextResponse.redirect(getRedirectUrl('/dashboard', req));
     }
   }
 
@@ -46,7 +53,7 @@ export default auth((req) => {
     pathname.startsWith('/bookmarks')
   ) {
     if (!isLoggedIn) {
-      const loginUrl = new URL('/auth/login', req.url);
+      const loginUrl = getRedirectUrl('/auth/login', req);
       loginUrl.searchParams.set('callbackUrl', pathname);
       return NextResponse.redirect(loginUrl);
     }
@@ -55,7 +62,7 @@ export default auth((req) => {
   // Protect test taking
   if (pathname.match(/^\/test\/[^/]+\/attempt/)) {
     if (!isLoggedIn) {
-      const loginUrl = new URL('/auth/login', req.url);
+      const loginUrl = getRedirectUrl('/auth/login', req);
       loginUrl.searchParams.set('callbackUrl', pathname);
       return NextResponse.redirect(loginUrl);
     }
