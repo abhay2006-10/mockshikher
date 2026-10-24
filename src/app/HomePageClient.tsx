@@ -346,6 +346,10 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
               <span>Himachal Pradesh State Examination Preparation</span>
             </div>
 
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(16, 185, 129, 0.18) 100%)', border: '1px solid rgba(245, 158, 11, 0.5)', color: '#FCD34D', fontSize: '0.78rem', fontWeight: 800, padding: '0.28rem 0.75rem', borderRadius: '999px', width: 'fit-content', letterSpacing: '0.03em' }}>
+              <span>⚡ LIMITED TIME LAUNCH OFFER: Full Series Just ₹1 (was ₹149)</span>
+            </div>
+
             <h1 className={styles.heroHeading}>
               Crack Himachal Pradesh Government Exams{' '}
               <span className={styles.heroHeadingHighlight}>Practice Smarter with Realistic Mock Tests.</span>
@@ -766,10 +770,13 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
       <section className={styles.sectionBlock} id="series-catalog">
         <div className={styles.sectionHeaderRow}>
           <div className={styles.sectionHeaderCol}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(239, 68, 68, 0.15) 100%)', border: '1px solid rgba(245, 158, 11, 0.45)', color: '#FCD34D', fontSize: '0.75rem', fontWeight: 800, padding: '0.25rem 0.65rem', borderRadius: '999px', width: 'fit-content', marginBottom: '0.5rem', letterSpacing: '0.03em' }}>
+              <span>⚡ LIMITED TIME LAUNCH OFFER — ₹1 ONLY (WAS ₹149)</span>
+            </div>
             <div className={styles.sectionPreTitle}>Targeted HP Examinations</div>
             <h2 className={styles.sectionMainHeading}>Select Your Test Series</h2>
             <p className={styles.sectionDescription}>
-              Includes 1 Free Full Mock, syllabus-aligned questions, and detailed bilingual solutions.
+              Includes 1 Free Full Mock, syllabus-aligned questions, and complete test series unlock for just ₹1 for a limited time.
             </p>
           </div>
           <div className={styles.sectionActionsRow}>

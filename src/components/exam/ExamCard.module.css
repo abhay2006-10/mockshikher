@@ -116,15 +116,69 @@
   margin-top: auto;
 }
 
-.priceLine {
-  font-family: var(--font-heading);
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #FBBF24;
-  letter-spacing: 0.01em;
-  display: flex;
+.offerBadge {
+  display: inline-flex;
   align-items: center;
+  gap: 0.35rem;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(239, 68, 68, 0.15) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #FCD34D;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  width: fit-content;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.fireIcon {
+  font-size: 0.8rem;
+}
+
+.priceLine {
+  display: flex;
+  align-items: baseline;
   justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.priceWrap {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.currentPrice {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #10B981;
+  letter-spacing: -0.02em;
+}
+
+.originalPrice {
+  font-size: 0.85rem;
+  color: #94A3B8;
+  text-decoration: line-through;
+  font-weight: 600;
+}
+
+.discountBadge {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.validityText {
+  font-size: 0.75rem;
+  color: #94A3B8;
+  font-weight: 600;
 }
 
 .buttonRow {

@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
         if (dbExam) {
           const amountInRupees = paymentEntity?.amount
             ? paymentEntity.amount / 100
-            : existingPayment?.amount || ((dbExam.price === 199 || !dbExam.price) ? 149 : dbExam.price);
+            : existingPayment?.amount || ((dbExam.price === 199 || dbExam.price === 149 || !dbExam.price) ? 1 : dbExam.price);
 
           await prisma.$transaction(async (tx) => {
             const updatedPayment = await tx.payment.upsert({

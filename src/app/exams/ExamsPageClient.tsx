@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
-import { Search, Filter, BookOpen } from 'lucide-react';
+import { Search, Filter, BookOpen, Flame } from 'lucide-react';
 import ExamCard from '@/components/exam/ExamCard';
 import ComingSoonExamCard from '@/components/exam/ComingSoonExamCard';
 import Input from '@/components/ui/Input';
@@ -105,6 +105,29 @@ export default function ExamsPageClient({ initialExams, categories }: ExamsPageC
           </div>
         </div>
       </header>
+
+      {/* Limited Time Launch Offer Banner */}
+      <div className={styles.launchBanner}>
+        <div className={styles.launchBannerLeft}>
+          <div className={styles.launchBadgePill}>
+            <Flame size={14} className={styles.launchFlameIcon} />
+            <span>LIMITED TIME LAUNCH OFFER</span>
+          </div>
+          <h2 className={styles.launchTitle}>
+            All Mock Test Series for Just <span className={styles.launchPriceHighlight}>₹1</span> <span className={styles.launchOldPrice}>₹149</span>
+          </h2>
+          <p className={styles.launchSubtitle}>
+            Special introductory launch price for all candidates. Get full access to 10 bilingual mock tests, step-by-step solutions, and personal Mistake Book for 1 full year.
+          </p>
+        </div>
+        <div className={styles.launchBannerRight}>
+          <div className={styles.launchCountdownBox}>
+            <span className={styles.countdownTitle}>⚡ Special Offer Status</span>
+            <span className={styles.countdownStatus}>LIVE NOW • 99% DISCOUNT</span>
+            <span className={styles.countdownNote}>Valid for limited time</span>
+          </div>
+        </div>
+      </div>
 
       {/* Exam Cards Grid */}
       {filteredExams.length > 0 ? (

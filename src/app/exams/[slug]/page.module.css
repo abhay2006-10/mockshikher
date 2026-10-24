@@ -23,6 +23,59 @@
   color: var(--color-primary-600);
 }
 
+.launchAlertBar {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(239, 68, 68, 0.1) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: var(--radius-xl);
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  box-shadow: 0 4px 20px -5px rgba(245, 158, 11, 0.25);
+}
+
+.launchAlertContent {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.launchFireTag {
+  background: rgba(245, 158, 11, 0.25);
+  color: #FCD34D;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  letter-spacing: 0.03em;
+}
+
+.launchAlertText {
+  font-size: 0.88rem;
+  color: #F8FAFC;
+}
+
+.launchOldPriceInline {
+  color: #94A3B8;
+  text-decoration: line-through;
+  margin-left: 0.2rem;
+}
+
+.launchOfferPill {
+  background: #10B981;
+  color: #064E3B;
+  font-size: 0.75rem;
+  font-weight: 900;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
 .examBanner {
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);

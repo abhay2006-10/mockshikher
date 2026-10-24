@@ -278,7 +278,7 @@ async function seed() {
       totalQuestions: 90,
       durationMinutes: 60,
       difficulty: 'MEDIUM',
-      price: 149,
+      price: 1,
       isPopular: true,
       category: 'Police Exams',
     },
@@ -286,7 +286,7 @@ async function seed() {
 
   await prisma.exam.upsert({
     where: { slug: 'hp-patwari' },
-    update: {},
+    update: { price: 1 },
     create: {
       id: 'exam-hp-patwari',
       name: 'HP Patwari Examination',
@@ -295,7 +295,7 @@ async function seed() {
       totalQuestions: 100,
       durationMinutes: 90,
       difficulty: 'MEDIUM',
-      price: 149,
+      price: 1,
       category: 'Revenue',
     },
   });

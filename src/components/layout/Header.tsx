@@ -143,6 +143,19 @@ export default function Header({ initialUser, user: legacyUser }: HeaderProps) {
   return (
     <>
       <header className={styles.header}>
+        {/* Limited Time Launch Offer Top Banner */}
+        <div className={styles.topAnnouncementBar}>
+          <div className={styles.topAnnouncementContent}>
+            <span className={styles.announcementTag}>🚀 LAUNCH OFFER</span>
+            <span className={styles.announcementText}>
+              All Mock Test Series for Just <strong>₹1</strong> <span className={styles.announcementStrike}>₹149</span> — Limited Time Only!
+            </span>
+            <Link href="/exams" className={styles.announcementLink}>
+              Unlock For ₹1 →
+            </Link>
+          </div>
+        </div>
+
         <div className={styles.headerInner}>
           {/* Logo */}
           <Link href="/" className={styles.logo} aria-label="MockShikhar Home">

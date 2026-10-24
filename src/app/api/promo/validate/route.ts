@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const rawCode = body.code ? String(body.code).trim().toUpperCase() : '';
-    const basePrice = Number(body.basePrice) || 149;
+    const basePrice = Number(body.basePrice) || 1;
 
     if (!rawCode) {
       return NextResponse.json(
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     }
 
     const discount = Math.min(basePrice, promo.discount);
-    const finalPrice = Math.max(0, basePrice - discount);
+    const finalPrice = Math.max(1, basePrice - discount);
 
     return NextResponse.json({
       valid: true,

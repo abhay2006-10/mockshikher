@@ -191,7 +191,7 @@ interface QuestionResultItem {
       examId: attempt.mockTest.examId,
       examName: examData?.name || 'HP Competitive Exam',
       examSlug: examData?.slug || 'hp-patwari',
-      examPrice: (examData?.price === 199 || !examData?.price) ? 149 : examData.price,
+      examPrice: (examData?.price === 199 || examData?.price === 149 || !examData?.price) ? 1 : examData.price,
       examTotalMocks: examData?.totalMocks || 10,
       startedAt: attempt.startedAt.toISOString(),
       submittedAt: attempt.submittedAt?.toISOString() || attempt.startedAt.toISOString(),

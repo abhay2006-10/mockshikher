@@ -134,8 +134,8 @@ export function TestCard({
             onClick={onUnlockClick}
           >
             {(() => {
-              const displayPrice = (examPrice === 199 || !examPrice) ? 149 : examPrice;
-              return `Unlock ${totalMocks ? `All ${totalMocks} Mocks` : 'Full Series'} for ₹${displayPrice}`;
+              const displayPrice = (examPrice === 199 || examPrice === 149 || !examPrice) ? 1 : examPrice;
+              return `Unlock ${totalMocks ? `All ${totalMocks} Mocks` : 'Full Series'} for ₹${displayPrice} (Launch Offer)`;
             })()}
           </Button>
         )}

@@ -70,12 +70,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let examPrice = Number(dbExam.price) || 149;
-    if (examPrice === 199) {
-      examPrice = 149;
+    let examPrice = Number(dbExam.price) || 1;
+    if (examPrice === 199 || examPrice === 149) {
+      examPrice = 1;
       await prisma.exam.update({
         where: { id: dbExam.id },
-        data: { price: 149 },
+        data: { price: 1 },
       }).catch(() => {});
     }
     const basePrice = Math.max(1, examPrice);

@@ -246,7 +246,7 @@ export async function GET(
         isFree: mockTest.isFree,
         examSlug: mockTest.exam?.slug || '',
         examName: mockTest.exam?.name || '',
-        examPrice: (mockTest.exam?.price === 199 || !mockTest.exam?.price) ? 149 : mockTest.exam?.price,
+        examPrice: (mockTest.exam?.price === 199 || mockTest.exam?.price === 149 || !mockTest.exam?.price) ? 1 : mockTest.exam?.price,
         totalQuestions: studentQuestions.length,
         durationMinutes: mockTest.durationMinutes || 60,
         totalMarks: mockTest.totalMarks || studentQuestions.reduce((sum, q) => sum + q.marks, 0),

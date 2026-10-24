@@ -17,6 +17,65 @@
   transition: all 0.25s ease;
 }
 
+/* Launch Offer Top Announcement Bar */
+.topAnnouncementBar {
+  background: linear-gradient(90deg, #B45309 0%, #D97706 35%, #059669 100%);
+  color: #FFFFFF;
+  padding: 0.4rem var(--space-4);
+  font-size: 0.78rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.topAnnouncementContent {
+  max-width: var(--container-xl);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  text-align: center;
+}
+
+.announcementTag {
+  background: rgba(0, 0, 0, 0.25);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 800;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.announcementText {
+  font-weight: 600;
+}
+
+.announcementStrike {
+  text-decoration: line-through;
+  opacity: 0.8;
+  margin-left: 0.15rem;
+}
+
+.announcementLink {
+  background: #FFFFFF;
+  color: #0F172A !important;
+  font-weight: 800;
+  font-size: 0.72rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.announcementLink:hover {
+  background: #FEF3C7;
+  transform: scale(1.04);
+}
+
 .headerInner {
   display: flex;
   align-items: center;

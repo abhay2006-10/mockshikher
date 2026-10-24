@@ -143,7 +143,7 @@ export default async function AdminPage() {
     },
     {
       title: 'Promo Codes & Discounts',
-      description: 'Generate, edit, enable/disable promo codes and configure discount amounts across all exams (e.g. ₹51 off for ₹149 price).',
+      description: 'Generate, edit, enable/disable promo codes and configure discount amounts across all exams (e.g. for ₹1 launch offer).',
       href: '/admin/promo-codes',
       label: 'Manage Promo Codes →',
       icon: <Tag size={26} />,

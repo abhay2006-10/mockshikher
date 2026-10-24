@@ -14,10 +14,10 @@ export const metadata: Metadata = {
 
 async function getExamsPageData() {
   try {
-    // Migrate any legacy 199 price rows in PostgreSQL to 149
+    // Migrate any legacy price rows in PostgreSQL to 1
     await prisma.exam.updateMany({
-      where: { price: 199 },
-      data: { price: 149 },
+      where: { price: { in: [149, 199] } },
+      data: { price: 1 },
     }).catch(() => {});
 
     const [dbExams, archivedExams] = await Promise.all([
@@ -107,8 +107,8 @@ async function getExamsPageData() {
         totalQuestions: db.totalQuestions,
         durationMinutes: db.durationMinutes,
         difficulty: (db.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || 'MEDIUM',
-        price: (db.price === 199 || !db.price) ? 149 : db.price,
-        originalPrice: staticExam?.originalPrice ?? 499,
+        price: (db.price === 199 || db.price === 149 || !db.price) ? 1 : db.price,
+        originalPrice: 149,
         isPopular: db.isPopular,
         category: db.category || config.category,
         totalMocks: publishedTests.length,
@@ -147,8 +147,8 @@ async function getExamsPageData() {
               totalQuestions: db.totalQuestions,
               durationMinutes: db.durationMinutes,
               difficulty: (db.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || 'MEDIUM',
-              price: (db.price === 199 || !db.price) ? 149 : db.price,
-              originalPrice: 499,
+              price: (db.price === 199 || db.price === 149 || !db.price) ? 1 : db.price,
+              originalPrice: 149,
               isPopular: db.isPopular,
               category: db.category || 'General',
               totalMocks: publishedTests.length,

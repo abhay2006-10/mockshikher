@@ -234,7 +234,7 @@ export default function AdminPromoCodesPage() {
             Promo Codes &amp; Discounts
           </h1>
           <p className={styles.pageSubtitle}>
-            Create and manage promotional discount codes across all exam test series. Baseline test series price is ₹149; e.g. ₹50 discount gives ₹99 price.
+            Create and manage promotional discount codes across all exam test series. Current test series price is ₹1 for the Limited Time Launch Offer (regular ₹149).
           </p>
         </div>
 
@@ -368,7 +368,7 @@ export default function AdminPromoCodesPage() {
             <tr>
               <th>Promo Code</th>
               <th>Discount Amount</th>
-              <th>Effective Price (₹149 Base)</th>
+              <th>Effective Price (₹1 Offer)</th>
               <th>Status</th>
               <th>Usage Count</th>
               <th>Created</th>
@@ -390,7 +390,7 @@ export default function AdminPromoCodesPage() {
               </tr>
             ) : (
               filtered.map((item) => {
-                const effectivePrice = Math.max(0, 149 - item.discount);
+                const effectivePrice = Math.max(1, 1 - item.discount);
                 return (
                   <tr key={item.id}>
                     <td>
@@ -422,7 +422,7 @@ export default function AdminPromoCodesPage() {
                         <span style={{ textDecoration: 'line-through', color: 'var(--color-text-tertiary)', fontSize: '0.85rem' }}>
                           ₹149
                         </span>
-                        <strong style={{ color: '#F5B301', fontSize: '0.95rem' }}>
+                        <strong style={{ color: '#10B981', fontSize: '0.95rem' }}>
                           ₹{effectivePrice}
                         </strong>
                       </div>
@@ -582,7 +582,7 @@ export default function AdminPromoCodesPage() {
               required
             />
             <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem', display: 'block' }}>
-              With ₹149 test series price, ₹50 discount gives final promotional price of ₹99.
+              Current test series price is ₹1 (Limited Time Launch Offer, regular ₹149).
             </span>
           </div>
 

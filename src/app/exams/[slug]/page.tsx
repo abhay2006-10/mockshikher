@@ -55,9 +55,9 @@ export default function ExamDetailPage() {
   const [promoError, setPromoError] = useState<string | null>(null);
   const [isCheckingPromo, setIsCheckingPromo] = useState(false);
 
-  // Baseline price is ₹149 for all eligible exams
-  const basePrice = 149;
-  const payablePrice = appliedPromo ? appliedPromo.finalPrice : basePrice;
+  // Baseline price is ₹1 for all eligible exams (Limited Time Launch Offer)
+  const basePrice = 1;
+  const payablePrice = appliedPromo ? Math.max(1, appliedPromo.finalPrice) : basePrice;
 
   const baseExam = POPULAR_EXAMS.find((e) => e.slug === slug) || POPULAR_EXAMS[0];
   const [examData, setExamData] = useState<any>(null);
@@ -90,8 +90,8 @@ export default function ExamDetailPage() {
   const rawExam = examData || baseExam;
   const exam = {
     ...rawExam,
-    price: (rawExam.price === 199 || !rawExam.price) ? 149 : rawExam.price,
-    originalPrice: rawExam.originalPrice || 499,
+    price: (rawExam.price === 199 || rawExam.price === 149 || !rawExam.price) ? 1 : rawExam.price,
+    originalPrice: 149,
   };
 
   // Free mock is always placed first with prominent FREE tag
@@ -317,6 +317,17 @@ export default function ExamDetailPage() {
         <span>Back to All Exams</span>
       </Link>
 
+      {/* Launch Offer Alert Bar */}
+      <div className={styles.launchAlertBar}>
+        <div className={styles.launchAlertContent}>
+          <span className={styles.launchFireTag}>🔥 LIMITED TIME LAUNCH OFFER</span>
+          <span className={styles.launchAlertText}>
+            Special Launch Price: Get all mock tests in this series for just <strong>₹1</strong> <span className={styles.launchOldPriceInline}>(Regular ₹149)</span>! Offer valid for a limited time.
+          </span>
+        </div>
+        <span className={styles.launchOfferPill}>99% OFF • ₹1 ONLY</span>
+      </div>
+
       {/* Exam Hero Banner */}
       <header className={styles.examBanner}>
         <div className={styles.bannerInfo}>
@@ -374,17 +385,17 @@ export default function ExamDetailPage() {
 
         {/* Pricing Card */}
         <div className={styles.pricingCard}>
-          <div className={styles.pricingBadge}>Special Launch Price</div>
+          <div className={styles.pricingBadge}>🔥 Limited Time Launch Offer</div>
           <div className={styles.priceRow}>
-            <span className={styles.price}>₹{exam.price || 149}</span>
-            <span className={styles.origPrice}>₹{exam.originalPrice || 299}</span>
+            <span className={styles.price}>₹{exam.price || 1}</span>
+            <span className={styles.origPrice}>₹{exam.originalPrice || 149}</span>
             <span className={styles.discount}>
-              {Math.max(10, Math.round((((exam.originalPrice || 299) - (exam.price || 149)) / (exam.originalPrice || 299)) * 100))}% OFF
+              99% OFF
             </span>
           </div>
-          <p className={styles.pricingGuarantee}>One-time payment • Valid for 1 full year</p>
+          <p className={styles.pricingGuarantee}>Special Launch Offer • Valid for 1 full year</p>
           <p style={{ fontSize: '0.85rem', color: '#10B981', fontWeight: 600, margin: '0.35rem 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span>🏷️</span> Get more discount with promo code
+            <span>⚡</span> Limited time launch offer for all students
           </p>
 
           <div className={styles.includedList}>
@@ -419,7 +430,7 @@ export default function ExamDetailPage() {
               leftIcon={<Zap size={18} />}
               onClick={handleBuyClick}
             >
-              Buy Test Series • ₹{exam.price || 149}
+              Buy Test Series • ₹{exam.price || 1} (Launch Offer)
             </Button>
           )}
         </div>
@@ -540,16 +551,17 @@ export default function ExamDetailPage() {
           <div className={styles.modalExamHeader}>
             <h3 className={styles.modalExamTitle}>{exam.name}</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {appliedPromo && (
-                <span style={{ textDecoration: 'line-through', color: 'var(--color-text-muted)', fontSize: '0.95rem' }}>
-                  ₹{basePrice}
-                </span>
-              )}
+              <span style={{ textDecoration: 'line-through', color: 'var(--color-text-muted)', fontSize: '0.95rem' }}>
+                ₹{exam.originalPrice || 149}
+              </span>
               <div className={styles.modalPricePill}>₹{payablePrice}</div>
             </div>
           </div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.35)', color: '#FCD34D', fontSize: '0.75rem', fontWeight: 800, padding: '0.2rem 0.55rem', borderRadius: '6px', marginBottom: '0.65rem' }}>
+            <span>⚡ Limited Time Launch Offer (₹1 Only)</span>
+          </div>
           <p className={styles.modalSubtext}>
-            Get immediate access to all 10 full-length tests, detailed solutions, and personal Mistake Book.
+            Get immediate access to all 10 full-length tests, detailed solutions, and personal Mistake Book for 1 full year.
           </p>
 
           {/* Promo Code Box */}
@@ -675,7 +687,7 @@ export default function ExamDetailPage() {
               isLoading={isProcessingPayment}
               onClick={handleExecutePurchase}
             >
-              Pay ₹{payablePrice} &amp; Unlock All 10 Mocks
+              Pay ₹{payablePrice} &amp; Unlock Full Test Series (Launch Offer)
             </Button>
             <p className={styles.modalSecurityNote}>
               🔒 Razorpay 256-Bit SSL Secured Payment

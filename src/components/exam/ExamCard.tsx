@@ -64,8 +64,18 @@ export function ExamCard({
       </div>
 
       <div className={styles.footer}>
+        <div className={styles.offerBadge}>
+          <span className={styles.fireIcon}>⚡</span>
+          <span>Limited Time Launch Offer</span>
+        </div>
+
         <div className={styles.priceLine}>
-          ₹{(exam.price === 199 || !exam.price) ? 149 : exam.price} • 1 Year Validity
+          <div className={styles.priceWrap}>
+            <span className={styles.currentPrice}>₹{(exam.price === 199 || exam.price === 149 || !exam.price) ? 1 : exam.price}</span>
+            <span className={styles.originalPrice}>₹{exam.originalPrice || 149}</span>
+            <span className={styles.discountBadge}>99% OFF</span>
+          </div>
+          <span className={styles.validityText}>1 Year Validity</span>
         </div>
 
         <div className={styles.buttonRow}>

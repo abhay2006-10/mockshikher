@@ -96,7 +96,7 @@ export default async function HomePage() {
           }))
         : staticExam?.subjects || [];
 
-    const price = (db.price === 199 || !db.price) ? 149 : db.price;
+    const price = (db.price === 199 || db.price === 149 || !db.price) ? 1 : db.price;
     const mockExam: MockExam = {
       id: db.id,
       name: db.name,
@@ -106,7 +106,7 @@ export default async function HomePage() {
       durationMinutes: db.durationMinutes,
       difficulty: db.difficulty as MockExam['difficulty'],
       price,
-      originalPrice: staticExam?.originalPrice ?? 499,
+      originalPrice: 149,
       isPopular: db.isPopular,
       category: config.category, // use config category label
       totalMocks: totalMocks > 0 ? totalMocks : staticExam?.totalMocks ?? 10,

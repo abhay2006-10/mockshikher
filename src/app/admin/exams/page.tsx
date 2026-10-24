@@ -114,7 +114,7 @@ export default function AdminExamsPage() {
   const [newDesc, setNewDesc] = useState('');
   const [newQuestions, setNewQuestions] = useState('90');
   const [newDuration, setNewDuration] = useState('60');
-  const [newPrice, setNewPrice] = useState('149');
+  const [newPrice, setNewPrice] = useState('1');
   const [newNegMark, setNewNegMark] = useState('0.25');
   const [newMarksPerQ, setNewMarksPerQ] = useState('1.0');
   const [isSubmittingAddExam, setIsSubmittingAddExam] = useState(false);
@@ -243,7 +243,7 @@ export default function AdminExamsPage() {
     setNewDesc('');
     setNewQuestions('90');
     setNewDuration('60');
-    setNewPrice('149');
+    setNewPrice('1');
     setNewNegMark('0.25');
     setNewMarksPerQ('1.0');
     setAddExamError('');
@@ -311,7 +311,7 @@ export default function AdminExamsPage() {
     setEditDesc(exam.description || '');
     setEditQuestions(String(exam.totalQuestions));
     setEditDuration(String(exam.durationMinutes));
-    setEditPrice(String(exam.price === 199 ? 149 : exam.price));
+    setEditPrice(String(exam.price === 199 || exam.price === 149 ? 1 : exam.price));
     setEditNegMark(String(exam.negativeMarking));
     setEditMarksPerQ(String(exam.marksPerQuestion));
     setEditArchived(exam.isArchived);
@@ -832,7 +832,7 @@ export default function AdminExamsPage() {
                         <span>{exam.durationMinutes} mins</span>
                       </td>
                       <td data-label="Price">
-                        <strong style={{ color: '#F5B301' }}>₹{(exam.price === 199 || !exam.price) ? 149 : exam.price}</strong>
+                        <strong style={{ color: '#10B981' }}>₹{(exam.price === 199 || exam.price === 149 || !exam.price) ? 1 : exam.price}</strong>
                       </td>
                       <td data-label="Default Marks">
                         <span style={{ fontSize: '0.8rem', color: '#38BDF8' }}>
