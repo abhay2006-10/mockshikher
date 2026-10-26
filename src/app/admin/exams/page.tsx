@@ -23,6 +23,9 @@ import {
   FolderPlus,
   FileSpreadsheet,
   Folder,
+  ArrowUp,
+  ArrowDown,
+  Pin,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -93,6 +96,7 @@ export default function AdminExamsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
 
   // Expanded exam ID for viewing mock tests & subjects
   const [expandedExamId, setExpandedExamId] = useState<string | null>(null);
@@ -204,6 +208,56 @@ export default function AdminExamsPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const saveNewOrder = async (orderedSlugs: string[], successMsg: string) => {
+    setIsSavingOrder(true);
+    try {
+      const res = await fetch('/api/admin/exams/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderedSlugs }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update order');
+      }
+      showToast(successMsg, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Error updating order', 'error');
+      fetchExams();
+    } finally {
+      setIsSavingOrder(false);
+    }
+  };
+
+  const handleReorderExam = async (index: number, direction: 'up' | 'down') => {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === exams.length - 1) return;
+
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    const newExams = [...exams];
+    const [moved] = newExams.splice(index, 1);
+    newExams.splice(targetIndex, 0, moved);
+
+    setExams(newExams);
+    await saveNewOrder(
+      newExams.map((e) => e.slug),
+      `Moved "${moved.name}" ${direction === 'up' ? 'higher' : 'lower'} to position #${targetIndex + 1}`
+    );
+  };
+
+  const handlePinExamToTop = async (index: number) => {
+    if (index === 0) return;
+    const newExams = [...exams];
+    const [moved] = newExams.splice(index, 1);
+    newExams.unshift(moved);
+
+    setExams(newExams);
+    await saveNewOrder(
+      newExams.map((e) => e.slug),
+      `Pinned "${moved.name}" to Top (#1 display position)`
+    );
   };
 
   const fetchSubjectsForExam = async (examId: string) => {
@@ -790,9 +844,37 @@ export default function AdminExamsPage() {
         </div>
       ) : (
         <div className={styles.adminTableWrapper}>
+          <div
+            style={{
+              marginBottom: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
+              padding: '0.85rem 1.25rem',
+              background: 'rgba(245, 179, 1, 0.08)',
+              border: '1px solid rgba(245, 179, 1, 0.25)',
+              borderRadius: '10px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Pin size={18} color="#F5B301" />
+              <span style={{ fontSize: '0.85rem', color: '#FCD34D' }}>
+                <strong>Display Priority:</strong> The order below directly controls how mock test bundles appear on the <strong>Homepage</strong> and <strong>/exams</strong>. Pin upcoming exams (HP Police Constable, Patwari) to #1 so students see them first.
+              </span>
+            </div>
+            {isSavingOrder && (
+              <span style={{ fontSize: '0.8rem', color: '#38BDF8', fontWeight: 600 }}>
+                Saving new order...
+              </span>
+            )}
+          </div>
+
           <table className={styles.adminTable}>
             <thead>
               <tr>
+                <th style={{ width: '120px', textAlign: 'center' }}>Display Order</th>
                 <th>Exam Series</th>
                 <th>Category</th>
                 <th>Questions</th>
@@ -805,7 +887,7 @@ export default function AdminExamsPage() {
               </tr>
             </thead>
             <tbody>
-              {exams.map((exam) => {
+              {exams.map((exam, index) => {
                 const isExpanded = expandedExamId === exam.id;
                 const testCount = exam.mockTests?.length ?? exam._count?.mockTests ?? 0;
                 const currentTab = examActiveTab[exam.id] || 'mocks';
@@ -814,6 +896,92 @@ export default function AdminExamsPage() {
                 return (
                   <React.Fragment key={exam.id}>
                     <tr>
+                      <td data-label="Display Order" style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                        <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}>
+                          <span
+                            style={{
+                              fontSize: '0.75rem',
+                              fontWeight: 800,
+                              padding: '0.15rem 0.5rem',
+                              borderRadius: '999px',
+                              background: index === 0 ? '#F5B301' : 'rgba(255, 255, 255, 0.08)',
+                              color: index === 0 ? '#0F172A' : '#94A3B8',
+                              letterSpacing: '0.5px',
+                            }}
+                          >
+                            {index === 0 ? '★ #1 TOP' : `#${index + 1}`}
+                          </span>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                            <button
+                              type="button"
+                              title="Move exam higher"
+                              disabled={index === 0 || isSavingOrder}
+                              onClick={() => handleReorderExam(index, 'up')}
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid var(--color-border)',
+                                color: index === 0 ? '#475569' : '#F5B301',
+                                cursor: index === 0 ? 'not-allowed' : 'pointer',
+                                padding: '0.2rem 0.35rem',
+                                borderRadius: '4px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.15s ease',
+                              }}
+                            >
+                              <ArrowUp size={13} />
+                            </button>
+
+                            <button
+                              type="button"
+                              title="Move exam lower"
+                              disabled={index === exams.length - 1 || isSavingOrder}
+                              onClick={() => handleReorderExam(index, 'down')}
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid var(--color-border)',
+                                color: index === exams.length - 1 ? '#475569' : '#94A3B8',
+                                cursor: index === exams.length - 1 ? 'not-allowed' : 'pointer',
+                                padding: '0.2rem 0.35rem',
+                                borderRadius: '4px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.15s ease',
+                              }}
+                            >
+                              <ArrowDown size={13} />
+                            </button>
+
+                            {index > 0 && (
+                              <button
+                                type="button"
+                                title="Pin to top (#1)"
+                                disabled={isSavingOrder}
+                                onClick={() => handlePinExamToTop(index)}
+                                style={{
+                                  background: 'rgba(245, 179, 1, 0.12)',
+                                  border: '1px solid rgba(245, 179, 1, 0.4)',
+                                  color: '#F5B301',
+                                  cursor: 'pointer',
+                                  padding: '0.2rem 0.4rem',
+                                  borderRadius: '4px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '0.65rem',
+                                  fontWeight: 800,
+                                  gap: '2px',
+                                }}
+                              >
+                                <Pin size={10} /> Top
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </td>
                       <td data-label="Exam Series">
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                           <strong style={{ color: '#fff', fontSize: '0.95rem' }}>{exam.name}</strong>
@@ -901,7 +1069,7 @@ export default function AdminExamsPage() {
                     {/* Expandable Mock Tests & Subjects Sub-panel */}
                     {isExpanded && (
                       <tr>
-                        <td colSpan={9} style={{ padding: '0', background: 'rgba(15, 23, 42, 0.45)' }}>
+                        <td colSpan={10} style={{ padding: '0', background: 'rgba(15, 23, 42, 0.45)' }}>
                           <div style={{ padding: '1.25rem', borderLeft: '3px solid #F5B301' }}>
                             {/* Inner Sub-navigation Tabs */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>

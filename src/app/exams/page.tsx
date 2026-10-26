@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { LANDING_EXAMS } from '@/lib/landing-exams';
 import { POPULAR_EXAMS, type MockExam } from '@/lib/mock-data';
+import { getCustomExamOrder, sortExamsByCustomOrder } from '@/lib/exam-order';
 import ExamsPageClient, { type ExamItem } from './ExamsPageClient';
 
 export const revalidate = 60;
@@ -166,12 +167,16 @@ async function getExamsPageData() {
       }
     });
 
+    const orderedSlugs = await getCustomExamOrder();
+    const sortedExams = sortExamsByCustomOrder(examsList, orderedSlugs);
+
     return {
-      exams: examsList,
+      exams: sortedExams,
       categories: ['All', ...Array.from(categoriesSet)],
     };
   } catch {
     // Graceful fallback
+    const orderedSlugs = await getCustomExamOrder().catch(() => []);
     const fallbackList: ExamItem[] = LANDING_EXAMS.map((c) => {
       if (c.slug === 'hp-police-constable') {
         const staticExam = POPULAR_EXAMS.find((e) => e.slug === c.slug) || POPULAR_EXAMS[0];
@@ -191,7 +196,7 @@ async function getExamsPageData() {
     });
 
     return {
-      exams: fallbackList,
+      exams: sortExamsByCustomOrder(fallbackList, orderedSlugs),
       categories: ['All', 'Police Exams', 'State Revenue', 'Forestry', 'Panchayat', 'Secretariat', 'Court Exams'],
     };
   }

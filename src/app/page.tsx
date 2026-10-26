@@ -4,6 +4,7 @@
 import { prisma } from '@/lib/prisma';
 import { LANDING_EXAMS } from '@/lib/landing-exams';
 import { POPULAR_EXAMS, type MockExam } from '@/lib/mock-data';
+import { getCustomExamOrder, sortExamsByCustomOrder } from '@/lib/exam-order';
 import HomePageClient from './HomePageClient';
 
 export const revalidate = 60;
@@ -117,6 +118,9 @@ export default async function HomePage() {
     return { isComingSoon: false as const, exam: mockExam };
   });
 
+  const orderedSlugs = await getCustomExamOrder();
+  const sortedLandingExams = sortExamsByCustomOrder(landingExams, orderedSlugs);
+
   const organizationJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -143,7 +147,7 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
       />
       <HomePageClient
-        landingExams={landingExams}
+        landingExams={sortedLandingExams}
         publishedExamCount={publishedExamCount}
         showGoogle={!!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)}
       />

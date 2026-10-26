@@ -133,6 +133,8 @@ export default function AdminStudentActivityPage() {
   const [availableExams, setAvailableExams] = useState<AvailableExam[]>([]);
   const [selectedExamToGrant, setSelectedExamToGrant] = useState<string>('');
   const [grantReason, setGrantReason] = useState<string>('');
+  const [grantPaymentId, setGrantPaymentId] = useState<string>('');
+  const [grantAmount, setGrantAmount] = useState<string>('');
   const [isGranting, setIsGranting] = useState<boolean>(false);
   const [grantSuccessMsg, setGrantSuccessMsg] = useState<string | null>(null);
   const [grantErrorMsg, setGrantErrorMsg] = useState<string | null>(null);
@@ -205,6 +207,8 @@ export default function AdminStudentActivityPage() {
           userId: selectedUser.id,
           examId: selectedExamToGrant,
           reason: grantReason.trim() || 'Admin manual access grant',
+          paymentId: grantPaymentId.trim() || undefined,
+          amount: grantAmount.trim() ? Number(grantAmount) : undefined,
         }),
       });
 
@@ -213,6 +217,8 @@ export default function AdminStudentActivityPage() {
         setGrantSuccessMsg(data.message || 'Access successfully granted!');
         setSelectedExamToGrant('');
         setGrantReason('');
+        setGrantPaymentId('');
+        setGrantAmount('');
         await fetchUsers();
       } else {
         setGrantErrorMsg(data.error || 'Failed to grant access');
@@ -276,6 +282,21 @@ export default function AdminStudentActivityPage() {
       month: 'short',
       year: 'numeric',
     });
+  };
+
+  const getWhatsAppUrl = (phoneStr: string | null) => {
+    if (!phoneStr) return '#';
+    let digits = phoneStr.replace(/\D/g, '');
+    if (digits.startsWith('0') && digits.length === 11) {
+      digits = digits.slice(1);
+    }
+    if (digits.startsWith('91') && digits.length === 12) {
+      return `https://wa.me/${digits}`;
+    }
+    if (digits.length === 10) {
+      return `https://wa.me/91${digits}`;
+    }
+    return `https://wa.me/${digits}`;
   };
 
   // Helper to determine the latest activity between test attempts and purchases
@@ -644,7 +665,7 @@ export default function AdminStudentActivityPage() {
                             <Phone size={11} color="#10B981" />
                             <span>{u.phone}</span>
                             <a
-                              href={`https://wa.me/91${u.phone.replace(/\D/g, '')}`}
+                              href={getWhatsAppUrl(u.phone)}
                               target="_blank"
                               rel="noopener noreferrer"
                               title="Chat on WhatsApp"
@@ -869,7 +890,7 @@ export default function AdminStudentActivityPage() {
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                       {selectedUser.phone}
                       <a
-                        href={`https://wa.me/91${selectedUser.phone.replace(/\D/g, '')}`}
+                        href={getWhatsAppUrl(selectedUser.phone)}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{ color: '#10B981', display: 'inline-flex', alignItems: 'center' }}
@@ -1092,55 +1113,91 @@ export default function AdminStudentActivityPage() {
                     </div>
                   )}
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '0.75rem', alignItems: 'center' }}>
-                    <select
-                      value={selectedExamToGrant}
-                      onChange={(e) => setSelectedExamToGrant(e.target.value)}
-                      style={{
-                        padding: '0.6rem 0.85rem',
-                        background: 'var(--color-bg-secondary)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: 'var(--radius-md)',
-                        color: 'var(--color-text-primary)',
-                        fontSize: '0.85rem',
-                        outline: 'none',
-                      }}
-                    >
-                      <option value="">-- Choose Exam Bundle to Unlock --</option>
-                      {availableExams.map((ex) => {
-                        const isAlreadyOwned = selectedUser.purchases.some((p) => p.exam.id === ex.id || p.exam.slug === ex.slug);
-                        return (
-                          <option key={ex.id} value={ex.id} disabled={isAlreadyOwned}>
-                            {ex.name} (₹{ex.price}) {isAlreadyOwned ? '— [ALREADY UNLOCKED]' : ''}
-                          </option>
-                        );
-                      })}
-                    </select>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
+                      <select
+                        value={selectedExamToGrant}
+                        onChange={(e) => setSelectedExamToGrant(e.target.value)}
+                        style={{
+                          padding: '0.6rem 0.85rem',
+                          background: 'var(--color-bg-secondary)',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: 'var(--radius-md)',
+                          color: 'var(--color-text-primary)',
+                          fontSize: '0.85rem',
+                          outline: 'none',
+                        }}
+                      >
+                        <option value="">-- Choose Exam Bundle to Unlock --</option>
+                        {availableExams.map((ex) => {
+                          const isAlreadyOwned = selectedUser.purchases.some((p) => p.exam.id === ex.id || p.exam.slug === ex.slug);
+                          return (
+                            <option key={ex.id} value={ex.id} disabled={isAlreadyOwned}>
+                              {ex.name} (₹{ex.price}) {isAlreadyOwned ? '— [ALREADY UNLOCKED]' : ''}
+                            </option>
+                          );
+                        })}
+                      </select>
 
-                    <input
-                      type="text"
-                      placeholder="Optional reason (e.g. Paid via GPay)"
-                      value={grantReason}
-                      onChange={(e) => setGrantReason(e.target.value)}
-                      style={{
-                        padding: '0.6rem 0.85rem',
-                        background: 'var(--color-bg-secondary)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: 'var(--radius-md)',
-                        color: 'var(--color-text-primary)',
-                        fontSize: '0.85rem',
-                        outline: 'none',
-                      }}
-                    />
+                      <input
+                        type="text"
+                        placeholder="Razorpay Payment ID (e.g. pay_Q...)"
+                        value={grantPaymentId}
+                        onChange={(e) => setGrantPaymentId(e.target.value)}
+                        style={{
+                          padding: '0.6rem 0.85rem',
+                          background: 'var(--color-bg-secondary)',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: 'var(--radius-md)',
+                          color: 'var(--color-text-primary)',
+                          fontSize: '0.85rem',
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
 
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      disabled={!selectedExamToGrant || isGranting}
-                      onClick={handleGrantAccess}
-                    >
-                      {isGranting ? 'Unlocking...' : 'Unlock Bundle'}
-                    </Button>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px auto', gap: '0.75rem', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        placeholder="Optional reason (e.g. Akanksha paid ₹1 on Razorpay)"
+                        value={grantReason}
+                        onChange={(e) => setGrantReason(e.target.value)}
+                        style={{
+                          padding: '0.6rem 0.85rem',
+                          background: 'var(--color-bg-secondary)',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: 'var(--radius-md)',
+                          color: 'var(--color-text-primary)',
+                          fontSize: '0.85rem',
+                          outline: 'none',
+                        }}
+                      />
+
+                      <input
+                        type="number"
+                        placeholder="₹ Amount"
+                        value={grantAmount}
+                        onChange={(e) => setGrantAmount(e.target.value)}
+                        style={{
+                          padding: '0.6rem 0.85rem',
+                          background: 'var(--color-bg-secondary)',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: 'var(--radius-md)',
+                          color: 'var(--color-text-primary)',
+                          fontSize: '0.85rem',
+                          outline: 'none',
+                        }}
+                      />
+
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        disabled={!selectedExamToGrant || isGranting}
+                        onClick={handleGrantAccess}
+                      >
+                        {isGranting ? 'Unlocking...' : 'Unlock Bundle'}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>

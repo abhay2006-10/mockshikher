@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
 import prisma from '@/lib/prisma';
 import { recordAuditLog } from '@/lib/audit';
+import { getCustomExamOrder, sortExamsByCustomOrder } from '@/lib/exam-order';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +50,10 @@ export async function GET() {
       price: (exam.price === 199 || exam.price === 149 || !exam.price) ? 1 : exam.price,
     }));
 
-    return NextResponse.json({ exams: normalizedExams });
+    const orderedSlugs = await getCustomExamOrder();
+    const sortedExams = sortExamsByCustomOrder(normalizedExams, orderedSlugs);
+
+    return NextResponse.json({ exams: sortedExams, orderedSlugs });
   } catch (error: any) {
     console.error('Error fetching admin exams:', error);
     return NextResponse.json(

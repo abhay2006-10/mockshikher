@@ -242,15 +242,6 @@ export default function ExamDetailPage() {
           modal: {
             ondismiss: function () {
               setIsProcessingPayment(false);
-              fetch('/api/payments/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  razorpay_order_id: data.orderId,
-                  status: 'FAILED',
-                  failureReason: 'Checkout dismissed by user',
-                }),
-              }).catch(() => {});
             },
           },
         };

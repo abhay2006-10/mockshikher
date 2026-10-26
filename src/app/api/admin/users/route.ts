@@ -238,15 +238,16 @@ export async function POST(req: NextRequest) {
         const payment = await tx.payment.create({
           data: {
             userId: targetUser.id,
-            amount: targetExam.price || 1,
+            amount: body.amount !== undefined ? Number(body.amount) : (targetExam.price || 1),
             currency: 'INR',
             status: 'PAID',
             source: 'CHECKOUT',
-            gatewayOrderId: `admin_manual_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-            gatewayPaymentId: `pay_manual_${Date.now()}`,
+            gatewayOrderId: body.orderId || `admin_manual_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+            gatewayPaymentId: (body.paymentId || '').trim() || `pay_manual_${Date.now()}`,
             gatewayResponse: {
               grantedBy: adminEmail,
               reason: reason || 'Manual grant from Admin Student Activity',
+              razorpayPaymentId: (body.paymentId || '').trim() || null,
             },
           },
         });
