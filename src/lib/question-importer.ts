@@ -241,6 +241,8 @@ export function validateImportRows(
     existingExams?: Set<string>;
     existingMockNumbers?: Map<string, Set<number>>;
     existingExamSubjects?: Map<string, Set<string>>;
+    targetExamSlug?: string;
+    targetMockNumber?: number;
   } = {}
 ): ValidationSummary {
   const results: RowValidationResult[] = [];
@@ -254,7 +256,11 @@ export function validateImportRows(
     existingExams,
     existingMockNumbers,
     existingExamSubjects,
+    targetExamSlug,
+    targetMockNumber,
   } = options;
+
+  const cleanTargetSlug = targetExamSlug ? targetExamSlug.toLowerCase().trim() : '';
 
   rows.forEach((row, index) => {
     const rowNumber = index + 2; // Accounting for 1-based index + header row
@@ -271,18 +277,47 @@ export function validateImportRows(
 
     // 1. Validate Exam
     const rawExam = (row.exam || '').toLowerCase().trim();
-    const cleanExamSlug = rawExam ? normalizeExamSlug(rawExam) : '';
+    let cleanExamSlug = '';
+
+    if (rawExam) {
+      cleanExamSlug = normalizeExamSlug(rawExam, cleanTargetSlug);
+    } else if (cleanTargetSlug) {
+      // If exam column is empty in CSV, adopt authoritative target
+      cleanExamSlug = cleanTargetSlug;
+    }
+
+    // Set row.exam to the resolved canonical exam slug for preview and DB writes
     row.exam = cleanExamSlug;
+
     if (!cleanExamSlug) {
-      addError('exam', 'Exam slug is required.');
+      addError('exam', 'Exam slug is required in CSV or must be selected as target.');
+    } else if (cleanTargetSlug && cleanExamSlug !== cleanTargetSlug) {
+      // Explicit target mismatch rejection
+      addError(
+        'exam',
+        `CSV exam '${rawExam}' (resolved as '${cleanExamSlug}') does not match selected target exam '${cleanTargetSlug}'. Please select the matching target exam or upload the correct CSV file.`
+      );
     } else if (existingExams && !existingExams.has(cleanExamSlug)) {
       addError('exam', `Exam slug "${cleanExamSlug}" does not exist in the database.`);
     }
 
     // 2. Validate Mock Test Number
-    const testNum = Number(row.mock_test_number);
+    let testNum = Number(row.mock_test_number);
+    if ((!row.mock_test_number || isNaN(testNum)) && targetMockNumber && targetMockNumber > 0) {
+      testNum = targetMockNumber;
+    }
+
+    if (!isNaN(testNum) && Number.isInteger(testNum) && testNum > 0) {
+      row.mock_test_number = testNum;
+    }
+
     if (!row.mock_test_number || isNaN(testNum) || testNum < 1 || !Number.isInteger(testNum)) {
       addError('mock_test_number', `mock_test_number must be a positive integer (received: '${row.mock_test_number}').`);
+    } else if (targetMockNumber && targetMockNumber > 0 && testNum !== targetMockNumber) {
+      addError(
+        'mock_test_number',
+        `CSV mock_test_number '${testNum}' does not match selected target Mock #${targetMockNumber}. Please select the matching target mock or upload the matching file.`
+      );
     } else if (
       !createMissingMockTests &&
       existingMockNumbers &&
@@ -318,9 +353,19 @@ export function validateImportRows(
     if (!optD) addError('option_d', 'Option D text is missing (English or Hindi required).');
 
     // 5. Validate Correct Answer
-    const correct = (row.correct_answer || '').toUpperCase().trim();
+    const rawAnswer = String(row.correct_answer || '').trim();
+    let correct = rawAnswer.toUpperCase();
+    const letterMatch = correct.match(/^[(\[]?([A-D])[)\]\.]?$/) || correct.match(/^OPTION\s*([A-D])$/);
+    if (letterMatch) {
+      correct = letterMatch[1];
+      row.correct_answer = correct;
+    }
+
     if (!['A', 'B', 'C', 'D'].includes(correct)) {
-      addError('correct_answer', `correct_answer must be one of 'A', 'B', 'C', or 'D' (received: '${row.correct_answer}').`);
+      addError(
+        'correct_answer',
+        `correct_answer must be one of 'A', 'B', 'C', or 'D' (received: '${rawAnswer || '<BLANK>'}').`
+      );
     }
 
     // 6. Validate Subject

@@ -54,5 +54,16 @@ mock-test-platform/
 
 # local agent tooling
 .agents/
+.agent/
+.gemini/
+.gsd/
 skills-lock.json
+GSD-STYLE.md
+PROJECT_RULES.md
+VERSION
+adapters/
+model_capabilities.yaml
+scripts/validate-*
+scripts/search_repo.*
+scripts/setup_search.*
 

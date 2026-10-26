@@ -62,7 +62,7 @@ export default function Footer() {
                 </a>
                 <span style={{ color: 'var(--color-border)' }}>•</span>
                 <a
-                  href="https://www.instagram.com/himshikhar8262?rpxt=enVjNzB0dmtqMjk%3D&utm_source=qr"
+                  href="https://www.instagram.com/mockshikhar?utm_source=ig_web_button_share_sheet&rpxt=ZDNlZDc0MzIxNw=="
                   target="_blank"
                   rel="noopener noreferrer"
                   className={styles.contactItem}

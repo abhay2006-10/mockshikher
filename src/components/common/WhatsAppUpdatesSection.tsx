@@ -8,7 +8,7 @@ interface WhatsAppUpdatesSectionProps {
 }
 
 const WHATSAPP_CHANNEL_URL = 'https://whatsapp.com/channel/0029Va5I0zx0VycNW93eqO2P';
-const INSTAGRAM_URL = 'https://www.instagram.com/himshikhar8262?rpxt=enVjNzB0dmtqMjk%3D&utm_source=qr';
+const INSTAGRAM_URL = 'https://www.instagram.com/mockshikhar?utm_source=ig_web_button_share_sheet&rpxt=ZDNlZDc0MzIxNw==';
 
 export default function WhatsAppUpdatesSection({
   className = '',

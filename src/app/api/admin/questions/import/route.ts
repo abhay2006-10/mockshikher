@@ -23,6 +23,9 @@ export async function POST(req: NextRequest) {
     const createMissingMockTests = formData.get('createMissingMockTests') === 'true' || formData.get('createMissingMockTests') === '1';
     const createMissingSubjects = formData.get('createMissingSubjects') === 'true' || formData.get('createMissingSubjects') === '1';
     const replaceAllQuestions = formData.get('replaceAllQuestions') === 'true' || formData.get('replaceAllQuestions') === '1';
+    const targetExamSlug = (formData.get('targetExamSlug') as string | null)?.trim() || undefined;
+    const targetMockNumberRaw = formData.get('targetMockNumber') as string | null;
+    const targetMockNumber = targetMockNumberRaw ? parseInt(targetMockNumberRaw, 10) : undefined;
     const rawRowsJson = formData.get('rows') as string | null;
 
     let rows: ImportRow[] = [];
@@ -69,13 +72,15 @@ export async function POST(req: NextRequest) {
       );
     });
 
-    // 2. Run deep validation
+    // 2. Run deep validation with authoritative target context
     const validation = validateImportRows(rows, new Set(), {
       createMissingMockTests,
       createMissingSubjects,
       existingExams,
       existingMockNumbers,
       existingExamSubjects,
+      targetExamSlug,
+      targetMockNumber: targetMockNumber && !isNaN(targetMockNumber) ? targetMockNumber : undefined,
     });
 
     // If PREVIEW MODE: return summary, row-level errors, preview rows
@@ -129,12 +134,11 @@ export async function POST(req: NextRequest) {
     let skippedCount = validation.invalidRows;
     const affectedMockTestIds = new Set<string>();
 
-    // 1. Group rows by Exam and Mock Test Number
+    // 1. Group rows by Exam and Mock Test Number (using validated canonical exam slug)
     const groupedByExamAndMock = new Map<string, ImportRow[]>();
     for (const row of validRowsToImport) {
-      const rawSlug = (row.exam || 'hp-patwari').toLowerCase().trim();
-      const examSlug = normalizeExamSlug(rawSlug);
-      const testNum = Number(row.mock_test_number) || 1;
+      const examSlug = row.exam;
+      const testNum = Number(row.mock_test_number) || (targetMockNumber || 1);
       const key = `${examSlug}:::${testNum}`;
       if (!groupedByExamAndMock.has(key)) {
         groupedByExamAndMock.set(key, []);
@@ -142,213 +146,253 @@ export async function POST(req: NextRequest) {
       groupedByExamAndMock.get(key)!.push(row);
     }
 
-    // 2. Process each Exam and Mock Test Group
-    for (const [key, groupRows] of groupedByExamAndMock.entries()) {
-      const [examSlug, testNumStr] = key.split(':::');
-      const testNum = parseInt(testNumStr, 10);
+    // 2. Process all groups inside an atomic Prisma transaction
+    const txResult = await prisma.$transaction(
+      async (tx) => {
+        let localCreated = 0;
+        let localUpdated = 0;
+        const localAffectedMockIds = new Set<string>();
 
-      // A. Resolve or create Exam
-      let exam = await prisma.exam.findUnique({
-        where: { slug: examSlug },
-      });
+        for (const [key, groupRows] of groupedByExamAndMock.entries()) {
+          const [examSlug, testNumStr] = key.split(':::');
+          const testNum = parseInt(testNumStr, 10);
 
-      if (!exam) {
-        return NextResponse.json(
-          { error: `Exam "${examSlug}" does not exist in the database.` },
-          { status: 400 }
-        );
-      }
+          // A. Resolve Exam
+          let exam = await tx.exam.findUnique({
+            where: { slug: examSlug },
+          });
 
-      // B. Resolve or create Mock Test
-      let mockTest = await prisma.mockTest.findUnique({
-        where: {
-          examId_testNumber: {
-            examId: exam.id,
-            testNumber: testNum,
-          },
-        },
-        include: {
-          _count: { select: { attempts: true } },
-        },
-      });
-
-      if (!mockTest) {
-        if (!createMissingMockTests) {
-          return NextResponse.json(
-            { error: `Mock Test #${testNum} for exam "${exam.name}" does not exist. Enable "Create missing mock tests" to auto-create.` },
-            { status: 400 }
-          );
-        }
-
-        mockTest = await prisma.mockTest.create({
-          data: {
-            examId: exam.id,
-            testNumber: testNum,
-            name: `${exam.name} Full Mock ${testNum}`,
-            isFree: testNum === 1,
-            isPublished: false,
-            totalQuestions: 0,
-            durationMinutes: exam.durationMinutes,
-            totalMarks: 0,
-            marksPerQuestion: exam.marksPerQuestion,
-            negativeMarksPerQuestion: exam.negativeMarking,
-          },
-          include: {
-            _count: { select: { attempts: true } },
-          },
-        });
-      }
-
-      affectedMockTestIds.add(mockTest.id);
-
-      // C. Check "Replace all questions" attempt protection
-      if (replaceAllQuestions) {
-        const studentAttempts = mockTest._count.attempts;
-        if (studentAttempts > 0) {
-          return NextResponse.json(
-            {
-              error: `Cannot replace all questions in Mock Test #${testNum} (${mockTest.name}): students have already submitted ${studentAttempts} attempt(s). Replacing questions would corrupt historical test scores.`,
-            },
-            { status: 400 }
-          );
-        }
-
-        // Safe to delete existing questions for this mock test
-        await prisma.question.deleteMany({
-          where: { mockTestId: mockTest.id },
-        });
-      }
-
-      // D. Cache subjects and topics for this exam
-      const dbSubjects = await prisma.subject.findMany({
-        where: { examId: exam.id },
-        include: { topics: true },
-      });
-      const subjectMap = new Map<string, any>();
-      dbSubjects.forEach((s) => subjectMap.set(s.name.toLowerCase().trim(), s));
-
-      // E. Process each question row in order within this mock test
-      for (let i = 0; i < groupRows.length; i++) {
-        const row = groupRows[i];
-        const questionNumber = i + 1;
-
-        // Resolve subject
-        const rawSubjectName = (row.subject || 'General Awareness').trim();
-        const subjectKey = rawSubjectName.toLowerCase();
-        let subject = subjectMap.get(subjectKey);
-
-        if (!subject) {
-          if (!createMissingSubjects) {
-            return NextResponse.json(
-              { error: `Subject "${rawSubjectName}" does not exist for exam "${exam.name}". Enable "Create missing subjects/topics" to auto-create.` },
-              { status: 400 }
-            );
+          if (!exam) {
+            throw new Error(`Exam "${examSlug}" does not exist in the database.`);
           }
 
-          subject = await prisma.subject.create({
-            data: {
-              examId: exam.id,
-              name: rawSubjectName,
-              nameHi: rawSubjectName,
+          // B. Resolve or create Mock Test
+          let mockTest = await tx.mockTest.findUnique({
+            where: {
+              examId_testNumber: {
+                examId: exam.id,
+                testNumber: testNum,
+              },
             },
+            include: {
+              _count: { select: { attempts: true } },
+            },
+          });
+
+          if (!mockTest) {
+            if (!createMissingMockTests) {
+              throw new Error(
+                `Mock Test #${testNum} for exam "${exam.name}" does not exist. Enable "Create missing mock tests" to auto-create.`
+              );
+            }
+
+            mockTest = await tx.mockTest.create({
+              data: {
+                examId: exam.id,
+                testNumber: testNum,
+                name: `${exam.name} Full Mock ${testNum}`,
+                isFree: testNum === 1,
+                isPublished: false,
+                totalQuestions: 0,
+                durationMinutes: exam.durationMinutes,
+                totalMarks: 0,
+                marksPerQuestion: exam.marksPerQuestion,
+                negativeMarksPerQuestion: exam.negativeMarking,
+              },
+              include: {
+                _count: { select: { attempts: true } },
+              },
+            });
+          }
+
+          localAffectedMockIds.add(mockTest.id);
+
+          // C. Check "Replace all questions" attempt protection
+          if (replaceAllQuestions) {
+            const studentAttempts = mockTest._count.attempts;
+            if (studentAttempts > 0) {
+              throw new Error(
+                `Cannot replace all questions in Mock Test #${testNum} (${mockTest.name}): students have already submitted ${studentAttempts} attempt(s). Replacing questions would corrupt historical test scores.`
+              );
+            }
+
+            // Safe to delete existing questions for this mock test
+            await tx.question.deleteMany({
+              where: { mockTestId: mockTest.id },
+            });
+          }
+
+          // D. Cache subjects and topics for this exam
+          const dbSubjects = await tx.subject.findMany({
+            where: { examId: exam.id },
             include: { topics: true },
           });
-          subjectMap.set(subjectKey, subject);
+          const subjectMap = new Map<string, any>();
+          dbSubjects.forEach((s) => subjectMap.set(s.name.toLowerCase().trim(), s));
+
+          // E. Fetch existing questions to prevent duplicates on retries
+          const existingQuestions = await tx.question.findMany({
+            where: { mockTestId: mockTest.id },
+            select: { id: true, questionNumber: true, questionText: true, questionTextHi: true },
+          });
+
+          const questionByNumber = new Map<number, typeof existingQuestions[0]>();
+          const questionByText = new Map<string, typeof existingQuestions[0]>();
+          let maxQNum = 0;
+
+          existingQuestions.forEach((q) => {
+            questionByNumber.set(q.questionNumber, q);
+            if (q.questionNumber > maxQNum) maxQNum = q.questionNumber;
+            const normText = (q.questionText || q.questionTextHi || '').toLowerCase().trim();
+            if (normText) questionByText.set(normText, q);
+          });
+
+          // F. Process each question row in order within this mock test
+          for (let i = 0; i < groupRows.length; i++) {
+            const row = groupRows[i];
+
+            // Resolve subject
+            const rawSubjectName = (row.subject || 'General Awareness').trim();
+            const subjectKey = rawSubjectName.toLowerCase();
+            let subject = subjectMap.get(subjectKey);
+
+            if (!subject) {
+              if (!createMissingSubjects) {
+                throw new Error(
+                  `Subject "${rawSubjectName}" does not exist for exam "${exam.name}". Enable "Create missing subjects/topics" to auto-create.`
+                );
+              }
+
+              subject = await tx.subject.create({
+                data: {
+                  examId: exam.id,
+                  name: rawSubjectName,
+                  nameHi: rawSubjectName,
+                },
+                include: { topics: true },
+              });
+              subjectMap.set(subjectKey, subject);
+            }
+
+            // Resolve topic
+            const rawTopicName = (row.topic || 'General').trim();
+            const topicKey = rawTopicName.toLowerCase();
+            let topic = (subject.topics || []).find((t: any) => t.name.toLowerCase().trim() === topicKey);
+
+            if (!topic) {
+              topic = await tx.topic.create({
+                data: {
+                  subjectId: subject.id,
+                  name: rawTopicName,
+                  nameHi: rawTopicName,
+                },
+              });
+              if (!subject.topics) subject.topics = [];
+              subject.topics.push(topic);
+            }
+
+            const qMarks = Number(row.marks) || 1.0;
+            const qNegMarks = Number(row.negative_marks) !== undefined ? Number(row.negative_marks) : 0.25;
+            const qCorrect = (row.correct_answer || 'A').toUpperCase().trim() as 'A' | 'B' | 'C' | 'D';
+            const qDifficulty = (row.difficulty || 'MEDIUM').toUpperCase().trim() as any;
+
+            const rowTextNorm = (row.question || row.hindi_question || '').toLowerCase().trim();
+
+            // Check if question already exists in this mock test by text or by target questionNumber
+            let targetQuestion = rowTextNorm ? questionByText.get(rowTextNorm) : null;
+            let questionNumber = targetQuestion ? targetQuestion.questionNumber : i + 1;
+
+            if (!targetQuestion && questionByNumber.has(questionNumber)) {
+              targetQuestion = questionByNumber.get(questionNumber) || null;
+            }
+
+            if (targetQuestion) {
+              // UPDATE EXISTING QUESTION (Idempotent, no duplicates on retries)
+              await tx.question.update({
+                where: { id: targetQuestion.id },
+                data: {
+                  subjectId: subject.id,
+                  topicId: topic.id,
+                  questionText: row.question || row.hindi_question || '',
+                  questionTextHi: row.hindi_question || row.question || '',
+                  correctOption: qCorrect,
+                  marks: qMarks,
+                  negativeMarks: qNegMarks,
+                  difficulty: qDifficulty,
+                  explanation: row.explanation || '',
+                  explanationHi: row.hindi_explanation || row.explanation || '',
+                  options: {
+                    deleteMany: {},
+                    create: [
+                      { optionLabel: 'A', optionText: row.option_a || '', optionTextHi: row.hindi_option_a || row.option_a || '' },
+                      { optionLabel: 'B', optionText: row.option_b || '', optionTextHi: row.hindi_option_b || row.option_b || '' },
+                      { optionLabel: 'C', optionText: row.option_c || '', optionTextHi: row.hindi_option_c || row.option_c || '' },
+                      { optionLabel: 'D', optionText: row.option_d || '', optionTextHi: row.hindi_option_d || row.option_d || '' },
+                    ],
+                  },
+                },
+              });
+              localUpdated++;
+            } else {
+              // Allocate questionNumber without colliding
+              if (questionByNumber.has(questionNumber)) {
+                maxQNum++;
+                questionNumber = maxQNum;
+              } else if (questionNumber > maxQNum) {
+                maxQNum = questionNumber;
+              }
+
+              const newQ = await tx.question.create({
+                data: {
+                  mockTestId: mockTest.id,
+                  subjectId: subject.id,
+                  topicId: topic.id,
+                  questionNumber,
+                  questionText: row.question || row.hindi_question || '',
+                  questionTextHi: row.hindi_question || row.question || '',
+                  correctOption: qCorrect,
+                  marks: qMarks,
+                  negativeMarks: qNegMarks,
+                  difficulty: qDifficulty,
+                  explanation: row.explanation || '',
+                  explanationHi: row.hindi_explanation || row.explanation || '',
+                  options: {
+                    create: [
+                      { optionLabel: 'A', optionText: row.option_a || '', optionTextHi: row.hindi_option_a || row.option_a || '' },
+                      { optionLabel: 'B', optionText: row.option_b || '', optionTextHi: row.hindi_option_b || row.option_b || '' },
+                      { optionLabel: 'C', optionText: row.option_c || '', optionTextHi: row.hindi_option_c || row.option_c || '' },
+                      { optionLabel: 'D', optionText: row.option_d || '', optionTextHi: row.hindi_option_d || row.option_d || '' },
+                    ],
+                  },
+                },
+              });
+              questionByNumber.set(questionNumber, newQ as any);
+              if (rowTextNorm) questionByText.set(rowTextNorm, newQ as any);
+              localCreated++;
+            }
+          }
         }
 
-        // Resolve topic
-        const rawTopicName = (row.topic || 'General').trim();
-        const topicKey = rawTopicName.toLowerCase();
-        let topic = (subject.topics || []).find((t: any) => t.name.toLowerCase().trim() === topicKey);
+        return {
+          createdCount: localCreated,
+          updatedCount: localUpdated,
+          affectedMockTestIds: Array.from(localAffectedMockIds),
+        };
+      },
+      { timeout: 60000 }
+    );
 
-        if (!topic) {
-          topic = await prisma.topic.create({
-            data: {
-              subjectId: subject.id,
-              name: rawTopicName,
-              nameHi: rawTopicName,
-            },
-          });
-          if (!subject.topics) subject.topics = [];
-          subject.topics.push(topic);
-        }
-
-        const qMarks = Number(row.marks) || 1.0;
-        const qNegMarks = Number(row.negative_marks) !== undefined ? Number(row.negative_marks) : 0.25;
-        const qCorrect = (row.correct_answer || 'A').toUpperCase().trim() as 'A' | 'B' | 'C' | 'D';
-        const qDifficulty = (row.difficulty || 'MEDIUM').toUpperCase().trim() as any;
-
-        // Check if question already exists at this questionNumber for this mock test
-        const existingQuestion = await prisma.question.findUnique({
-          where: {
-            mockTestId_questionNumber: {
-              mockTestId: mockTest.id,
-              questionNumber,
-            },
-          },
-        });
-
-        if (existingQuestion) {
-          // UPDATE EXISTING QUESTION (NO DUPLICATION)
-          await prisma.question.update({
-            where: { id: existingQuestion.id },
-            data: {
-              subjectId: subject.id,
-              topicId: topic.id,
-              questionText: row.question || row.hindi_question || '',
-              questionTextHi: row.hindi_question || row.question || '',
-              correctOption: qCorrect,
-              marks: qMarks,
-              negativeMarks: qNegMarks,
-              difficulty: qDifficulty,
-              explanation: row.explanation || '',
-              explanationHi: row.hindi_explanation || row.explanation || '',
-              options: {
-                deleteMany: {},
-                create: [
-                  { optionLabel: 'A', optionText: row.option_a || '', optionTextHi: row.hindi_option_a || row.option_a || '' },
-                  { optionLabel: 'B', optionText: row.option_b || '', optionTextHi: row.hindi_option_b || row.option_b || '' },
-                  { optionLabel: 'C', optionText: row.option_c || '', optionTextHi: row.hindi_option_c || row.option_c || '' },
-                  { optionLabel: 'D', optionText: row.option_d || '', optionTextHi: row.hindi_option_d || row.option_d || '' },
-                ],
-              },
-            },
-          });
-          updatedCount++;
-        } else {
-          // CREATE NEW QUESTION
-          await prisma.question.create({
-            data: {
-              mockTestId: mockTest.id,
-              subjectId: subject.id,
-              topicId: topic.id,
-              questionNumber,
-              questionText: row.question || row.hindi_question || '',
-              questionTextHi: row.hindi_question || row.question || '',
-              correctOption: qCorrect,
-              marks: qMarks,
-              negativeMarks: qNegMarks,
-              difficulty: qDifficulty,
-              explanation: row.explanation || '',
-              explanationHi: row.hindi_explanation || row.explanation || '',
-              options: {
-                create: [
-                  { optionLabel: 'A', optionText: row.option_a || '', optionTextHi: row.hindi_option_a || row.option_a || '' },
-                  { optionLabel: 'B', optionText: row.option_b || '', optionTextHi: row.hindi_option_b || row.option_b || '' },
-                  { optionLabel: 'C', optionText: row.option_c || '', optionTextHi: row.hindi_option_c || row.option_c || '' },
-                  { optionLabel: 'D', optionText: row.option_d || '', optionTextHi: row.hindi_option_d || row.option_d || '' },
-                ],
-              },
-            },
-          });
-          createdCount++;
-        }
-      }
-    }
+    createdCount = txResult.createdCount;
+    updatedCount = txResult.updatedCount;
+    txResult.affectedMockTestIds.forEach((id) => affectedMockTestIds.add(id));
 
     // 3. Recalculate totals for all affected Mock Tests and Exams
     for (const mockId of affectedMockTestIds) {
-      await recalculateMockStats(mockId);
+      try {
+        await recalculateMockStats(mockId);
+      } catch (statsErr: any) {
+        console.warn(`Failed to recalculate stats for mock ${mockId}:`, statsErr.message);
+      }
     }
 
     await recordAuditLog(

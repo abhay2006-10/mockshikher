@@ -1409,6 +1409,11 @@ export default function AdminQuestionsPage() {
         isOpen={importModalOpen}
         onClose={() => setImportModalOpen(false)}
         defaultExamSlug={selectedExamSlug !== 'ALL' ? selectedExamSlug : undefined}
+        defaultMockNumber={
+          selectedMockTestId !== 'ALL'
+            ? filterMocks.find((m) => m.id === selectedMockTestId)?.testNumber
+            : undefined
+        }
         onSuccess={() => {
           fetchQuestions();
           fetchExamsAndSetup();

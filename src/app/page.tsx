@@ -126,7 +126,7 @@ export default async function HomePage() {
     image: 'https://mockshikhar.com/logo.svg',
     description:
       'Premier mock test series for Himachal Pradesh government exams (HP Patwari, HP Police, HP Judiciary Clerk & Process Server).',
-    sameAs: ['https://www.instagram.com/himshikhar8262'],
+    sameAs: ['https://www.instagram.com/mockshikhar?utm_source=ig_web_button_share_sheet&rpxt=ZDNlZDc0MzIxNw=='],
     contactPoint: {
       '@type': 'ContactPoint',
       telephone: '+91-7876725758, +91-8262910464',

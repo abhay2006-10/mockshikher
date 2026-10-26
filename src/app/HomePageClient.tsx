@@ -1005,7 +1005,7 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
             </a>
 
             <a
-              href="https://www.instagram.com/himshikhar8262?rpxt=enVjNzB0dmtqMjk%3D&utm_source=qr"
+              href="https://www.instagram.com/mockshikhar?utm_source=ig_web_button_share_sheet&rpxt=ZDNlZDc0MzIxNw=="
               target="_blank"
               rel="noopener noreferrer"
               className={styles.supportItem}
@@ -1016,7 +1016,7 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 600 }}>Instagram Updates</div>
                 <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF' }}>
-                  @himshikhar8262
+                  @mockshikhar
                 </div>
               </div>
             </a>

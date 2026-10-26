@@ -55,6 +55,69 @@ interface ImportSummary {
   skipped?: number;
 }
 
+/**
+ * Safely parses API responses, preventing "Unexpected token '<', <html>... is not valid JSON" crashes.
+ */
+async function parseApiResponse(res: Response): Promise<{ ok: boolean; data: any; errorMessage: string }> {
+  const contentType = res.headers.get('content-type') || '';
+  let rawText = '';
+  try {
+    rawText = await res.text();
+  } catch (readErr: any) {
+    return {
+      ok: false,
+      data: null,
+      errorMessage: `Failed to read server response: ${readErr.message}`,
+    };
+  }
+
+  const isJson = contentType.includes('application/json') || rawText.trim().startsWith('{') || rawText.trim().startsWith('[');
+
+  if (isJson) {
+    try {
+      const data = JSON.parse(rawText);
+      if (!res.ok) {
+        return {
+          ok: false,
+          data,
+          errorMessage: data.error || data.message || `Server error (HTTP ${res.status})`,
+        };
+      }
+      return { ok: true, data, errorMessage: '' };
+    } catch {
+      // JSON parse error on malformed JSON payload
+    }
+  }
+
+  // Handle HTML or non-JSON responses with clear diagnostics
+  let helpfulMessage = '';
+  if (res.status === 401) {
+    helpfulMessage = 'Authentication session expired or missing (HTTP 401). Please refresh the page and log in as admin.';
+  } else if (res.status === 403) {
+    helpfulMessage = 'Forbidden (HTTP 403): You do not have admin permissions to perform question imports.';
+  } else if (res.status === 404) {
+    helpfulMessage = 'API endpoint not found (HTTP 404): /api/admin/questions/import.';
+  } else if (res.status === 413) {
+    helpfulMessage = 'File payload is too large for the server (HTTP 413 Payload Too Large). Please split CSV into smaller batches.';
+  } else if (res.status >= 500) {
+    helpfulMessage = `Internal server error (HTTP ${res.status}). The server or database encountered an issue.`;
+  } else {
+    helpfulMessage = `Server returned an unexpected non-JSON response (HTTP ${res.status}).`;
+  }
+
+  // Extract <title> or <body> text if HTML was returned
+  const titleMatch = rawText.match(/<title>([^<]+)<\/title>/i);
+  if (titleMatch && titleMatch[1]) {
+    helpfulMessage += ` Details: ${titleMatch[1].trim()}`;
+  }
+
+  return {
+    ok: false,
+    data: null,
+    errorMessage: helpfulMessage,
+  };
+}
+
 export default function AdminImportModal({
   isOpen,
   onClose,
@@ -63,6 +126,9 @@ export default function AdminImportModal({
   onSuccess,
 }: AdminImportModalProps) {
   const [file, setFile] = useState<File | null>(null);
+  const [targetExamSlug, setTargetExamSlug] = useState<string>(defaultExamSlug || '');
+  const [targetMockNumber, setTargetMockNumber] = useState<number | undefined>(defaultMockNumber);
+
   const [isDragging, setIsDragging] = useState(false);
   const [createMissingMockTests, setCreateMissingMockTests] = useState(true);
   const [createMissingSubjects, setCreateMissingSubjects] = useState(true);
@@ -84,6 +150,14 @@ export default function AdminImportModal({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Synchronize target exam and mock number whenever props or visibility changes
+  React.useEffect(() => {
+    if (isOpen) {
+      setTargetExamSlug(defaultExamSlug || '');
+      setTargetMockNumber(defaultMockNumber);
+    }
+  }, [isOpen, defaultExamSlug, defaultMockNumber]);
+
   if (!isOpen) return null;
 
   const handleReset = () => {
@@ -97,9 +171,14 @@ export default function AdminImportModal({
   };
 
   const handleFilePicked = async (pickedFile: File) => {
+    // Clear old state completely to prevent stale React state
     setFile(pickedFile);
+    setPreviewRows([]);
+    setRowErrors([]);
+    setSummary(null);
     setExecutionResult(null);
     setServerError(null);
+
     await runPreview(pickedFile, createMissingMockTests, createMissingSubjects);
   };
 
@@ -119,6 +198,8 @@ export default function AdminImportModal({
     formData.append('mode', 'preview');
     formData.append('createMissingMockTests', createMocks ? 'true' : 'false');
     formData.append('createMissingSubjects', createSubj ? 'true' : 'false');
+    if (targetExamSlug) formData.append('targetExamSlug', targetExamSlug);
+    if (targetMockNumber) formData.append('targetMockNumber', String(targetMockNumber));
 
     try {
       const res = await fetch('/api/admin/questions/import', {
@@ -126,14 +207,14 @@ export default function AdminImportModal({
         body: formData,
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        setServerError(data.error || 'Failed to validate upload file.');
-        if (data.rowErrors) setRowErrors(data.rowErrors);
+      const parsed = await parseApiResponse(res);
+      if (!parsed.ok) {
+        setServerError(parsed.errorMessage);
+        if (parsed.data?.rowErrors) setRowErrors(parsed.data.rowErrors);
       } else {
-        setSummary(data.summary);
-        setPreviewRows(data.preview || []);
-        setRowErrors(data.rowErrors || []);
+        setSummary(parsed.data.summary);
+        setPreviewRows(parsed.data.preview || []);
+        setRowErrors(parsed.data.rowErrors || []);
       }
     } catch (err: any) {
       setServerError(err.message || 'Network error during validation preview.');
@@ -155,6 +236,8 @@ export default function AdminImportModal({
     formData.append('createMissingMockTests', createMissingMockTests ? 'true' : 'false');
     formData.append('createMissingSubjects', createMissingSubjects ? 'true' : 'false');
     formData.append('replaceAllQuestions', replaceAllQuestions ? 'true' : 'false');
+    if (targetExamSlug) formData.append('targetExamSlug', targetExamSlug);
+    if (targetMockNumber) formData.append('targetMockNumber', String(targetMockNumber));
 
     try {
       const res = await fetch('/api/admin/questions/import', {
@@ -162,17 +245,17 @@ export default function AdminImportModal({
         body: formData,
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        setServerError(data.error || 'Import failed.');
-        if (data.rowErrors) setRowErrors(data.rowErrors);
+      const parsed = await parseApiResponse(res);
+      if (!parsed.ok) {
+        setServerError(parsed.errorMessage);
+        if (parsed.data?.rowErrors) setRowErrors(parsed.data.rowErrors);
       } else {
         setExecutionResult({
           success: true,
-          message: data.message,
-          created: data.summary?.created,
-          updated: data.summary?.updated,
-          skipped: data.summary?.skipped,
+          message: parsed.data.message,
+          created: parsed.data.summary?.created,
+          updated: parsed.data.summary?.updated,
+          skipped: parsed.data.summary?.skipped,
         });
         if (onSuccess) onSuccess();
       }
@@ -197,8 +280,8 @@ export default function AdminImportModal({
             <div>
               <h3 className={styles.drawerTitle}>Bulk Question Importer</h3>
               <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
-                {defaultExamSlug
-                  ? `Target: ${defaultExamSlug} ${defaultMockNumber ? `• Mock ${defaultMockNumber}` : ''}`
+                {targetExamSlug
+                  ? `Target: ${targetExamSlug} ${targetMockNumber ? `• Mock ${targetMockNumber}` : ''}`
                   : 'Import questions into any mock test via CSV or Excel'}
               </span>
             </div>
