@@ -23,6 +23,7 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import AuthModal from '@/components/ui/AuthModal';
 import { POPULAR_EXAMS, HP_POLICE_MOCKS } from '@/lib/mock-data';
+import { getOfficialExamConfig } from '@/lib/exam-syllabus';
 import styles from './page.module.css';
 
 export default function ExamDetailPage() {
@@ -59,7 +60,28 @@ export default function ExamDetailPage() {
   const basePrice = 1;
   const payablePrice = appliedPromo ? Math.max(1, appliedPromo.finalPrice) : basePrice;
 
-  const baseExam = POPULAR_EXAMS.find((e) => e.slug === slug) || POPULAR_EXAMS[0];
+  const officialConfig = React.useMemo(() => getOfficialExamConfig(slug), [slug]);
+  const baseExam = POPULAR_EXAMS.find((e) => e.slug === slug) || {
+    id: `exam-${slug}`,
+    name: officialConfig.name,
+    slug: officialConfig.slug,
+    description: officialConfig.description,
+    totalQuestions: officialConfig.totalQuestions,
+    durationMinutes: officialConfig.durationMinutes,
+    difficulty: 'MEDIUM',
+    price: 1,
+    originalPrice: 149,
+    isPopular: true,
+    category: officialConfig.category,
+    totalMocks: 10,
+    freeMocks: 1,
+    subjects: officialConfig.sections.map((s) => ({
+      id: s.id,
+      name: s.name,
+      nameHi: s.nameHi,
+      questionCount: s.questionCount,
+    })),
+  };
   const [examData, setExamData] = useState<any>(null);
   const [tests, setTests] = useState<any[]>([]);
   const [isLoadingTests, setIsLoadingTests] = useState(true);
@@ -90,6 +112,13 @@ export default function ExamDetailPage() {
   const rawExam = examData || baseExam;
   const exam = {
     ...rawExam,
+    name: rawExam.name || officialConfig.name,
+    description: rawExam.description || officialConfig.description,
+    category: rawExam.category || officialConfig.category,
+    totalQuestions: rawExam.totalQuestions || officialConfig.totalQuestions,
+    durationMinutes: rawExam.durationMinutes || officialConfig.durationMinutes,
+    negativeMarking: typeof rawExam.negativeMarking === 'number' ? rawExam.negativeMarking : officialConfig.negativeMarking,
+    marksPerQuestion: rawExam.marksPerQuestion || officialConfig.marksPerQuestion,
     price: (rawExam.price === 199 || rawExam.price === 149 || !rawExam.price) ? 1 : rawExam.price,
     originalPrice: 149,
   };
@@ -455,9 +484,16 @@ export default function ExamDetailPage() {
         {/* Right Side: Syllabus & Exam Pattern Breakdown */}
         <aside className={styles.sidebar}>
           <div className={styles.sidebarCard}>
+            <div className={styles.sidebarBadgeWrap}>
+              <Badge variant="accent" size="sm">
+                Official Exam Pattern
+              </Badge>
+              <span className={styles.conductingBodyText}>{officialConfig.conductingBody}</span>
+            </div>
+
             <h3 className={styles.sidebarTitle}>Official Exam Pattern</h3>
             <p className={styles.sidebarDesc}>
-              Strictly aligned with {exam.name} latest notification structure.
+              Strictly aligned with {exam.name} official notification syllabus.
             </p>
 
             <div className={styles.patternTable}>
@@ -465,40 +501,7 @@ export default function ExamDetailPage() {
                 <span>Subject / Section</span>
                 <span>Questions</span>
               </div>
-              {(() => {
-                if (slug?.includes('clerk')) {
-                  return [
-                    { id: 'sec-gk', name: 'General Knowledge & HP GK', nameHi: 'सामान्य ज्ञान व हि.प्र. सामान्य ज्ञान (HP, National & International)', questionCount: 60 },
-                    { id: 'sec-comp', name: 'Basic Computers & IT', nameHi: 'कंप्यूटर एवं सूचना प्रौद्योगिकी', questionCount: 20 },
-                    { id: 'sec-reason', name: 'Reasoning Ability', nameHi: 'तर्कशक्ति (रीजनिंग)', questionCount: 20 },
-                  ];
-                }
-                if (slug?.includes('process-server')) {
-                  return [
-                    { id: 'sec-gk', name: 'General Knowledge & HP GK', nameHi: 'सामान्य ज्ञान व हि.प्र. सामान्य ज्ञान', questionCount: 15 },
-                    { id: 'sec-math', name: 'Elementary Mathematics', nameHi: 'प्रारंभिक गणित', questionCount: 10 },
-                    { id: 'sec-sci', name: 'General Science', nameHi: 'सामान्य विज्ञान', questionCount: 10 },
-                    { id: 'sec-lang', name: 'General English & Hindi', nameHi: 'अंग्रेजी व हिंदी भाषा', questionCount: 10 },
-                    { id: 'sec-reason', name: 'Reasoning Ability', nameHi: 'तर्कशक्ति (रीजनिंग)', questionCount: 5 },
-                  ];
-                }
-                if (slug?.includes('police')) {
-                  return [
-                    { id: 'sec-eng', name: 'English Language', nameHi: 'अंग्रेजी भाषा', questionCount: 16 },
-                    { id: 'sec-hindi', name: 'Hindi Language', nameHi: 'हिंदी भाषा', questionCount: 16 },
-                    { id: 'sec-math', name: 'Mathematics', nameHi: 'गणित', questionCount: 16 },
-                    { id: 'sec-gk', name: 'General Knowledge & HP GK', nameHi: 'सामान्य ज्ञान व हि.प्र. सामान्य ज्ञान', questionCount: 24 },
-                    { id: 'sec-reason', name: 'Reasoning Ability', nameHi: 'तर्कशक्ति (रीजनिंग)', questionCount: 18 },
-                  ];
-                }
-                return [
-                  { id: 'sec-eng', name: 'English Language', nameHi: 'अंग्रेजी भाषा', questionCount: 20 },
-                  { id: 'sec-math', name: 'Mathematics', nameHi: 'गणित', questionCount: 20 },
-                  { id: 'sec-hindi', name: 'Hindi Language', nameHi: 'हिंदी भाषा', questionCount: 20 },
-                  { id: 'sec-gk', name: 'General Knowledge & HP GK', nameHi: 'सामान्य ज्ञान व हि.प्र. सामान्य ज्ञान', questionCount: 20 },
-                  { id: 'sec-reason', name: 'Reasoning Ability', nameHi: 'तर्कशक्ति (रीजनिंग)', questionCount: 20 },
-                ];
-              })().map((sub: any) => (
+              {officialConfig.sections.map((sub) => (
                 <div key={sub.id} className={styles.patternRow}>
                   <div>
                     <span className={styles.subjectNameEn}>{sub.name}</span>
@@ -509,24 +512,68 @@ export default function ExamDetailPage() {
               ))}
               <div className={styles.patternTotalRow}>
                 <span>Total Questions</span>
-                <span>{exam.totalQuestions} Questions ({exam.durationMinutes || 90} Mins)</span>
+                <span>{officialConfig.totalQuestions} Questions ({officialConfig.durationMinutes} Mins)</span>
               </div>
             </div>
 
             <div className={styles.markingNotes}>
               <div className={styles.markingNote}>
-                <strong>+{exam.marksPerQuestion || 1.0} Mark</strong> for every correct answer
+                <strong>+{officialConfig.marksPerQuestion} Mark</strong> for every correct answer
               </div>
               <div className={styles.markingNote}>
                 <strong>
-                  {exam.negativeMarking && Number(exam.negativeMarking) > 0
-                    ? `-${exam.negativeMarking} Mark deducted for incorrect attempts`
+                  {officialConfig.negativeMarking > 0
+                    ? `-${officialConfig.negativeMarking} Mark deducted for incorrect attempts`
                     : '0 Marks deducted (No negative marking)'}
                 </strong>
               </div>
               <div className={styles.markingNote}>
                 <strong>0 Marks</strong> for unattempted questions
               </div>
+            </div>
+          </div>
+
+          {/* Detailed Syllabus & Topics Card */}
+          <div className={styles.sidebarCard}>
+            <div className={styles.sidebarBadgeWrap}>
+              <Badge variant="neutral" size="sm">
+                Official Syllabus
+              </Badge>
+              <span className={styles.conductingBodyText}>{officialConfig.sections.length} Sections</span>
+            </div>
+
+            <h3 className={styles.sidebarTitle} style={{ fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <span>📖</span> Official Syllabus Topics
+            </h3>
+            <p className={styles.sidebarDesc}>
+              Complete topic-by-topic syllabus tested in this examination:
+            </p>
+
+            <div className={styles.syllabusAccordion}>
+              {officialConfig.sections.map((sec, idx) => (
+                <div key={sec.id} className={styles.syllabusSectionBox}>
+                  <div className={styles.syllabusSectionHead}>
+                    <div className={styles.syllabusSecTitleWrap}>
+                      <span className={styles.sectionNumBadge}>Sec {idx + 1}</span>
+                      <span>{sec.name}</span>
+                    </div>
+                    <span className={styles.sectionMarksBadge}>{sec.questionCount} Q</span>
+                  </div>
+                  <div className={styles.syllabusTopicsList}>
+                    {sec.topics.map((top, tIdx) => (
+                      <div key={tIdx} className={styles.syllabusTopicItem}>
+                        <span className={styles.topicBullet}>•</span>
+                        <div>
+                          <span className={styles.topicNameText}>{top.name}</span>
+                          {top.nameHi && (
+                            <span className={styles.topicNameHiText}> ({top.nameHi})</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </aside>

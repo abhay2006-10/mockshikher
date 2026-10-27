@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { getOfficialExamConfig } from '@/lib/exam-syllabus';
 
 export const dynamic = 'force-dynamic';
 
@@ -171,26 +172,37 @@ export async function GET(
       };
     });
 
+    const officialConfig = getOfficialExamConfig(exam.slug);
+    const resolvedSubjects =
+      exam.subjects && exam.subjects.length > 0
+        ? exam.subjects.map((s) => ({
+            id: s.id,
+            name: s.name,
+            nameHi: s.nameHi,
+            questionCount: s._count.questions,
+          }))
+        : officialConfig.sections.map((s) => ({
+            id: s.id,
+            name: s.name,
+            nameHi: s.nameHi,
+            questionCount: s.questionCount,
+          }));
+
     const response = NextResponse.json({
       exam: {
         id: exam.id,
-        name: exam.name,
+        name: exam.name || officialConfig.name,
         slug: exam.slug,
-        description: exam.description,
-        category: exam.category,
+        description: exam.description || officialConfig.description,
+        category: exam.category || officialConfig.category,
         price: (exam.price === 199 || exam.price === 149 || !exam.price) ? 1 : exam.price,
         originalPrice: 149,
-        durationMinutes: exam.durationMinutes,
-        totalQuestions: exam.totalQuestions,
-        negativeMarking: exam.negativeMarking,
+        durationMinutes: exam.durationMinutes || officialConfig.durationMinutes,
+        totalQuestions: exam.totalQuestions || officialConfig.totalQuestions,
+        negativeMarking: typeof exam.negativeMarking === 'number' ? exam.negativeMarking : officialConfig.negativeMarking,
         totalMocks: mockTests.length,
         isPurchased,
-        subjects: exam.subjects.map((s) => ({
-          id: s.id,
-          name: s.name,
-          nameHi: s.nameHi,
-          questionCount: s._count.questions,
-        })),
+        subjects: resolvedSubjects,
       },
       tests: formattedTests,
       isPurchased,

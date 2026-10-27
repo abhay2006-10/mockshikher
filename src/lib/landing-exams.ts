@@ -29,6 +29,30 @@ export const LANDING_EXAMS: LandingExamConfig[] = [
     category: 'Police Exams',
   },
   {
+    slug: 'hp-tet-tgt-medical',
+    name: 'HP TET TGT Medical 2026',
+    description: 'Comprehensive test series for HP TET TGT Medical covering Child Pedagogy, HP GK, Biology and Chemistry.',
+    category: 'HP TET Exams',
+  },
+  {
+    slug: 'hp-tet-tgt-non-medical',
+    name: 'HP TET TGT Non-Medical 2026',
+    description: 'Targeted mock series for HP TET TGT Non-Medical covering Child Pedagogy, HP GK, Mathematics, Physics & Chemistry.',
+    category: 'HP TET Exams',
+  },
+  {
+    slug: 'hp-tet-tgt-arts',
+    name: 'HP TET TGT Arts 2026',
+    description: 'Official test series for HP TET TGT Arts covering Child Pedagogy, HP GK, English Literature, and Social Studies.',
+    category: 'HP TET Exams',
+  },
+  {
+    slug: 'hp-tet-jbt',
+    name: 'HP TET JBT / D.El.Ed 2026',
+    description: 'Full-length practice mocks for HP TET JBT covering Child Pedagogy, Hindi, English, Mathematics, and EVS & HP GK.',
+    category: 'HP TET Exams',
+  },
+  {
     slug: 'hp-judiciary-clerk',
     name: 'HP Judiciary Clerk',
     description: 'Full-length practice tests for HP High Court & District Judiciary Clerk / Proof Reader examination per official pattern.',

@@ -138,6 +138,7 @@ async function getExamsPageData() {
           });
         } else {
           const freeTest = publishedTests.find((t) => t.isFree) || publishedTests[0];
+          const staticExam = POPULAR_EXAMS.find((e) => e.slug === db.slug);
           examsList.push({
             isComingSoon: false,
             exam: {
@@ -145,8 +146,8 @@ async function getExamsPageData() {
               name: db.name,
               slug: db.slug,
               description: db.description,
-              totalQuestions: db.totalQuestions,
-              durationMinutes: db.durationMinutes,
+              totalQuestions: db.totalQuestions || staticExam?.totalQuestions || 100,
+              durationMinutes: db.durationMinutes || staticExam?.durationMinutes || 90,
               difficulty: (db.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || 'MEDIUM',
               price: (db.price === 199 || db.price === 149 || !db.price) ? 1 : db.price,
               originalPrice: 149,
@@ -154,12 +155,15 @@ async function getExamsPageData() {
               category: db.category || 'General',
               totalMocks: publishedTests.length,
               freeMocks: publishedTests.filter((t) => t.isFree).length,
-              subjects: db.subjects.map((s) => ({
-                id: s.id,
-                name: s.name,
-                nameHi: s.nameHi || s.name,
-                questionCount: 0,
-              })),
+              subjects:
+                db.subjects.length > 0
+                  ? db.subjects.map((s) => ({
+                      id: s.id,
+                      name: s.name,
+                      nameHi: s.nameHi || s.name,
+                      questionCount: 0,
+                    }))
+                  : staticExam?.subjects || [],
             },
             freeMockId: freeTest?.id || `${db.slug}-mock-1`,
           });

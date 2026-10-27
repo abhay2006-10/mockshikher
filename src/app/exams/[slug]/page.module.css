@@ -451,6 +451,115 @@
   margin: 0;
 }
 
+/* Sidebar Syllabus & Conducting Body */
+.sidebarBadgeWrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.conductingBodyText {
+  font-size: 0.72rem;
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.syllabusAccordion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.syllabusSectionBox {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.syllabusSectionBox:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.syllabusSectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.75rem;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-size: var(--text-xs);
+  gap: 0.5rem;
+}
+
+.syllabusSecTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--color-text-primary);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.sectionNumBadge {
+  background: var(--color-primary-500);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.sectionMarksBadge {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.syllabusTopicsList {
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.syllabusTopicItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.topicBullet {
+  color: var(--color-primary-500);
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.topicNameText {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.topicNameHiText {
+  color: var(--color-text-tertiary);
+  font-size: 0.72rem;
+}
+
 @media (max-width: 1024px) {
   .examBanner {
     grid-template-columns: 1fr;

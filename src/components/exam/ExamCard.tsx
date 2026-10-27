@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import Badge from '@/components/ui/Badge';
 import type { MockExam } from '@/lib/mock-data';
+import { getOfficialExamConfig, getExamCanonicalBadges } from '@/lib/exam-syllabus';
 import styles from './ExamCard.module.css';
 
 interface ExamCardProps {
@@ -18,41 +19,29 @@ export function ExamCard({
   onTryFreeMock,
 }: ExamCardProps) {
   const freeMockUrl = `/test/${freeMockId || `${exam.slug}-mock-1`}/instructions`;
+  const officialConfig = React.useMemo(() => getOfficialExamConfig(exam.slug), [exam.slug]);
 
   const canonicalSubjects = React.useMemo(() => {
-    if (exam.slug?.includes('patwari')) {
-      return ['Hindi', 'English', 'Mathematics', 'General Knowledge', 'Reasoning'];
-    }
-    if (exam.slug?.includes('police')) {
-      return ['English', 'Hindi', 'Mathematics', 'GK & HP GK', 'Reasoning'];
-    }
-    if (exam.slug?.includes('process-server')) {
-      return ['HP & National GK', 'Mathematics', 'General Science', 'English & Hindi', 'Reasoning'];
-    }
-    if (exam.slug?.includes('clerk')) {
-      return ['HP & National GK', 'Computers & IT', 'Reasoning Ability'];
-    }
-    if (exam.subjects && exam.subjects.length > 0) {
-      const unique = Array.from(new Set(exam.subjects.map((s) => s.name)));
-      return unique.slice(0, 5);
-    }
-    return ['English', 'Mathematics', 'Hindi', 'General Knowledge', 'Reasoning'];
+    return getExamCanonicalBadges(exam.slug, exam.subjects);
   }, [exam.slug, exam.subjects]);
+
+  const totalQuestions = exam.totalQuestions || officialConfig.totalQuestions;
+  const durationMinutes = exam.durationMinutes || officialConfig.durationMinutes;
 
   return (
     <div className={styles.card}>
       <div className={styles.header}>
         <div className={styles.categoryBadge}>
           <Badge variant="neutral" size="sm">
-            {exam.category}
+            {exam.category || officialConfig.category}
           </Badge>
         </div>
         <h3 className={styles.title}>{exam.name}</h3>
-        <p className={styles.description}>{exam.description}</p>
+        <p className={styles.description}>{exam.description || officialConfig.description}</p>
       </div>
 
       <div className={styles.metaLine}>
-        {exam.totalQuestions || 90} Q • {exam.durationMinutes || 60} Min • {exam.totalMocks || 10} Mocks
+        {totalQuestions} Q • {durationMinutes} Min • {exam.totalMocks || 10} Mocks
       </div>
 
       <div className={styles.subjectTags}>

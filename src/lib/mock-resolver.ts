@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { getOfficialExamConfig } from '@/lib/exam-syllabus';
 
 interface ResolveMockOptions {
   mockTestId?: string;
@@ -214,19 +215,38 @@ export async function resolveOrCreateMockTest(options: ResolveMockOptions) {
         )
         .join(' ');
 
+    const officialConfig = getOfficialExamConfig(examSlug);
     exam = await prisma.exam.create({
       data: {
         id: `exam-${examSlug}`,
-        name: formattedName,
+        name: officialConfig.name || formattedName,
+        nameHi: officialConfig.nameHi,
         slug: examSlug,
-        description: 'Comprehensive test series per the latest official syllabus.',
-        totalQuestions: 90,
-        durationMinutes: 60,
+        description: officialConfig.description,
+        totalQuestions: officialConfig.totalQuestions,
+        durationMinutes: officialConfig.durationMinutes,
         difficulty: 'MEDIUM',
         price: 1,
-        category: 'HP Exams',
+        category: officialConfig.category,
+        negativeMarking: officialConfig.negativeMarking,
+        marksPerQuestion: officialConfig.marksPerQuestion,
       },
     });
+
+    // Create official subjects for this exam
+    for (let sIdx = 0; sIdx < officialConfig.sections.length; sIdx++) {
+      const sec = officialConfig.sections[sIdx];
+      await prisma.subject.upsert({
+        where: { examId_name: { examId: exam.id, name: sec.name } },
+        update: { nameHi: sec.nameHi, sortOrder: sIdx },
+        create: {
+          examId: exam.id,
+          name: sec.name,
+          nameHi: sec.nameHi,
+          sortOrder: sIdx,
+        },
+      }).catch(() => {});
+    }
   }
 
   // 3. Lookup or create MockTest by examId + testNumber
