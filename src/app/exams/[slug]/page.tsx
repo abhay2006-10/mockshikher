@@ -9,6 +9,7 @@ import {
   HelpCircle,
   AlertCircle,
   ShieldCheck,
+  Upload,
   CheckCircle2,
   Sparkles,
   Lock,
@@ -22,6 +23,7 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import AuthModal from '@/components/ui/AuthModal';
+import AdminImportModal from '@/components/admin/AdminImportModal';
 import { POPULAR_EXAMS, HP_POLICE_MOCKS } from '@/lib/mock-data';
 import { getOfficialExamConfig } from '@/lib/exam-syllabus';
 import styles from './page.module.css';
@@ -39,6 +41,7 @@ export default function ExamDetailPage() {
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [unlockedExam, setUnlockedExam] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   React.useEffect(() => {
     if (isAdmin) {
@@ -466,6 +469,48 @@ export default function ExamDetailPage() {
               Start with Mock 1 for free. Unlock the entire series to access all remaining tests.
             </p>
           </div>
+
+                    {isAdmin && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(245, 179, 1, 0.12)',
+                border: '1px solid rgba(245, 179, 1, 0.35)',
+                padding: '0.85rem 1.25rem',
+                borderRadius: '10px',
+                marginBottom: '1.25rem',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <ShieldCheck size={20} color="#F5B301" />
+                <div>
+                  <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block' }}>Admin Control Mode</strong>
+                  <span style={{ fontSize: '0.75rem', color: '#CBD5E1' }}>
+                    Upload mock tests, add questions via CSV/Excel, or manage series
+                  </span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <Button
+                  variant="accent"
+                  size="sm"
+                  leftIcon={<Upload size={14} />}
+                  onClick={() => setImportModalOpen(true)}
+                >
+                  Upload Mock Test (CSV/Excel)
+                </Button>
+                <Link href="/admin/exams">
+                  <Button variant="secondary" size="sm">
+                    Admin Panel →
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
 
           <div className={styles.testsGrid}>
             {sortedTests.map((test) => (

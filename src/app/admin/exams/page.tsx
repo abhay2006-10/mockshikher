@@ -1051,7 +1051,7 @@ export default function AdminExamsPage() {
                             Edit
                           </Button>
                           <Button
-                            variant="outline"
+                            variant="accent"
                             size="sm"
                             leftIcon={<Upload size={13} />}
                             onClick={() => {
@@ -1060,7 +1060,7 @@ export default function AdminExamsPage() {
                               setImportModalOpen(true);
                             }}
                           >
-                            Import
+                            Upload Mock
                           </Button>
                         </div>
                       </td>
@@ -1108,9 +1108,21 @@ export default function AdminExamsPage() {
                                 </button>
                               </div>
 
-                              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                 {currentTab === 'mocks' ? (
                                   <>
+                                    <Button
+                                      variant="accent"
+                                      size="sm"
+                                      leftIcon={<Upload size={14} />}
+                                      onClick={() => {
+                                        setImportTargetExam(exam.slug);
+                                        setImportTargetMock(undefined);
+                                        setImportModalOpen(true);
+                                      }}
+                                    >
+                                      Upload Mock (CSV/Excel)
+                                    </Button>
                                     <Button
                                       variant="secondary"
                                       size="sm"
@@ -1119,7 +1131,7 @@ export default function AdminExamsPage() {
                                       Create Mocks 1–10
                                     </Button>
                                     <Button
-                                      variant="accent"
+                                      variant="secondary"
                                       size="sm"
                                       leftIcon={<Plus size={14} />}
                                       onClick={() => openAddMock(exam)}
@@ -1235,7 +1247,7 @@ export default function AdminExamsPage() {
                                               setImportModalOpen(true);
                                             }}
                                           >
-                                            Import
+                                            Upload Mock #{test.testNumber}
                                           </Button>
 
                                           <Button

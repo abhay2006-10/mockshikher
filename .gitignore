@@ -66,4 +66,5 @@ model_capabilities.yaml
 scripts/validate-*
 scripts/search_repo.*
 scripts/setup_search.*
+/marketing-screenshots/
 

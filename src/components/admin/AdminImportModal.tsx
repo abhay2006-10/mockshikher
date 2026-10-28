@@ -128,6 +128,9 @@ export default function AdminImportModal({
   const [file, setFile] = useState<File | null>(null);
   const [targetExamSlug, setTargetExamSlug] = useState<string>(defaultExamSlug || '');
   const [targetMockNumber, setTargetMockNumber] = useState<number | undefined>(defaultMockNumber);
+  const [availableExams, setAvailableExams] = useState<
+    { id: string; name: string; slug: string; mockTests?: { id: string; testNumber: number; name: string }[] }[]
+  >([]);
 
   const [isDragging, setIsDragging] = useState(false);
   const [createMissingMockTests, setCreateMissingMockTests] = useState(true);
@@ -150,11 +153,19 @@ export default function AdminImportModal({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Synchronize target exam and mock number whenever props or visibility changes
+  // Load available exams when modal opens
   React.useEffect(() => {
     if (isOpen) {
       setTargetExamSlug(defaultExamSlug || '');
       setTargetMockNumber(defaultMockNumber);
+      fetch('/api/admin/exams')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.exams) {
+            setAvailableExams(data.exams);
+          }
+        })
+        .catch(() => {});
     }
   }, [isOpen, defaultExamSlug, defaultMockNumber]);
 
@@ -278,11 +289,11 @@ export default function AdminImportModal({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <FileSpreadsheet size={24} color="#F5B301" />
             <div>
-              <h3 className={styles.drawerTitle}>Bulk Question Importer</h3>
+              <h3 className={styles.drawerTitle}>Upload Mock Tests & Questions (CSV/Excel)</h3>
               <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
                 {targetExamSlug
-                  ? `Target: ${targetExamSlug} ${targetMockNumber ? `• Mock ${targetMockNumber}` : ''}`
-                  : 'Import questions into any mock test via CSV or Excel'}
+                  ? `Selected Series: ${targetExamSlug} ${targetMockNumber ? `• Mock #${targetMockNumber}` : ''}`
+                  : 'Select an exam series below or auto-detect from CSV'}
               </span>
             </div>
           </div>
@@ -298,6 +309,73 @@ export default function AdminImportModal({
 
         {/* Body */}
         <div className={styles.drawerBody} style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Target Exam Series & Mock Selector */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '0.75rem',
+              background: 'rgba(255, 255, 255, 0.03)',
+              padding: '0.85rem 1rem',
+              borderRadius: '8px',
+              border: '1px solid var(--color-border)',
+            }}
+          >
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#F5B301', display: 'block', marginBottom: '0.35rem' }}>
+                Target Exam Series:
+              </label>
+              <select
+                style={{
+                  width: '100%',
+                  padding: '0.45rem 0.65rem',
+                  borderRadius: '6px',
+                  background: 'var(--color-bg-primary)',
+                  color: '#fff',
+                  border: '1px solid var(--color-border)',
+                  fontSize: '0.85rem',
+                }}
+                value={targetExamSlug}
+                onChange={(e) => {
+                  setTargetExamSlug(e.target.value);
+                  setTargetMockNumber(undefined);
+                }}
+              >
+                <option value="">Auto-detect from CSV (or select series)</option>
+                {availableExams.map((ex) => (
+                  <option key={ex.id} value={ex.slug}>
+                    {ex.name} ({ex.slug})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#F5B301', display: 'block', marginBottom: '0.35rem' }}>
+                Target Mock Test (Optional):
+              </label>
+              <select
+                style={{
+                  width: '100%',
+                  padding: '0.45rem 0.65rem',
+                  borderRadius: '6px',
+                  background: 'var(--color-bg-primary)',
+                  color: '#fff',
+                  border: '1px solid var(--color-border)',
+                  fontSize: '0.85rem',
+                }}
+                value={targetMockNumber || ''}
+                onChange={(e) => setTargetMockNumber(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+              >
+                <option value="">Auto-detect from CSV (or select mock)</option>
+                {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                  <option key={num} value={num}>
+                    Mock #{num} {num === 1 ? '(Free Diagnostic)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           {/* Server Error Alert */}
           {serverError && (
             <div
