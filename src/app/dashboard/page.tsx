@@ -25,6 +25,7 @@ import {
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import WhatsAppUpdatesSection from '@/components/common/WhatsAppUpdatesSection';
+import NoticeBoard from '@/components/common/NoticeBoard';
 import styles from './dashboard.module.css';
 
 export default function DashboardPage() {
@@ -464,6 +465,9 @@ export default function DashboardPage() {
           </Link>
         </div>
       </section>
+
+      {/* Mockshikhar In-App Notice Board */}
+      <NoticeBoard />
 
       {/* Mockshikhar Updates — Official WhatsApp Channel */}
       <WhatsAppUpdatesSection sourceContext="dashboard" />

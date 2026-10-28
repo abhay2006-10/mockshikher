@@ -17,6 +17,7 @@ import {
   Users,
   Menu,
   X,
+  Megaphone,
 } from 'lucide-react';
 import styles from './admin.module.css';
 
@@ -30,6 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Exams & Tests', href: '/admin/exams', icon: <BookOpen size={18} />, exact: false },
     { label: 'Question Bank', href: '/admin/questions', icon: <Layers size={18} />, exact: false },
     { label: 'Promo Codes', href: '/admin/promo-codes', icon: <Tag size={18} />, exact: false },
+    { label: 'Announcements', href: '/admin/announcements', icon: <Megaphone size={18} />, exact: false },
     { label: 'WhatsApp Marketing', href: '/admin/marketing', icon: <Phone size={18} />, exact: false },
   ];
 

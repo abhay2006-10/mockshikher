@@ -447,3 +447,33 @@ model PromoCode {
   @@map("promo_codes")
 }
 
+// ============ Announcement / Notice Board ============
+
+enum AnnouncementType {
+  INFO
+  SUCCESS
+  WARNING
+  URGENT
+  NEW_TEST
+  OFFER
+}
+
+model Announcement {
+  id          String           @id @default(cuid())
+  title       String
+  body        String           @db.Text
+  type        AnnouncementType @default(INFO)
+  isPinned    Boolean          @default(false)
+  isActive    Boolean          @default(true)
+  ctaLabel    String?          // e.g. "Attempt Now"
+  ctaUrl      String?          // e.g. "/exams/hp-patwari"
+  expiresAt   DateTime?        // Auto-hide after this date
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([isActive])
+  @@index([isPinned])
+  @@index([createdAt])
+  @@map("announcements")
+}
+
