@@ -7,6 +7,7 @@ import ExamCard from '@/components/exam/ExamCard';
 import ComingSoonExamCard from '@/components/exam/ComingSoonExamCard';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
+import NoticeBoard from '@/components/common/NoticeBoard';
 import AuthModal from '@/components/ui/AuthModal';
 import type { MockExam } from '@/lib/mock-data';
 import styles from './page.module.css';
@@ -105,6 +106,11 @@ export default function ExamsPageClient({ initialExams, categories }: ExamsPageC
           </div>
         </div>
       </header>
+
+      {/* Official Notice Board */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <NoticeBoard compact />
+      </div>
 
       {/* Limited Time Launch Offer Banner */}
       <div className={styles.launchBanner}>

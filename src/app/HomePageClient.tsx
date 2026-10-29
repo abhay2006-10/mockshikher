@@ -26,6 +26,7 @@ import ExamCard from '@/components/exam/ExamCard';
 import ComingSoonExamCard from '@/components/exam/ComingSoonExamCard';
 import Button from '@/components/ui/Button';
 import AuthModal, { AuthModalTab } from '@/components/ui/AuthModal';
+import NoticeBoard from '@/components/common/NoticeBoard';
 import WhatsAppUpdatesSection, { InstagramIcon } from '@/components/common/WhatsAppUpdatesSection';
 import type { MockExam } from '@/lib/mock-data';
 import styles from './page.module.css';
@@ -550,6 +551,10 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
         </div>
       </section>
 
+      {/* Official Notice Board */}
+      <section className={styles.sectionBlock} id="notice-board-section" style={{ paddingTop: '1.5rem' }}>
+        <NoticeBoard />
+      </section>
 
       {/* 3. SECTION: SMART MISTAKE BOOK */}
       <section className={styles.sectionBlock} id="mistake-book">
