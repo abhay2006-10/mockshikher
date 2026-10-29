@@ -2,13 +2,19 @@ import { PrismaClient } from '@prisma/client';
 
 function getDatabaseUrl(): string | undefined {
   if (typeof process === 'undefined' || !process.env?.DATABASE_URL) return undefined;
-  const dbUrl = process.env.DATABASE_URL;
+  let dbUrl = process.env.DATABASE_URL;
   const isTransactionPooler =
     dbUrl.includes('-pooler') ||
+    dbUrl.includes('.neon.tech') ||
     (dbUrl.includes('.pooler.supabase.com') && dbUrl.includes(':6543'));
 
-  if (isTransactionPooler && !dbUrl.includes('pgbouncer=true')) {
-    return dbUrl.includes('?') ? `${dbUrl}&pgbouncer=true` : `${dbUrl}?pgbouncer=true`;
+  if (isTransactionPooler) {
+    if (!dbUrl.includes('pgbouncer=true')) {
+      dbUrl = dbUrl.includes('?') ? `${dbUrl}&pgbouncer=true` : `${dbUrl}?pgbouncer=true`;
+    }
+    if (!dbUrl.includes('connection_limit=')) {
+      dbUrl = `${dbUrl}&connection_limit=5&pool_timeout=15`;
+    }
   }
   return dbUrl;
 }
