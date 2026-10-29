@@ -351,6 +351,28 @@
   transform: translateY(-1px);
 }
 
+.ctaWhatsApp {
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+  border-color: rgba(37, 211, 102, 0.4);
+}
+
+.ctaWhatsApp:hover {
+  background: linear-gradient(135deg, #2ae06d 0%, #169e8f 100%);
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5);
+}
+
+.ctaInstagram {
+  background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
+  box-shadow: 0 4px 14px rgba(225, 48, 108, 0.35);
+  border-color: rgba(225, 48, 108, 0.4);
+}
+
+.ctaInstagram:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 6px 20px rgba(225, 48, 108, 0.55);
+}
+
 .ctaArrow {
   transition: transform 0.15s ease;
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/admin-auth';
 import { recordAuditLog } from '@/lib/audit';
+import { ensureAnnouncementsTable } from '@/lib/announcement-db';
 
 // GET — All announcements (admin view, including inactive)
 export async function GET() {
@@ -9,6 +10,8 @@ export async function GET() {
   if (authCheck instanceof NextResponse) return authCheck;
 
   try {
+    await ensureAnnouncementsTable();
+
     const announcements = await prisma.announcement.findMany({
       orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
     });
@@ -25,6 +28,8 @@ export async function POST(req: NextRequest) {
   if (authCheck instanceof NextResponse) return authCheck;
 
   try {
+    await ensureAnnouncementsTable();
+
     const body = await req.json();
     const { title, body: msgBody, type, isPinned, isActive, ctaLabel, ctaUrl, expiresAt } = body;
 

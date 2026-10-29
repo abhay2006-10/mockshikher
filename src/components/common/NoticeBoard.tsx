@@ -320,29 +320,51 @@ export default function NoticeBoard({ compact = false }: NoticeBoardProps) {
                 <div className={styles.bodyContent}>
                   <p className={styles.bodyText}>{item.body}</p>
 
-                  {item.ctaLabel && item.ctaUrl && (
-                    <div className={styles.ctaRow}>
-                      {item.ctaUrl.startsWith('http') ? (
-                        <a
-                          href={item.ctaUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.ctaButton}
-                          id={`notice-cta-${item.id}`}
-                        >
-                          <Sparkles size={14} />
-                          <span>{item.ctaLabel}</span>
-                          <ExternalLink size={13} />
-                        </a>
-                      ) : (
-                        <Link href={item.ctaUrl} className={styles.ctaButton} id={`notice-cta-${item.id}`}>
-                          <Sparkles size={14} />
-                          <span>{item.ctaLabel}</span>
-                          <ArrowRight size={14} className={styles.ctaArrow} />
-                        </Link>
-                      )}
-                    </div>
-                  )}
+                  {item.ctaLabel && item.ctaUrl && (() => {
+                    const isWa = item.ctaUrl.includes('whatsapp.com') || item.ctaUrl.includes('wa.me');
+                    const isIg = item.ctaUrl.includes('instagram.com');
+                    const isExternal = item.ctaUrl.startsWith('http');
+
+                    const btnClass = `${styles.ctaButton} ${
+                      isWa ? styles.ctaWhatsApp : isIg ? styles.ctaInstagram : ''
+                    }`;
+
+                    return (
+                      <div className={styles.ctaRow}>
+                        {isExternal ? (
+                          <a
+                            href={item.ctaUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={btnClass}
+                            id={`notice-cta-${item.id}`}
+                          >
+                            {isWa ? (
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.025 3.284l-.548 2.003 2.062-.54c.974.57 1.954.896 3.228.897 3.18 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.644-5.767-5.644zm0 10.372c-1.12 0-2.002-.321-2.85-.826l-.204-.121-1.341.351.358-1.308-.133-.211c-.555-.884-.848-1.748-.847-2.844.001-2.54 2.072-4.611 4.614-4.611 2.546 0 4.617 2.071 4.617 4.614 0 2.543-2.071 4.956-6.047 4.956z"/>
+                              </svg>
+                            ) : isIg ? (
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                              </svg>
+                            ) : (
+                              <Sparkles size={14} />
+                            )}
+                            <span>{item.ctaLabel}</span>
+                            <ExternalLink size={13} />
+                          </a>
+                        ) : (
+                          <Link href={item.ctaUrl} className={btnClass} id={`notice-cta-${item.id}`}>
+                            <Sparkles size={14} />
+                            <span>{item.ctaLabel}</span>
+                            <ArrowRight size={14} className={styles.ctaArrow} />
+                          </Link>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </article>

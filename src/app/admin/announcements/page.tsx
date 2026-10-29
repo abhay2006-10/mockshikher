@@ -356,6 +356,155 @@ export default function AdminAnnouncementsPage() {
               />
             </div>
 
+            {/* Quick Destination Presets */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '0.45rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Quick Destination Presets (Click to Auto-fill)
+              </label>
+              <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, ctaLabel: 'Join WhatsApp Channel', ctaUrl: 'https://whatsapp.com/channel/0029Va5I0zx0VycNW93eqO2P' }))}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.4rem 0.8rem',
+                    borderRadius: '8px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    color: '#25D366',
+                    background: 'rgba(37, 211, 102, 0.12)',
+                    border: '1px solid rgba(37, 211, 102, 0.35)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  💬 Official WhatsApp
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, ctaLabel: 'Follow on Instagram', ctaUrl: 'https://www.instagram.com/mockshikhar' }))}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.4rem 0.8rem',
+                    borderRadius: '8px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    color: '#E1306C',
+                    background: 'rgba(225, 48, 108, 0.12)',
+                    border: '1px solid rgba(225, 48, 108, 0.35)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  📸 Official Instagram
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, ctaLabel: 'Explore Test Series', ctaUrl: '/exams' }))}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.4rem 0.8rem',
+                    borderRadius: '8px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    color: '#60a5fa',
+                    background: 'rgba(59, 130, 246, 0.12)',
+                    border: '1px solid rgba(59, 130, 246, 0.35)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  📚 All Exams Catalog
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, ctaLabel: 'Attempt Free Mock', ctaUrl: '/exams/hp-tet-tgt-non-medical' }))}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.4rem 0.8rem',
+                    borderRadius: '8px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    color: '#c084fc',
+                    background: 'rgba(168, 85, 247, 0.12)',
+                    border: '1px solid rgba(168, 85, 247, 0.35)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  🎯 HP TET Non-Med
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, ctaLabel: 'Attempt Free Mock', ctaUrl: '/exams/hp-tet-tgt-arts' }))}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.4rem 0.8rem',
+                    borderRadius: '8px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    color: '#34d399',
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    border: '1px solid rgba(16, 185, 129, 0.35)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  🎨 HP TET Arts
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, ctaLabel: 'Attempt Free Mock', ctaUrl: '/exams/hp-patwari' }))}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.4rem 0.8rem',
+                    borderRadius: '8px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    color: '#fbbf24',
+                    background: 'rgba(245, 158, 11, 0.12)',
+                    border: '1px solid rgba(245, 158, 11, 0.35)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  📖 HP Patwari
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, ctaLabel: 'Attempt Free Mock', ctaUrl: '/exams/hp-police-constable' }))}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.4rem 0.8rem',
+                    borderRadius: '8px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    color: '#f87171',
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  👮 HP Police
+                </button>
+              </div>
+            </div>
+
             {/* CTA Row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>

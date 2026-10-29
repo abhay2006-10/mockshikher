@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { ensureAnnouncementsTable } from '@/lib/announcement-db';
 
 // Public endpoint — no auth needed (announcements are public info)
 export async function GET() {
   try {
+    await ensureAnnouncementsTable();
+
     const now = new Date();
 
     const announcements = await prisma.announcement.findMany({

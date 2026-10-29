@@ -357,19 +357,6 @@ export default function Header({ initialUser, user: legacyUser }: HeaderProps) {
                     <span>Dashboard</span>
                   </Link>
 
-                  {/* 4. Mistakes */}
-                  <Link
-                    href="/dashboard/mistakes"
-                    className={`${styles.bottomTabItem} ${
-                      pathname?.startsWith('/dashboard/mistakes')
-                        ? styles.bottomTabItemActive
-                        : ''
-                    }`}
-                  >
-                    <Flame className={styles.bottomTabIcon} />
-                    <span>Mistakes</span>
-                  </Link>
-
                   {/* 5. More */}
                   <button
                     type="button"

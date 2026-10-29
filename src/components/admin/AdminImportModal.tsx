@@ -434,6 +434,21 @@ export default function AdminImportModal({
                   <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#F59E0B' }}>{executionResult.skipped ?? 0}</div>
                 </div>
               </div>
+
+              {/* Action buttons to allow uploading another mock immediately */}
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+                <Button
+                  variant="accent"
+                  size="md"
+                  onClick={handleReset}
+                  leftIcon={<Upload size={16} />}
+                >
+                  Upload Another Mock Test (CSV / Excel)
+                </Button>
+                <Button variant="secondary" size="md" onClick={onClose}>
+                  Done & Close
+                </Button>
+              </div>
             </div>
           )}
 
@@ -692,6 +707,11 @@ export default function AdminImportModal({
             {file && !executionResult && (
               <Button variant="ghost" size="sm" onClick={handleReset}>
                 Choose Different File
+              </Button>
+            )}
+            {executionResult && (
+              <Button variant="accent" size="sm" onClick={handleReset} leftIcon={<Upload size={14} />}>
+                Upload Another Mock Test
               </Button>
             )}
           </div>

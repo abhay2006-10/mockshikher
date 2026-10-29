@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/admin-auth';
 import { recordAuditLog } from '@/lib/audit';
+import { ensureAnnouncementsTable } from '@/lib/announcement-db';
 
 // PATCH — Toggle active/pinned or update fields
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -11,6 +12,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
 
   try {
+    await ensureAnnouncementsTable();
+
     const body = await req.json();
     const { title, body: msgBody, type, isPinned, isActive, ctaLabel, ctaUrl, expiresAt } = body;
 
@@ -37,9 +40,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     );
 
     return NextResponse.json({ announcement: updated });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[admin/announcements/PATCH]', error);
-    return NextResponse.json({ error: 'Failed to update announcement' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to update announcement' }, { status: 500 });
   }
 }
 
@@ -51,6 +54,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
 
   try {
+    await ensureAnnouncementsTable();
+
     const deleted = await prisma.announcement.delete({ where: { id } });
 
     await recordAuditLog(
@@ -61,8 +66,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     );
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[admin/announcements/DELETE]', error);
-    return NextResponse.json({ error: 'Failed to delete announcement' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to delete announcement' }, { status: 500 });
   }
 }
