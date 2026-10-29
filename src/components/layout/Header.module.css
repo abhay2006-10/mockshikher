@@ -309,6 +309,7 @@
 .mobileRight {
   display: none;
   align-items: center;
+  gap: 8px;
 }
 
 .mobileAuthButtons {

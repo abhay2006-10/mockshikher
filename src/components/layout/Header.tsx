@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import AuthModal, { AuthModalTab } from '@/components/ui/AuthModal';
+import { NotificationBell, NotificationDrawer } from '@/components/common/NotificationCenter';
 import styles from './Header.module.css';
 
 interface HeaderUser {
@@ -186,6 +187,7 @@ export default function Header({ initialUser, user: legacyUser }: HeaderProps) {
 
           {/* Desktop Auth / User Menu */}
           <div className={styles.desktopActions}>
+            <NotificationBell />
             {user ? (
               <div className={styles.userMenu}>
                 <button
@@ -283,6 +285,7 @@ export default function Header({ initialUser, user: legacyUser }: HeaderProps) {
 
           {/* Mobile Right: Guest shows Log In button; Logged in shows Avatar to open sheet */}
           <div className={styles.mobileRight}>
+            <NotificationBell />
             {!user ? (
               <button
                 className={styles.mobileLoginBtn}
@@ -319,6 +322,7 @@ export default function Header({ initialUser, user: legacyUser }: HeaderProps) {
       {/* React Portal to document.body for bottom bar and bottom sheet */}
       {mounted && typeof document !== 'undefined' && createPortal(
         <>
+          <NotificationDrawer />
           {/* Phone Fixed Bottom Tab Bar */}
           {!hideBottomBar && (
             <nav className={styles.bottomTabBar} aria-label="Mobile Navigation">

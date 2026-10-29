@@ -27,6 +27,7 @@ import ComingSoonExamCard from '@/components/exam/ComingSoonExamCard';
 import Button from '@/components/ui/Button';
 import AuthModal, { AuthModalTab } from '@/components/ui/AuthModal';
 import NoticeBoard from '@/components/common/NoticeBoard';
+import { HeroAnnouncementPill, FloatingNotificationBell } from '@/components/common/NotificationCenter';
 import WhatsAppUpdatesSection, { InstagramIcon } from '@/components/common/WhatsAppUpdatesSection';
 import type { MockExam } from '@/lib/mock-data';
 import styles from './page.module.css';
@@ -342,6 +343,7 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
         <div className={styles.heroGrid}>
           {/* Left Column: Direct Value Proposition */}
           <div className={styles.heroLeft}>
+            <HeroAnnouncementPill />
             <div className={styles.officialNoticeChip}>
               <span>🏔️</span>
               <span>Himachal Pradesh State Examination Preparation</span>
@@ -1037,6 +1039,7 @@ export default function HomePageClient({ landingExams, publishedExamCount, showG
         callbackUrl={modalCallback}
         showGoogle={showGoogle}
       />
+          <FloatingNotificationBell />
     </div>
   );
 }
