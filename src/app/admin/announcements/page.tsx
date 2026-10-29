@@ -119,14 +119,22 @@ export default function AdminAnnouncementsPage() {
         }),
       });
       if (!res.ok) {
-        const d = await res.json();
-        setError(d.error || 'Failed to create announcement.');
+        const d = await res.json().catch(() => ({}));
+        if (res.status === 401) {
+          setError('Session expired or not logged in. Please log in as admin.');
+        } else if (res.status === 403) {
+          setError('Admin access required. Your account lacks admin privileges.');
+        } else {
+          setError(d.error || `Failed to create announcement (HTTP ${res.status})`);
+        }
         return;
       }
       setSuccessMsg('Announcement published successfully!');
       setTimeout(() => setSuccessMsg(''), 3500);
       resetForm();
       await loadItems();
+    } catch (err: any) {
+      setError(err?.message || 'Network error while publishing announcement.');
     } finally {
       setIsSaving(false);
     }

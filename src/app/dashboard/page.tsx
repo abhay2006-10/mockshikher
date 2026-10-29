@@ -148,6 +148,9 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      {/* Mockshikhar In-App Notice Board — Prominently placed for high student visibility */}
+      <NoticeBoard />
+
       {/* ========================================================
           1. TIPS TO IMPROVE PROGRESS (DEDICATED SECTION)
          ======================================================== */}
@@ -465,9 +468,6 @@ export default function DashboardPage() {
           </Link>
         </div>
       </section>
-
-      {/* Mockshikhar In-App Notice Board */}
-      <NoticeBoard />
 
       {/* Mockshikhar Updates — Official WhatsApp Channel */}
       <WhatsAppUpdatesSection sourceContext="dashboard" />

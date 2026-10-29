@@ -16,12 +16,14 @@ import {
   ChevronUp,
   Megaphone,
   Pin,
+  Sparkles,
+  ExternalLink,
 } from 'lucide-react';
 import styles from './NoticeBoard.module.css';
 
-type AnnouncementType = 'INFO' | 'SUCCESS' | 'WARNING' | 'URGENT' | 'NEW_TEST' | 'OFFER';
+export type AnnouncementType = 'INFO' | 'SUCCESS' | 'WARNING' | 'URGENT' | 'NEW_TEST' | 'OFFER';
 
-interface Announcement {
+export interface Announcement {
   id: string;
   title: string;
   body: string;
@@ -38,37 +40,44 @@ const TYPE_CONFIG: Record<
     icon: React.ReactNode;
     label: string;
     colorClass: string;
+    borderGlow: string;
   }
 > = {
   INFO: {
-    icon: <Info size={15} />,
-    label: 'Info',
+    icon: <Info size={14} />,
+    label: 'Platform Notice',
     colorClass: styles.typeInfo,
+    borderGlow: 'rgba(59, 130, 246, 0.3)',
   },
   SUCCESS: {
-    icon: <CheckCircle2 size={15} />,
+    icon: <CheckCircle2 size={14} />,
     label: 'Update',
     colorClass: styles.typeSuccess,
+    borderGlow: 'rgba(16, 185, 129, 0.3)',
   },
   WARNING: {
-    icon: <AlertTriangle size={15} />,
-    label: 'Notice',
+    icon: <AlertTriangle size={14} />,
+    label: 'Important Notice',
     colorClass: styles.typeWarning,
+    borderGlow: 'rgba(245, 158, 11, 0.3)',
   },
   URGENT: {
-    icon: <Zap size={15} />,
-    label: 'Urgent',
+    icon: <Zap size={14} />,
+    label: 'Urgent Alert',
     colorClass: styles.typeUrgent,
+    borderGlow: 'rgba(239, 68, 68, 0.4)',
   },
   NEW_TEST: {
-    icon: <BookOpen size={15} />,
-    label: 'New Test',
+    icon: <BookOpen size={14} />,
+    label: 'New Test Series',
     colorClass: styles.typeNewTest,
+    borderGlow: 'rgba(168, 85, 247, 0.35)',
   },
   OFFER: {
-    icon: <Tag size={15} />,
-    label: 'Offer',
+    icon: <Tag size={14} />,
+    label: 'Special Offer',
     colorClass: styles.typeOffer,
+    borderGlow: 'rgba(249, 115, 22, 0.35)',
   },
 };
 
@@ -88,7 +97,11 @@ function formatRelativeTime(dateStr: string): string {
   return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 
-export default function NoticeBoard() {
+interface NoticeBoardProps {
+  compact?: boolean;
+}
+
+export default function NoticeBoard({ compact = false }: NoticeBoardProps) {
   const [announcements, setAnnouncements] = React.useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [expanded, setExpanded] = React.useState<string | null>(null);
@@ -98,7 +111,7 @@ export default function NoticeBoard() {
   React.useEffect(() => {
     async function fetchAnnouncements() {
       try {
-        const res = await fetch('/api/announcements', { next: { revalidate: 300 } } as RequestInit);
+        const res = await fetch('/api/announcements', { next: { revalidate: 60 } } as RequestInit);
         if (res.ok) {
           const data = await res.json();
           const items: Announcement[] = data.announcements || [];
@@ -106,9 +119,20 @@ export default function NoticeBoard() {
 
           // Track unread using localStorage
           const seenKey = 'ms_seen_announcements';
-          const seen: string[] = JSON.parse(localStorage.getItem(seenKey) || '[]');
+          let seen: string[] = [];
+          try {
+            seen = JSON.parse(localStorage.getItem(seenKey) || '[]');
+          } catch {
+            seen = [];
+          }
           const unseen = items.filter((a) => !seen.includes(a.id));
           setUnreadCount(unseen.length);
+
+          // Auto-expand the pinned or first announcement by default so students don't miss it
+          if (items.length > 0) {
+            const pinned = items.find((i) => i.isPinned);
+            setExpanded(pinned ? pinned.id : items[0].id);
+          }
         }
       } catch {
         // Silent fail — notice board is non-critical
@@ -126,14 +150,18 @@ export default function NoticeBoard() {
     setUnreadCount(0);
   }
 
-  function handleExpand(id: string) {
+  function handleToggle(id: string) {
     setExpanded((prev) => (prev === id ? null : id));
     // Mark as seen when expanded
     const seenKey = 'ms_seen_announcements';
-    const seen: string[] = JSON.parse(localStorage.getItem(seenKey) || '[]');
-    if (!seen.includes(id)) {
-      localStorage.setItem(seenKey, JSON.stringify([...seen, id]));
-      setUnreadCount((c) => Math.max(0, c - 1));
+    try {
+      const seen: string[] = JSON.parse(localStorage.getItem(seenKey) || '[]');
+      if (!seen.includes(id)) {
+        localStorage.setItem(seenKey, JSON.stringify([...seen, id]));
+        setUnreadCount((c) => Math.max(0, c - 1));
+      }
+    } catch {
+      // Ignore localStorage errors
     }
   }
 
@@ -141,20 +169,20 @@ export default function NoticeBoard() {
 
   if (isLoading) {
     return (
-      <section className={styles.wrapper} aria-label="Notice Board">
+      <section className={styles.wrapper} aria-label="Official Notice Board">
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <div className={styles.bellIconBox}>
               <Megaphone size={20} />
             </div>
             <div>
-              <h2 className={styles.title}>Notice Board</h2>
-              <p className={styles.subtitle}>Platform updates & announcements</p>
+              <h2 className={styles.title}>Official Notice Board</h2>
+              <p className={styles.subtitle}>Checking platform announcements...</p>
             </div>
           </div>
         </div>
         <div className={styles.skeletonList}>
-          {[1, 2, 3].map((i) => (
+          {[1, 2].map((i) => (
             <div key={i} className={styles.skeletonItem}>
               <div className={styles.skeletonBadge} />
               <div className={styles.skeletonText} />
@@ -167,11 +195,11 @@ export default function NoticeBoard() {
   }
 
   if (announcements.length === 0) {
-    return null; // Don't render if no announcements — clean UX
+    return null; // Clean UX: don't render empty container when no active announcements
   }
 
   return (
-    <section className={styles.wrapper} aria-label="Notice Board" id="notice-board">
+    <section className={`${styles.wrapper} ${compact ? styles.wrapperCompact : ''}`} aria-label="Official Notice Board" id="notice-board">
       {/* Ambient background glow */}
       <div className={styles.ambientGlow} aria-hidden="true" />
 
@@ -179,37 +207,43 @@ export default function NoticeBoard() {
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <div className={styles.bellIconBox}>
-            {unreadCount > 0 ? <BellRing size={20} className={styles.bellRinging} /> : <Megaphone size={20} />}
+            {unreadCount > 0 ? (
+              <BellRing size={20} className={styles.bellRinging} />
+            ) : (
+              <Megaphone size={20} />
+            )}
             {unreadCount > 0 && (
-              <span className={styles.unreadBadge} aria-label={`${unreadCount} unread notifications`}>
+              <span className={styles.unreadBadge} aria-label={`${unreadCount} unread notices`}>
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
           </div>
           <div>
-            <h2 className={styles.title}>
-              Notice Board
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <h2 className={styles.title}>
+                Notice Board
+              </h2>
               <span className={styles.liveChip}>
                 <span className={styles.liveDot} aria-hidden="true" />
-                Live
+                Live Updates
               </span>
-            </h2>
+            </div>
             <p className={styles.subtitle}>
-              {announcements.length} update{announcements.length !== 1 ? 's' : ''} from Mockshikhar
+              Official exam notices, syllabus updates, and new mock releases from Mockshikhar
             </p>
           </div>
         </div>
 
         {unreadCount > 0 && (
-          <button className={styles.markReadBtn} onClick={markAllSeen} aria-label="Mark all as read">
-            <Bell size={14} />
-            Mark all read
+          <button className={styles.markReadBtn} onClick={markAllSeen} aria-label="Mark all notices as read">
+            <CheckCircle2 size={14} />
+            <span>Mark all read</span>
           </button>
         )}
       </div>
 
-      {/* Announcement Items */}
-      <ul className={styles.list} role="list">
+      {/* Announcement Cards List */}
+      <div className={styles.list}>
         {visibleItems.map((item, index) => {
           const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.INFO;
           const isOpen = expanded === item.id;
@@ -223,50 +257,58 @@ export default function NoticeBoard() {
           })();
 
           return (
-            <li
+            <article
               key={item.id}
-              className={`${styles.item} ${item.isPinned ? styles.itemPinned : ''} ${isUnread ? styles.itemUnread : ''}`}
+              className={`${styles.itemCard} ${item.isPinned ? styles.itemPinned : ''} ${isUnread ? styles.itemUnread : ''} ${isOpen ? styles.itemCardOpen : ''}`}
               style={{ animationDelay: `${index * 60}ms` }}
-              role="listitem"
             >
-              {/* Item Header Row */}
+              {/* Entire header + title is clickable */}
               <button
-                className={styles.itemHeader}
-                onClick={() => handleExpand(item.id)}
+                type="button"
+                className={styles.itemHeaderBtn}
+                onClick={() => handleToggle(item.id)}
                 aria-expanded={isOpen}
                 aria-controls={`notice-body-${item.id}`}
                 id={`notice-trigger-${item.id}`}
               >
-                <div className={styles.itemLeft}>
-                  {/* Type Badge */}
-                  <span className={`${styles.typeBadge} ${config.colorClass}`}>
-                    {config.icon}
-                    <span>{config.label}</span>
-                  </span>
-
-                  {/* Pin indicator */}
-                  {item.isPinned && (
-                    <span className={styles.pinBadge} aria-label="Pinned announcement">
-                      <Pin size={11} />
+                <div className={styles.itemHeaderTop}>
+                  <div className={styles.itemBadges}>
+                    {/* Type Badge */}
+                    <span className={`${styles.typeBadge} ${config.colorClass}`}>
+                      {config.icon}
+                      <span>{config.label}</span>
                     </span>
-                  )}
 
-                  {/* Unread dot */}
-                  {isUnread && <span className={styles.unreadDot} aria-label="Unread" />}
+                    {/* Pin badge */}
+                    {item.isPinned && (
+                      <span className={styles.pinBadge} title="Pinned announcement">
+                        <Pin size={11} />
+                        <span>Pinned</span>
+                      </span>
+                    )}
+
+                    {/* Unread indicator */}
+                    {isUnread && (
+                      <span className={styles.unreadChip}>
+                        <span className={styles.unreadDot} />
+                        New
+                      </span>
+                    )}
+                  </div>
+
+                  <div className={styles.itemMeta}>
+                    <time className={styles.timeAgo} dateTime={item.createdAt}>
+                      {formatRelativeTime(item.createdAt)}
+                    </time>
+                    <span className={`${styles.expandIcon} ${isOpen ? styles.expandIconRotated : ''}`} aria-hidden="true">
+                      <ChevronDown size={17} />
+                    </span>
+                  </div>
                 </div>
 
-                <div className={styles.itemMeta}>
-                  <time className={styles.timeAgo} dateTime={item.createdAt}>
-                    {formatRelativeTime(item.createdAt)}
-                  </time>
-                  <span className={styles.expandIcon} aria-hidden="true">
-                    {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                  </span>
-                </div>
+                {/* Title */}
+                <h3 className={styles.itemTitle}>{item.title}</h3>
               </button>
-
-              {/* Title */}
-              <div className={styles.itemTitle}>{item.title}</div>
 
               {/* Expandable Body */}
               <div
@@ -275,36 +317,40 @@ export default function NoticeBoard() {
                 role="region"
                 aria-labelledby={`notice-trigger-${item.id}`}
               >
-                <p className={styles.bodyText}>{item.body}</p>
+                <div className={styles.bodyContent}>
+                  <p className={styles.bodyText}>{item.body}</p>
 
-                {item.ctaLabel && item.ctaUrl && (
-                  <div className={styles.ctaRow}>
-                    {item.ctaUrl.startsWith('http') ? (
-                      <a
-                        href={item.ctaUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.ctaButton}
-                        id={`notice-cta-${item.id}`}
-                      >
-                        <span>{item.ctaLabel}</span>
-                        <ArrowRight size={14} />
-                      </a>
-                    ) : (
-                      <Link href={item.ctaUrl} className={styles.ctaButton} id={`notice-cta-${item.id}`}>
-                        <span>{item.ctaLabel}</span>
-                        <ArrowRight size={14} />
-                      </Link>
-                    )}
-                  </div>
-                )}
+                  {item.ctaLabel && item.ctaUrl && (
+                    <div className={styles.ctaRow}>
+                      {item.ctaUrl.startsWith('http') ? (
+                        <a
+                          href={item.ctaUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.ctaButton}
+                          id={`notice-cta-${item.id}`}
+                        >
+                          <Sparkles size={14} />
+                          <span>{item.ctaLabel}</span>
+                          <ExternalLink size={13} />
+                        </a>
+                      ) : (
+                        <Link href={item.ctaUrl} className={styles.ctaButton} id={`notice-cta-${item.id}`}>
+                          <Sparkles size={14} />
+                          <span>{item.ctaLabel}</span>
+                          <ArrowRight size={14} className={styles.ctaArrow} />
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </li>
+            </article>
           );
         })}
-      </ul>
+      </div>
 
-      {/* Show more / less */}
+      {/* Show more / less button if > 4 items */}
       {announcements.length > 4 && (
         <button
           className={styles.showMoreBtn}
@@ -314,12 +360,12 @@ export default function NoticeBoard() {
           {showAll ? (
             <>
               <ChevronUp size={15} />
-              Show Less
+              <span>Show Fewer Announcements</span>
             </>
           ) : (
             <>
               <ChevronDown size={15} />
-              Show {announcements.length - 4} More
+              <span>View All {announcements.length} Announcements</span>
             </>
           )}
         </button>

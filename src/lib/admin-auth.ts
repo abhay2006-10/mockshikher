@@ -9,6 +9,13 @@ export interface AdminSessionUser {
   role: 'ADMIN';
 }
 
+// Trusted super admin emails who always have admin rights
+const SUPER_ADMIN_EMAILS = [
+  'abhayverm24@gmail.com',
+  'admin@mockshikhar.com',
+  'admin@mockprep.com',
+];
+
 /**
  * Server-side authorization check for Admin API routes.
  * Strictly verifies that the authenticated user has role ADMIN in the PostgreSQL database.
@@ -25,8 +32,20 @@ export async function requireAdmin(): Promise<{ user: AdminSessionUser } | NextR
     }
 
     const userId = session.user.id;
-    const userEmail = session.user.email;
+    const userEmail = session.user.email?.toLowerCase().trim();
     const sessionRole = (session.user as any).role;
+
+    // Fast-path: Check trusted super admin emails
+    if (userEmail && SUPER_ADMIN_EMAILS.includes(userEmail)) {
+      return {
+        user: {
+          id: userId || 'admin-super',
+          name: session.user.name || 'Admin',
+          email: userEmail,
+          role: 'ADMIN',
+        },
+      };
+    }
 
     let dbUser = null;
     try {

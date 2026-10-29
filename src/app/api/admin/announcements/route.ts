@@ -13,9 +13,9 @@ export async function GET() {
       orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
     });
     return NextResponse.json({ announcements });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[admin/announcements/GET]', error);
-    return NextResponse.json({ error: 'Failed to fetch announcements' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to fetch announcements' }, { status: 500 });
   }
 }
 
@@ -58,8 +58,8 @@ export async function POST(req: NextRequest) {
     );
 
     return NextResponse.json({ announcement }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[admin/announcements/POST]', error);
-    return NextResponse.json({ error: 'Failed to create announcement' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to create announcement' }, { status: 500 });
   }
 }

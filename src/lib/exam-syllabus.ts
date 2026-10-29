@@ -916,16 +916,16 @@ export function getOfficialExamConfig(rawSlug?: string): OfficialExamConfig {
     return OFFICIAL_EXAMS_SYLLABUS[clean];
   }
 
-  // TGT Medical
-  if (clean.includes('medical') && (clean.includes('tet') || clean.includes('tgt'))) {
-    return OFFICIAL_EXAMS_SYLLABUS['hp-tet-tgt-medical'];
-  }
-  // TGT Non-Medical
-  if (clean.includes('non-medical') && (clean.includes('tet') || clean.includes('tgt'))) {
+  // TGT Non-Medical (MUST be checked before Medical because "non-medical" contains "medical")
+  if (clean.includes('non-med') || (clean.includes('non') && clean.includes('medical'))) {
     return OFFICIAL_EXAMS_SYLLABUS['hp-tet-tgt-non-medical'];
   }
+  // TGT Medical
+  if (clean.includes('medical') && !clean.includes('non')) {
+    return OFFICIAL_EXAMS_SYLLABUS['hp-tet-tgt-medical'];
+  }
   // TGT Arts
-  if (clean.includes('arts') && (clean.includes('tet') || clean.includes('tgt'))) {
+  if (clean.includes('arts') || clean.includes('tgt-art')) {
     return OFFICIAL_EXAMS_SYLLABUS['hp-tet-tgt-arts'];
   }
   // JBT
