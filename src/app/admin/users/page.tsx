@@ -138,6 +138,7 @@ export default function AdminStudentActivityPage() {
   const [isGranting, setIsGranting] = useState<boolean>(false);
   const [grantSuccessMsg, setGrantSuccessMsg] = useState<string | null>(null);
   const [grantErrorMsg, setGrantErrorMsg] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<{ message: string; isAuthError?: boolean } | null>(null);
 
   // Load available exams for the grant access dropdown
   useEffect(() => {
@@ -171,11 +172,29 @@ export default function AdminStudentActivityPage() {
         setUsers(data.users || []);
         setStats(data.stats || null);
         setTotalPages(data.pagination?.totalPages || 1);
+        setFetchError(null);
 
         // If a user modal is currently open, refresh their data too
         if (selectedUser) {
           const updated = (data.users || []).find((u: StudentUser) => u.id === selectedUser.id);
           if (updated) setSelectedUser(updated);
+        }
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        if (res.status === 401) {
+          setFetchError({
+            message: 'Session Expired: Please log in again to access Student Activity.',
+            isAuthError: true,
+          });
+        } else if (res.status === 403) {
+          setFetchError({
+            message: 'Access Denied: Your account does not have ADMIN privileges in the active database.',
+            isAuthError: true,
+          });
+        } else {
+          setFetchError({
+            message: errData.error || `Failed to load student activity records (Status ${res.status})`,
+          });
         }
       }
     } catch (err) {
@@ -424,6 +443,64 @@ export default function AdminStudentActivityPage() {
           </div>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {fetchError && (
+        <div
+          style={{
+            background: 'rgba(239, 68, 68, 0.12)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: '12px',
+            padding: '1rem 1.25rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            flexWrap: 'wrap',
+            color: '#f87171',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <AlertCircle size={20} style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{fetchError.message}</span>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {fetchError.isAuthError ? (
+              <Link
+                href="/auth/login?callbackUrl=/admin/users"
+                style={{
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  padding: '0.45rem 1rem',
+                  borderRadius: '6px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+              >
+                Log In as Admin
+              </Link>
+            ) : (
+              <button
+                onClick={() => fetchUsers()}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.25)',
+                  border: '1px solid rgba(239, 68, 68, 0.5)',
+                  color: '#fca5a5',
+                  padding: '0.45rem 1rem',
+                  borderRadius: '6px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Retry
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Search, Filter & Sort Toolbar */}
       <div

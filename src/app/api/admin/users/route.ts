@@ -55,16 +55,8 @@ export async function GET(req: NextRequest) {
       orderByClause = { createdAt: 'desc' };
     }
 
-    // Parallel queries for comprehensive stats & paginated users
-    const [
-      totalUsersCount,
-      activeTestTakersCount,
-      paidStudentsCount,
-      totalAttemptsSubmitted,
-      totalRevenueResult,
-      filteredUsersCount,
-      users,
-    ] = await Promise.all([
+    // Parallel queries with Promise.allSettled so a failure in stats never blocks user data
+    const results = await Promise.allSettled([
       prisma.user.count({ where: { role: { not: 'ADMIN' } } }),
       prisma.user.count({ where: { role: { not: 'ADMIN' }, attempts: { some: {} } } }),
       prisma.user.count({ where: { role: { not: 'ADMIN' }, purchases: { some: {} } } }),
@@ -168,6 +160,18 @@ export async function GET(req: NextRequest) {
         take: limit,
       }),
     ]);
+
+    const totalUsersCount = results[0].status === 'fulfilled' ? results[0].value : 0;
+    const activeTestTakersCount = results[1].status === 'fulfilled' ? results[1].value : 0;
+    const paidStudentsCount = results[2].status === 'fulfilled' ? results[2].value : 0;
+    const totalAttemptsSubmitted = results[3].status === 'fulfilled' ? results[3].value : 0;
+    const totalRevenueResult = results[4].status === 'fulfilled' ? results[4].value : { _sum: { amount: 0 } };
+    const filteredUsersCount = results[5].status === 'fulfilled' ? results[5].value : 0;
+    const users = results[6].status === 'fulfilled' ? results[6].value : [];
+
+    if (results[6].status === 'rejected') {
+      console.error('Failed to query users in admin/users:', results[6].reason);
+    }
 
     return NextResponse.json({
       success: true,
