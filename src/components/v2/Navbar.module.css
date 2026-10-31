@@ -1,0 +1,357 @@
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(238, 241, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(67, 56, 202, 0.10);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.brand:hover {
+  color: var(--primary-dark);
+}
+
+/* Desktop Navlinks */
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.navLink {
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted-2);
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+.navLink:hover {
+  color: var(--primary);
+  background: rgba(238, 241, 255, 0.6);
+}
+
+.navLink.active {
+  color: var(--primary);
+  font-weight: 800;
+  background: var(--sky);
+}
+
+/* Actions Right */
+.actionsRight {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-strong);
+}
+
+.loginTextBtn {
+  background: transparent;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 10px;
+  transition: background 0.18s ease;
+}
+
+.loginTextBtn:hover {
+  background: var(--sky);
+}
+
+.signupBtn {
+  background: var(--primary);
+  color: #FFFFFF;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.25s ease, background 0.2s ease;
+}
+
+.signupBtn:hover {
+  transform: translateY(-2px);
+  background: #3B30B5;
+  box-shadow: 0 14px 30px -10px rgba(67, 56, 202, 0.65);
+}
+
+/* Account Dropdown */
+.profileWrap {
+  position: relative;
+}
+
+.accountPill {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: #FFFFFF;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ink);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.accountPill:hover {
+  border-color: #C7CEFB;
+  box-shadow: 0 4px 12px -4px rgba(49, 46, 129, 0.15);
+}
+
+.avatarCircle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--amber);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.userName {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 270px;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 0 24px 50px -20px rgba(11, 16, 38, 0.35);
+  animation: drop 0.25s ease both;
+  z-index: 60;
+}
+
+.userCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.userCardInfo {
+  min-width: 0;
+}
+
+.userCardName {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userCardEmail {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 0;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.dropdownItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dropdownItem:hover {
+  background: var(--sky-2);
+}
+
+.logoutItem {
+  color: #B91C1C;
+}
+
+.logoutItem:hover {
+  background: #FEE2E2;
+}
+
+.badgeAmber {
+  background: var(--amber-tint);
+  color: var(--amber-text);
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+/* Mobile Controls */
+.mobileControls {
+  display: none;
+  align-items: center;
+  gap: 10px;
+}
+
+.hamburgerBtn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: #FFFFFF;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.hamburgerBtn:hover {
+  background: var(--sky);
+}
+
+/* Mobile Drawer */
+.mobileDrawer {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px 24px;
+  box-shadow: 0 20px 40px -15px rgba(11, 16, 38, 0.25);
+  animation: drop 0.25s ease both;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 55;
+  max-height: calc(100vh - 68px);
+  overflow-y: auto;
+}
+
+.mobileLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+  transition: background 0.18s ease;
+}
+
+.mobileLink:hover {
+  background: var(--sky-2);
+}
+
+.mobileLink.active {
+  color: var(--primary);
+  background: var(--sky);
+}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  padding: 8px 14px 4px;
+  text-transform: uppercase;
+}
+
+.mobileAuthButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+  .navLinks,
+  .divider,
+  .loginTextBtn,
+  .profileWrap .userName {
+    display: none !important;
+  }
+  .mobileControls {
+    display: flex;
+  }
+  .inner {
+    padding: 0 16px;
+    height: 60px;
+  }
+  .brand {
+    font-size: 18px;
+  }
+}

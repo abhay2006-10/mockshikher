@@ -1,0 +1,91 @@
+.heroSceneWrapper {
+  position: absolute;
+  left: -60px;
+  right: -60px;
+  bottom: 0;
+  height: 440px;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: transform;
+}
+
+.cloudLayer {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  width: 100%;
+  height: 160px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cloud1 {
+  position: absolute;
+  top: 20px;
+  width: 180px;
+  height: 70px;
+  animation: cloud 70s linear infinite;
+}
+
+.cloud2 {
+  position: absolute;
+  top: 90px;
+  width: 130px;
+  height: 50px;
+  animation: cloud2 42s linear infinite;
+  animation-delay: -18s;
+}
+
+.birdsLayer {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.birds {
+  position: absolute;
+  width: 60px;
+  height: 24px;
+  animation: fly 30s linear infinite;
+  animation-delay: -6s;
+}
+
+.farDrift {
+  animation: drift 26s ease-in-out infinite;
+}
+
+.midDrift {
+  animation: drift 18s ease-in-out infinite reverse;
+}
+
+@media (max-width: 720px) {
+  .heroSceneWrapper {
+    height: 240px;
+    left: -30px;
+    right: -30px;
+  }
+  .cloud2,
+  .birdsLayer {
+    display: none;
+  }
+  .cloud1 {
+    width: 140px;
+    top: 30px;
+  }
+}

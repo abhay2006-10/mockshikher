@@ -53,6 +53,53 @@ ul, ol {
 
 /* ---------- Design Tokens: SHIKHAR CREST Modern EdTech System ---------- */
 :root {
+  /* ========================================================
+     MASTER DESIGN SYSTEM V2 (Approved MockShikhar Tokens)
+     ======================================================== */
+  --ink: #0B1026;
+  --primary: #4338CA;
+  --primary-dark: #312E81;
+  --primary-panel-ridge: #3A378F;
+  --sky: #EEF1FF;
+  --sky-2: #F5F6FF;
+  --page: #F6F7FC;
+  --surface: #FFFFFF;
+  --border: #E3E6F5;
+  --border-strong: #D5D9EC;
+  --muted: #4B5168;
+  --muted-2: #3B4160;
+  --on-dark-muted: #D9DBFF;
+  --on-dark-footer-muted: #C3C7DD;
+  --amber: #FCD34D;
+  --amber-strong: #F59E0B;
+  --amber-tint: #FEF3C7;
+  --amber-text: #92400E;
+  --success: #16A34A;
+  --success-tint: #DCFCE7;
+  --success-text: #166534;
+  --danger: #DC2626;
+  --danger-tint: #FEE2E2;
+  --danger-text: #991B1B;
+  --pink: #DB2777;
+  --pink-tint: #FCE7F3;
+  --pink-text: #9D174D;
+
+  /* Category Chip Color Tokens */
+  --chip-patwari-bg: #CCFBF1;
+  --chip-patwari-text: #115E59;
+  --chip-police-bg: #DBEAFE;
+  --chip-police-text: #1E40AF;
+  --chip-court-bg: #EDE9FE;
+  --chip-court-text: #5B21B6;
+  --chip-tet-bg: #FFEDD5;
+  --chip-tet-text: #9A3412;
+  --chip-upcoming-bg: #EEF0F6;
+  --chip-upcoming-text: #3F4460;
+
+  /* Font bindings */
+  --font-body: var(--font-plus-jakarta-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-hindi: var(--font-noto-sans-devanagari), 'Noto Sans Devanagari', sans-serif;
+
   /* Brand Core (Electric Cobalt / Himalayan Azure) */
   --color-primary: #2563EB;
   --color-primary-50: rgba(37, 99, 235, 0.08);
@@ -129,8 +176,8 @@ ul, ol {
   --glass-blur: blur(16px);
 
   /* Typography */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-display: 'Outfit', var(--font-sans);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-body);
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   --text-xs: 0.75rem;     /* 12px */
@@ -1312,3 +1359,111 @@ a.btn {
   color: #FFFFFF !important;
 }
 
+
+
+/* ========================================================
+   MASTER DESIGN SYSTEM V2 ANIMATION KEYFRAMES
+   ======================================================== */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes draw {
+  from { stroke-dashoffset: 620; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes drift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-30px); }
+}
+@keyframes shine {
+  0% { left: -60%; }
+  60%, 100% { left: 130%; }
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55); }
+  100% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+}
+@keyframes slidein {
+  from { opacity: 0; transform: translateX(-14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes cloud {
+  from { transform: translateX(-10%); }
+  to { transform: translateX(110%); }
+}
+@keyframes cloud2 {
+  from { transform: translateX(-20%); }
+  to { transform: translateX(110vw); }
+}
+@keyframes fly {
+  0% { transform: translate(-10vw, 0); }
+  50% { transform: translate(50vw, -36px); }
+  100% { transform: translate(110vw, 10px); }
+}
+@keyframes up {
+  from { opacity: 0; transform: translateY(60px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes drop {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes bub {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ringwa {
+  0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.55); }
+  100% { box-shadow: 0 0 0 12px rgba(22, 163, 74, 0); }
+}
+@keyframes ringig {
+  0% { box-shadow: 0 0 0 0 rgba(219, 39, 119, 0.55); }
+  100% { box-shadow: 0 0 0 12px rgba(219, 39, 119, 0); }
+}
+@keyframes pop {
+  0% { transform: scale(0.985); }
+  60% { transform: scale(1.01); }
+  100% { transform: scale(1); }
+}
+@keyframes grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes sheet {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes tick {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+@keyframes ring {
+  from { stroke-dashoffset: 440; }
+  to { stroke-dashoffset: var(--ring-offset, 0); }
+}
+@keyframes spark {
+  0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(45deg); }
+}
+@keyframes open {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

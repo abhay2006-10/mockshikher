@@ -1,0 +1,15 @@
+.track {
+  width: 100%;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--primary);
+  transform-origin: left;
+  animation: grow 0.8s 0.2s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  transition: width 0.4s ease;
+}

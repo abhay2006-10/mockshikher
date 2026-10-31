@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
-import Header from './Header';
-import Footer from './Footer';
+import { Navbar } from '@/components/v2/Navbar';
+import { Footer } from '@/components/v2/Footer';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -17,7 +17,7 @@ interface AppShellProps {
 
 export default function AppShell({ children, initialUser }: AppShellProps) {
   const pathname = usePathname();
-  // Check if current page is an active exam attempt session
+  // Check if current page is an active exam attempt session or focus mode test
   const isExamAttempt = pathname?.includes('/attempt');
 
   if (isExamAttempt) {
@@ -29,9 +29,9 @@ export default function AppShell({ children, initialUser }: AppShellProps) {
   }
 
   return (
-    <div id="app-root" style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>
-      <Header initialUser={initialUser} />
-      <main style={{ flex: 1 }}>{children}</main>
+    <div id="app-root" style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', backgroundColor: 'var(--surface)' }}>
+      <Navbar initialUser={initialUser} />
+      <main style={{ flex: 1, minWidth: 0 }}>{children}</main>
       <Footer />
     </div>
   );

@@ -1,0 +1,53 @@
+.tabList {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  border-bottom: 1.5px solid var(--border);
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabList::-webkit-scrollbar {
+  display: none;
+}
+.tabList {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.tabButton {
+  position: relative;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1.5px;
+  padding: 12px 2px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted-2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+
+.tabButton:hover:not(.active) {
+  color: var(--primary);
+}
+
+.tabButton.active {
+  color: var(--primary);
+  font-weight: 800;
+  border-bottom-color: var(--primary);
+}
+
+@media (max-width: 720px) {
+  .tabList {
+    gap: 20px;
+  }
+  .tabButton {
+    font-size: 14px;
+    padding: 10px 2px;
+  }
+}
