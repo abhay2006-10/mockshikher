@@ -20,3 +20,4 @@ export function SearchInput({ className = '', ...props }: SearchInputProps) {
     </div>
   );
 }
+

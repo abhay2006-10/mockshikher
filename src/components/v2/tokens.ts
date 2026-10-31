@@ -78,3 +78,4 @@ export function getAccuracyColor(accuracy: number): AccuracyColor {
     label: 'Weak',
   };
 }
+

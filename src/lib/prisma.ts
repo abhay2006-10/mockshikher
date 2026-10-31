@@ -3,10 +3,13 @@ import { PrismaClient } from '@prisma/client';
 function getDatabaseUrl(): string | undefined {
   if (typeof process === 'undefined' || !process.env?.DATABASE_URL) return undefined;
   let dbUrl = process.env.DATABASE_URL;
+
+  // Detect Supabase transaction pooler (port 6543, pooler.supabase.com, or pgbouncer)
   const isTransactionPooler =
-    dbUrl.includes('-pooler') ||
-    dbUrl.includes('.neon.tech') ||
-    (dbUrl.includes('.pooler.supabase.com') && dbUrl.includes(':6543'));
+    dbUrl.includes('.pooler.supabase.com') ||
+    (dbUrl.includes('.supabase.co') && dbUrl.includes(':6543')) ||
+    dbUrl.includes(':6543') ||
+    dbUrl.includes('-pooler');
 
   if (isTransactionPooler) {
     if (!dbUrl.includes('pgbouncer=true')) {
@@ -39,4 +42,3 @@ export const prisma =
 globalForPrisma.prisma = prisma;
 
 export default prisma;
-

@@ -597,7 +597,7 @@ export async function POST(
         return { isDuplicate: false, committedAttempt: null };
       },
       {
-        // 30s bounded timeout: provides safe headroom for cross-continental round trips to Neon in Ohio
+        // 30s bounded timeout: provides safe headroom for database network round trips
         // while strictly preventing indefinite query hangs or lock deadlocks
         timeout: 30000,
         maxWait: 10000, // 10 seconds max wait to acquire a connection from the pool

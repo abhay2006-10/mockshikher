@@ -221,3 +221,4 @@ export function AlertCircle({ size = 20, strokeWidth = 2.2, ...props }: IconProp
     </svg>
   );
 }
+
