@@ -588,7 +588,7 @@ function TestAttemptInner() {
     });
   };
 
-  // Auto-save in-progress draft keyed by attemptId (temporary draft only)
+  // Auto-save in-progress draft: localStorage + periodic server draft sync
   useEffect(() => {
     if (!attemptId || Object.keys(answers).length === 0) return;
     try {
@@ -596,10 +596,38 @@ function TestAttemptInner() {
     } catch {
       // ignore quota errors
     }
+
+    // Sync draft to server DB so resume works across devices/incognito
+    const activeTest = testRef.current;
+    if (!activeTest?.id || isSubmittingRef.current) return;
+
+    const syncTimer = setTimeout(async () => {
+      try {
+        const finalAnswers: Record<string, UserAnswerState> = {};
+        for (const [qId, state] of Object.entries(answers)) {
+          finalAnswers[qId] = {
+            ...state,
+            timeSpent: timeSpentMapRef.current[qId] ?? state.timeSpent ?? 0,
+          };
+        }
+        await fetch(`/api/tests/${encodeURIComponent(activeTest.id)}/attempt/draft`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            attemptId,
+            answers: finalAnswers,
+          }),
+        });
+      } catch {
+        // silent fail to avoid interrupting active exam flow
+      }
+    }, 2500);
+
+    return () => clearTimeout(syncTimer);
   }, [answers, attemptId]);
 
-
-
+  const isAmberTime = timeLeft <= 600 && timeLeft > 120;
+  const isRedTime = timeLeft <= 120;
   const isLowTime = timeLeft < 300;
 
   // Loading state
@@ -660,7 +688,7 @@ function TestAttemptInner() {
             <span>{lang === 'en' ? 'हिन्दी' : 'English'}</span>
           </button>
 
-          <div className={`${styles.timerBox} ${isLowTime ? styles.timerLowTime : ''}`}>
+          <div className={`${styles.timerBox} ${isRedTime ? styles.timerRed : isAmberTime ? styles.timerAmber : ''}`}>
             <Clock size={16} className={styles.timerIcon} />
             <span className={styles.timeVal}>{formatTime(timeLeft)}</span>
             {isLowTime && <span className={styles.timeWarning}>!</span>}

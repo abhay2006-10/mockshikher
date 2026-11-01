@@ -98,14 +98,28 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #EEF1FF;
-  color: #312E81;
-  border: 1.5px solid #C7D2FE;
+  background: #E0F2FE;
+  color: #0369A1;
+  border: 1.5px solid #BAE6FD;
   padding: 6px 12px;
   border-radius: 10px;
   font-family: var(--font-jakarta, 'Plus Jakarta Sans', monospace);
   font-size: 15px;
   font-weight: 800;
+  transition: all 0.25s ease;
+}
+
+.timerAmber {
+  background: #FEF3C7 !important;
+  color: #B45309 !important;
+  border-color: #FCD34D !important;
+}
+
+.timerRed {
+  background: #FEE2E2 !important;
+  color: #DC2626 !important;
+  border-color: #FCA5A5 !important;
+  animation: pulseWarning 1.2s infinite ease-in-out;
 }
 
 .timerIcon {
