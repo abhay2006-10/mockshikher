@@ -102,11 +102,22 @@ export function BookOpenIcon({ size = 20, strokeWidth = 2.2, ...props }: IconPro
     </svg>
   );
 }
+export { BookOpenIcon as BookOpen };
 
 export function BookmarkIcon({ size = 20, strokeWidth = 2.2, ...props }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+    </svg>
+  );
+}
+export { BookmarkIcon as Bookmark };
+
+export function RotateCcw({ size = 20, strokeWidth = 2.2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
     </svg>
   );
 }

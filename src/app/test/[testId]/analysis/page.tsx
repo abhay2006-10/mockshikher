@@ -5,24 +5,23 @@ import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
-  CheckCircle2,
-  XCircle,
-  HelpCircle,
-  Clock,
-  Target,
-  Sparkles,
-  BookOpen,
+  CheckIcon,
+  XIcon,
   Bookmark,
-  TrendingDown,
-  TrendingUp,
-  Languages,
-  Check,
-  Filter,
-} from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
-// No hardcoded question imports — questions come from server result data
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
+  BookOpen,
+} from '@/components/v2/Icons';
+import { UnderlineTabs } from '@/components/v2';
 import styles from './page.module.css';
+
+interface OptionItem {
+  id: string;
+  label: number;
+  text: string;
+  textHi: string | null;
+}
 
 interface QuestionResultItem {
   questionId: string;
@@ -32,9 +31,9 @@ interface QuestionResultItem {
   subjectId: string;
   subjectName: string;
   topicName: string;
-  options: { id: string; label: string; text: string; textHi: string }[];
-  userAnswer: 'A' | 'B' | 'C' | 'D' | null;
-  correctOption: 'A' | 'B' | 'C' | 'D';
+  options: OptionItem[];
+  userAnswer: number | null;
+  correctOption: number;
   isCorrect: boolean;
   isAnswered: boolean;
   marks: number;
@@ -45,8 +44,10 @@ interface QuestionResultItem {
 }
 
 interface TestResult {
+  attemptId: string;
   testId: string;
   testName: string;
+  examName?: string;
   submittedAt: string;
   totalQuestions: number;
   correctCount: number;
@@ -67,29 +68,20 @@ function TestAnalysisInner() {
   const testId = params?.testId as string;
   const paramAttemptId = searchParams.get('attemptId');
 
-  const [testResult, setTestResult] = React.useState<TestResult | null>(null);
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const questions: QuestionResultItem[] = testResult?.questionResults || [];
 
-  const [activeTab, setActiveTab] = useState<'subject' | 'review'>('subject');
-  const [reviewFilter, setReviewFilter] = useState<
-    'all' | 'correct' | 'wrong' | 'unattempted' | 'bookmarked'
-  >('all');
+  const [activeView, setActiveView] = useState<'review' | 'diagnostics'>('review');
+  const [reviewFilter, setReviewFilter] = useState<'all' | 'correct' | 'wrong' | 'skipped' | 'bookmarked'>('all');
   const [lang, setLang] = useState<'en' | 'hi'>('en');
 
-  // Bookmarks & Mistake Book state
+  // Bookmarks state
   const [bookmarkedSet, setBookmarkedSet] = useState<Set<string>>(new Set());
-  const [mistakeBookSet, setMistakeBookSet] = useState<Set<string>>(new Set());
+  // Expanded options state: Set of questionIds that have options expanded
+  const [expandedOptions, setExpandedOptions] = useState<Set<string>>(new Set());
 
-  // Results map: questionId -> result (includes correctOption and explanation from server)
-  const questionResults = useMemo<Record<string, QuestionResultItem>>(() => {
-    const map: Record<string, QuestionResultItem> = {};
-    if (testResult?.questionResults) {
-      testResult.questionResults.forEach((r) => { map[r.questionId] = r; });
-    }
-    return map;
-  }, [testResult]);
+  const questions: QuestionResultItem[] = testResult?.questionResults || [];
 
   useEffect(() => {
     let isMounted = true;
@@ -119,7 +111,7 @@ function TestAnalysisInner() {
           throw new Error('No test result found. Please complete a test attempt first.');
         }
 
-        // Fetch attempt from database by user & attemptId
+        // Fetch attempt from database
         const res = await fetch(`/api/attempts/${encodeURIComponent(effectiveAttemptId)}`, {
           cache: 'no-store',
         });
@@ -135,15 +127,11 @@ function TestAnalysisInner() {
           if (data.result.bookmarkedIds) {
             setBookmarkedSet(new Set(data.result.bookmarkedIds));
           }
-          const autoMistakes = new Set<string>();
-          data.result.questionResults?.forEach((r: any) => {
-            if (r.isAnswered && !r.isCorrect) autoMistakes.add(r.questionId);
-          });
-          setMistakeBookSet(autoMistakes);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (isMounted) {
-          setError(err.message || 'Failed to load test analysis from database.');
+          const message = err instanceof Error ? err.message : 'Failed to load test analysis from database.';
+          setError(message);
         }
       } finally {
         if (isMounted) {
@@ -161,14 +149,13 @@ function TestAnalysisInner() {
     };
   }, [testId, paramAttemptId]);
 
-  // Subject diagnostics calculation — derived entirely from server result data
+  // Subject diagnostics calculation
   const subjectBreakdown = useMemo(() => {
     const subjectsMap: Record<
       string,
       {
         id: string;
         name: string;
-        nameHi: string;
         totalQuestions: number;
         correct: number;
         wrong: number;
@@ -179,12 +166,11 @@ function TestAnalysisInner() {
     > = {};
 
     questions.forEach((q) => {
-      const subKey = q.subjectId || q.subjectName || 'general';
+      const subKey = q.subjectName || 'General';
       if (!subjectsMap[subKey]) {
         subjectsMap[subKey] = {
           id: subKey,
-          name: q.subjectName,
-          nameHi: q.subjectName,
+          name: q.subjectName || 'General',
           totalQuestions: 0,
           correct: 0,
           wrong: 0,
@@ -213,15 +199,8 @@ function TestAnalysisInner() {
     return Object.values(subjectsMap);
   }, [questions]);
 
-  // Format marks without misleading rounding (e.g. -0.25 / 5 instead of -0.3 / 5)
-  const formatMarks = (val: number) => {
-    const rounded = Math.round(val * 100) / 100;
-    return Number.isInteger(rounded) ? rounded.toString() : rounded.toFixed(2);
-  };
-
-  // Derive top strengths and weak areas
+  // Top strengths and weaknesses
   const { strengths, weaknesses } = useMemo(() => {
-    // Strengths: only subjects with accuracy >= 60% AND at least 1 attempted question
     const eligibleStrengths = subjectBreakdown
       .filter((sub) => {
         const attempted = sub.correct + sub.wrong;
@@ -232,41 +211,34 @@ function TestAnalysisInner() {
       .sort((a, b) => {
         const accA = a.correct / (a.correct + a.wrong);
         const accB = b.correct / (b.correct + b.wrong);
-        if (accB !== accA) return accB - accA;
-        return b.correct - a.correct;
+        return accB - accA;
       });
 
-    // Priority areas for improvement: lowest accuracy or most wrong/skipped questions
     const eligibleWeaknesses = subjectBreakdown
       .filter((sub) => {
-        // Exclude perfect subjects (all correct and none unattempted/wrong)
         const attempted = sub.correct + sub.wrong;
         if (attempted > 0 && sub.wrong === 0 && sub.unattempted === 0) return false;
         return true;
       })
       .sort((a, b) => {
-        // First prioritize by highest wrong answers
         if (b.wrong !== a.wrong) return b.wrong - a.wrong;
-        // Then by lowest accuracy for attempted questions
-        const accA = (a.correct + a.wrong) > 0 ? a.correct / (a.correct + a.wrong) : 0;
-        const accB = (b.correct + b.wrong) > 0 ? b.correct / (b.correct + b.wrong) : 0;
-        if (accA !== accB) return accA - accB;
-        // Then by highest unattempted
-        return b.unattempted - a.unattempted;
+        const accA = a.correct + a.wrong > 0 ? a.correct / (a.correct + a.wrong) : 0;
+        const accB = b.correct + b.wrong > 0 ? b.correct / (b.correct + b.wrong) : 0;
+        return accA - accB;
       });
 
     return {
-      strengths: eligibleStrengths.slice(0, 2),
-      weaknesses: eligibleWeaknesses.slice(0, 2),
+      strengths: eligibleStrengths.slice(0, 3),
+      weaknesses: eligibleWeaknesses.slice(0, 3),
     };
   }, [subjectBreakdown]);
 
-  // Filtered review questions — results come from server evaluation
+  // Filtered review questions
   const filteredQuestions = useMemo(() => {
     return questions.filter((q) => {
       if (reviewFilter === 'correct') return q.isCorrect;
       if (reviewFilter === 'wrong') return q.isAnswered && !q.isCorrect;
-      if (reviewFilter === 'unattempted') return !q.isAnswered;
+      if (reviewFilter === 'skipped') return !q.isAnswered;
       if (reviewFilter === 'bookmarked') return bookmarkedSet.has(q.questionId);
       return true;
     });
@@ -296,8 +268,8 @@ function TestAnalysisInner() {
     }
   };
 
-  const toggleMistakeBook = (qId: string) => {
-    setMistakeBookSet((prev) => {
+  const toggleOptionsExpand = (qId: string) => {
+    setExpandedOptions((prev) => {
       const next = new Set(prev);
       if (next.has(qId)) next.delete(qId);
       else next.add(qId);
@@ -307,359 +279,366 @@ function TestAnalysisInner() {
 
   if (isLoading) {
     return (
-      <div style={{ padding: '5rem 1rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-        <p>Loading deep subject diagnostics and solutions from database...</p>
+      <div style={{ padding: '6rem 1rem', textAlign: 'center', color: 'var(--v2-text-muted, #4B5168)' }}>
+        <div style={{ width: 40, height: 40, border: '3.5px solid #E0E7FF', borderTopColor: '#4338CA', borderRadius: '50%', animation: 'v2-spin 0.8s linear infinite', margin: '0 auto 1.5rem' }} />
+        <p style={{ fontWeight: 600 }}>Loading detailed analysis and solutions...</p>
       </div>
     );
   }
 
   if (error || !testResult) {
     return (
-      <div style={{ maxWidth: '560px', margin: '4rem auto', padding: '2rem', textAlign: 'center', background: 'var(--color-bg-card, #1e293b)', borderRadius: '12px', border: '1px solid var(--color-border, #334155)' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>Analysis Unavailable</h2>
-        <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem' }}>{error || 'No test result found. Please complete a test attempt first.'}</p>
-        <Link href="/exams/hp-police-constable" style={{ color: 'var(--color-accent, #818cf8)', display: 'inline-block' }}>← Go to Exams</Link>
+      <div style={{ maxWidth: '560px', margin: '5rem auto', padding: '2.5rem', textAlign: 'center', background: '#FFFFFF', borderRadius: '20px', border: '1px solid #E3E6F5' }}>
+        <AlertCircle size={44} color="#EF4444" style={{ margin: '0 auto 1rem' }} />
+        <h2 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.5rem', color: '#0B1026' }}>Analysis Unavailable</h2>
+        <p style={{ color: '#4B5168', marginBottom: '1.5rem', fontSize: '14.5px' }}>{error || 'No test result found. Please complete a test attempt first.'}</p>
+        <Link href={`/test/${encodeURIComponent(testId)}/result`} style={{ color: '#4338CA', fontWeight: 700, textDecoration: 'none' }}>
+          ← Back to Scorecard
+        </Link>
       </div>
     );
   }
 
+  const filterTabs = [
+    { id: 'all', label: `All (${questions.length})` },
+    { id: 'correct', label: `Correct (${testResult.correctCount})` },
+    { id: 'wrong', label: `Wrong (${testResult.wrongCount})` },
+    { id: 'skipped', label: `Skipped (${testResult.unansweredCount})` },
+    { id: 'bookmarked', label: `Bookmarked (${bookmarkedSet.size})` },
+  ];
+
   return (
     <div className={styles.container}>
-      <Link href={`/test/${testId}/result`} className={styles.backLink}>
+      {/* Back Link */}
+      <Link href={`/test/${encodeURIComponent(testId)}/result?attemptId=${encodeURIComponent(testResult.attemptId)}`} className={styles.backLink}>
         <ArrowLeft size={16} />
-        <span>Back to Scorecard</span>
+        Back to Scorecard
       </Link>
 
+      {/* Header Bar */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <h1 className={styles.title}>Performance Analysis & Question Review</h1>
-          <p className={styles.subtitle}>{testResult.testName}</p>
+          <h1 className={styles.title}>Detailed Analysis & Question Solutions</h1>
+          <p className={styles.subtitle}>{testResult.testName} · Score: {testResult.score}/{testResult.totalPossibleMarks}</p>
         </div>
 
-        {/* Tab Controls */}
-        <div className={styles.tabPills}>
+        <div className={styles.headerActions}>
           <button
             type="button"
-            className={`${styles.tabBtn} ${activeTab === 'subject' ? styles.tabBtnActive : ''}`}
-            onClick={() => setActiveTab('subject')}
+            className={styles.langToggleBtn}
+            onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
           >
-            Subject Diagnostics
-          </button>
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === 'review' ? styles.tabBtnActive : ''}`}
-            onClick={() => setActiveTab('review')}
-          >
-            Question-by-Question Review ({questions.length})
+            <span>{lang === 'en' ? 'हिन्दी में देखें' : 'View in English'}</span>
           </button>
         </div>
       </header>
 
-      {/* ================= TAB 1: SUBJECT & TOPIC DIAGNOSTICS ================= */}
-      {activeTab === 'subject' && (
-        <div className={styles.subjectTabContent}>
-          {/* Strengths & Weaknesses Cards */}
-          <div className={styles.insightsGrid}>
-            <div className={`${styles.insightCard} ${styles.strengthCard}`}>
-              <div className={styles.insightHeader}>
-                <TrendingUp size={20} className={styles.strengthIcon} />
-                <h3 className={styles.insightTitle}>Key Strengths</h3>
+      {/* View Switcher Tabs */}
+      <div className={styles.viewTabs}>
+        <button
+          type="button"
+          className={`${styles.viewTabBtn} ${activeView === 'review' ? styles.viewTabBtnActive : ''}`}
+          onClick={() => setActiveView('review')}
+        >
+          Question-by-Question Solutions ({questions.length})
+        </button>
+        <button
+          type="button"
+          className={`${styles.viewTabBtn} ${activeView === 'diagnostics' ? styles.viewTabBtnActive : ''}`}
+          onClick={() => setActiveView('diagnostics')}
+        >
+          Subject Diagnostics & Strengths
+        </button>
+      </div>
+
+      {/* VIEW 1: Question-by-Question Review */}
+      {activeView === 'review' && (
+        <div>
+          {/* Underline Tabs */}
+          <div className={styles.filterBar}>
+            <UnderlineTabs
+              tabs={filterTabs}
+              activeTab={reviewFilter}
+              onChange={(id) => setReviewFilter(id as typeof reviewFilter)}
+            />
+          </div>
+
+          {/* Questions List */}
+          <div className={styles.questionsList}>
+            {filteredQuestions.map((q) => {
+              const isCorrect = q.isCorrect;
+              const isAnswered = q.isAnswered;
+              const isBookmarked = bookmarkedSet.has(q.questionId);
+              const isOptionsExpanded = expandedOptions.has(q.questionId);
+
+              const badgeClass = isCorrect
+                ? styles.qBadgeCorrect
+                : isAnswered
+                ? styles.qBadgeWrong
+                : styles.qBadgeSkipped;
+
+              const statusBadgeStyle = isCorrect
+                ? { background: '#DCFCE7', color: '#166534' }
+                : isAnswered
+                ? { background: '#FEE2E2', color: '#991B1B' }
+                : { background: '#EEF0F8', color: '#3F4460' };
+
+              const statusText = isCorrect
+                ? `Correct (+${q.marks})`
+                : isAnswered
+                ? `Wrong (-${q.negativeMarks})`
+                : 'Skipped (0)';
+
+              const userOpt = q.options?.find((o) => o.label === q.userAnswer);
+              const corrOpt = q.options?.find((o) => o.label === q.correctOption);
+
+              return (
+                <div key={q.questionId} id={`q-${q.questionId}`} className={styles.questionCard}>
+                  {/* Top Bar */}
+                  <div className={styles.qHeader}>
+                    <div className={styles.qHeaderLeft}>
+                      <span className={`${styles.qBadge} ${badgeClass}`}>
+                        {q.questionNumber}
+                      </span>
+                      <span className={styles.qSubject}>{q.subjectName}</span>
+                      {q.topicName && <span className={styles.qTopic}>· {q.topicName}</span>}
+                    </div>
+
+                    <div className={styles.qHeaderRight}>
+                      <span className={styles.qStatusPill} style={statusBadgeStyle}>
+                        {statusText}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => toggleBookmark(q.questionId)}
+                        className={`${styles.qActionIconBtn} ${isBookmarked ? styles.qActionBookmarked : ''}`}
+                        title={isBookmarked ? 'Remove bookmark' : 'Bookmark question'}
+                      >
+                        <Bookmark size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Question Text */}
+                  <p className={styles.qText}>
+                    {lang === 'hi' && q.questionTextHi ? q.questionTextHi : q.questionText}
+                  </p>
+
+                  {/* Comparison Answer Boxes (Red ✗ / Green ✓ Mistake Book System) */}
+                  <div className={styles.answersGrid}>
+                    {isAnswered && !isCorrect && (
+                      <div className={styles.ansBoxWrong}>
+                        <span className={styles.ansBoxLabel} style={{ color: '#991B1B' }}>
+                          <XIcon size={14} />
+                          Your answer
+                        </span>
+                        <span className={styles.ansBoxText} style={{ color: '#7F1D1D' }}>
+                          Option {q.userAnswer}: {lang === 'hi' && userOpt?.textHi ? userOpt.textHi : userOpt?.text || `Option ${q.userAnswer}`}
+                        </span>
+                      </div>
+                    )}
+
+                    {!isAnswered && (
+                      <div className={styles.ansBoxSkipped}>
+                        <span className={styles.ansBoxLabel} style={{ color: '#4B5168' }}>
+                          Skipped
+                        </span>
+                        <span className={styles.ansBoxText} style={{ color: '#3B4160' }}>
+                          Not answered
+                        </span>
+                      </div>
+                    )}
+
+                    <div className={styles.ansBoxCorrect}>
+                      <span className={styles.ansBoxLabel} style={{ color: '#166534' }}>
+                        <CheckIcon size={14} />
+                        {isCorrect ? 'Your answer (Correct)' : 'Correct answer'}
+                      </span>
+                      <span className={styles.ansBoxText} style={{ color: '#14532D' }}>
+                        Option {q.correctOption}: {lang === 'hi' && corrOpt?.textHi ? corrOpt.textHi : corrOpt?.text || `Option ${q.correctOption}`}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Toggle all options */}
+                  {q.options && q.options.length > 0 && (
+                    <button
+                      type="button"
+                      className={styles.optionsToggle}
+                      onClick={() => toggleOptionsExpand(q.questionId)}
+                    >
+                      {isOptionsExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      <span>{isOptionsExpanded ? 'Hide all 4 options' : 'View all 4 options'}</span>
+                    </button>
+                  )}
+
+                  {isOptionsExpanded && q.options && (
+                    <div className={styles.optionsList}>
+                      {q.options.map((opt) => {
+                        const isThisCorrect = opt.label === q.correctOption;
+                        const isThisUser = opt.label === q.userAnswer;
+
+                        let borderStyle = '1px solid #E2E8F0';
+                        let bgStyle = '#FFFFFF';
+                        if (isThisCorrect) {
+                          borderStyle = '1.5px solid #86EFAC';
+                          bgStyle = '#DCFCE7';
+                        } else if (isThisUser) {
+                          borderStyle = '1.5px solid #FCA5A5';
+                          bgStyle = '#FEE2E2';
+                        }
+
+                        return (
+                          <div
+                            key={opt.id}
+                            className={styles.optionRow}
+                            style={{ border: borderStyle, background: bgStyle }}
+                          >
+                            <span className={styles.optionLabel}>{opt.label}</span>
+                            <span style={{ flex: 1, fontSize: '14px', fontWeight: 600 }}>
+                              {lang === 'hi' && opt.textHi ? opt.textHi : opt.text}
+                            </span>
+                            {isThisCorrect && (
+                              <span style={{ fontSize: '12px', fontWeight: 800, color: '#166534' }}>
+                                ✓ Correct
+                              </span>
+                            )}
+                            {isThisUser && !isThisCorrect && (
+                              <span style={{ fontSize: '12px', fontWeight: 800, color: '#991B1B' }}>
+                                ✗ Your answer
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Step-by-Step Explanation */}
+                  {(q.explanation || q.explanationHi) && (
+                    <div className={styles.explanationBox}>
+                      <div className={styles.explanationHeader}>
+                        <BookOpen size={16} />
+                        <span>Step-by-Step Solution & Notes</span>
+                      </div>
+                      <p className={styles.explanationText}>
+                        {lang === 'hi' && q.explanationHi ? q.explanationHi : q.explanation}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* VIEW 2: Subject Diagnostics */}
+      {activeView === 'diagnostics' && (
+        <div>
+          <div className={styles.diagnosticsGrid}>
+            {/* Strengths */}
+            <div className={styles.diagCard}>
+              <div className={styles.strengthHeader}>
+                <CheckIcon size={20} />
+                <span>Key Strengths</span>
               </div>
-              <p className={styles.insightDesc}>
-                Sections where you demonstrated highest accuracy and consistency:
+              <p style={{ margin: 0, fontSize: '13.5px', color: '#4B5168' }}>
+                Sections where you showed highest accuracy:
               </p>
-              <div className={styles.insightList}>
+              <div className={styles.diagList}>
                 {strengths.length > 0 ? (
-                  strengths.map((sub) => {
-                    const totalAtt = sub.correct + sub.wrong;
-                    const acc = totalAtt > 0 ? Math.round((sub.correct / totalAtt) * 100) : 0;
+                  strengths.map((s) => {
+                    const attempted = s.correct + s.wrong;
+                    const acc = attempted > 0 ? Math.round((s.correct / attempted) * 100) : 0;
                     return (
-                      <div key={sub.id} className={styles.insightItem}>
-                        <span className={styles.insightSubjectName}>{sub.name}</span>
-                        <span className={styles.strengthAcc}>{acc}% Accuracy</span>
+                      <div key={s.id} className={styles.diagItem}>
+                        <span>{s.name}</span>
+                        <span className={styles.accPillGreen}>{acc}% Accuracy</span>
                       </div>
                     );
                   })
                 ) : (
-                  <p className={styles.noInsightText}>No strong subjects yet</p>
+                  <p style={{ fontSize: '13.5px', color: '#4B5168' }}>Practice more to establish strengths.</p>
                 )}
               </div>
             </div>
 
-            <div className={`${styles.insightCard} ${styles.weaknessCard}`}>
-              <div className={styles.insightHeader}>
-                <TrendingDown size={20} className={styles.weaknessIcon} />
-                <h3 className={styles.insightTitle}>Priority Areas For Improvement</h3>
+            {/* Improvement areas */}
+            <div className={styles.diagCard}>
+              <div className={styles.weaknessHeader}>
+                <AlertCircle size={20} />
+                <span>Priority Improvement Areas</span>
               </div>
-              <p className={styles.insightDesc}>
-                Focus revision here to minimize negative marking and boost your overall rank:
+              <p style={{ margin: 0, fontSize: '13.5px', color: '#4B5168' }}>
+                Revise these subjects in your Mistake Book to stop losing marks:
               </p>
-              <div className={styles.insightList}>
+              <div className={styles.diagList}>
                 {weaknesses.length > 0 ? (
-                  weaknesses.map((sub) => {
-                    const totalAtt = sub.correct + sub.wrong;
-                    const acc = totalAtt > 0 ? Math.round((sub.correct / totalAtt) * 100) : 0;
+                  weaknesses.map((w) => {
+                    const attempted = w.correct + w.wrong;
+                    const acc = attempted > 0 ? Math.round((w.correct / attempted) * 100) : 0;
                     return (
-                      <div key={sub.id} className={styles.insightItem}>
-                        <span className={styles.insightSubjectName}>{sub.name}</span>
-                        <span className={styles.weaknessStat}>
-                          {sub.wrong > 0
-                            ? `${sub.wrong} Wrong (-${formatMarks(sub.wrong * 0.25)})`
-                            : totalAtt === 0
-                            ? `${sub.unattempted} Skipped (0% Attempted)`
-                            : `${acc}% Accuracy (${sub.unattempted} Skipped)`}
+                      <div key={w.id} className={styles.diagItem}>
+                        <span>{w.name}</span>
+                        <span className={styles.accPillRed}>
+                          {w.wrong > 0 ? `${w.wrong} Mistakes` : `${acc}% Accuracy`}
                         </span>
                       </div>
                     );
                   })
                 ) : (
-                  <p className={styles.noInsightText}>All subjects performing well</p>
+                  <p style={{ fontSize: '13.5px', color: '#4B5168' }}>All sections performing solidly.</p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Subject-Wise Performance Breakdown Cards */}
-          <div className={styles.subjectBreakdownSection}>
-            <h2 className={styles.sectionTitle}>Sectional Score Breakdown</h2>
+          {/* Sectional cards */}
+          <div className={styles.panel}>
+            <h2 style={{ margin: '0 0 14px', fontSize: '18px', fontWeight: 800 }}>
+              Sectional Score Breakdown
+            </h2>
             <div className={styles.subjectCardsGrid}>
               {subjectBreakdown.map((sub) => {
-                const totalAtt = sub.correct + sub.wrong;
-                const accuracy =
-                  totalAtt > 0 ? Math.round((sub.correct / totalAtt) * 100) : 0;
-
+                const attempted = sub.correct + sub.wrong;
+                const acc = attempted > 0 ? Math.round((sub.correct / attempted) * 100) : 0;
                 return (
                   <div key={sub.id} className={styles.subjectCard}>
-                    <div className={styles.subjectCardHeader}>
-                      <div>
-                        <h4 className={styles.subCardTitle}>{sub.name}</h4>
-                        <span className={styles.subCardHi}>{sub.nameHi}</span>
-                      </div>
-                      <span className={styles.subScorePill}>
-                        {formatMarks(sub.score)} / {sub.totalQuestions} Marks
+                    <div className={styles.subCardTop}>
+                      <span className={styles.subName}>{sub.name}</span>
+                      <span className={styles.subScore}>
+                        {sub.score.toFixed(1)} / {sub.totalQuestions} Marks
                       </span>
                     </div>
-
                     <div className={styles.subStatsRow}>
-                      <div className={styles.subStat}>
-                        <span className={styles.subStatLabel}>Accuracy</span>
-                        <span className={styles.subStatVal}>{accuracy}%</span>
+                      <div className={styles.statItem}>
+                        <span className={styles.statLabel}>Acc</span>
+                        <span className={styles.statVal}>{acc}%</span>
                       </div>
-                      <div className={styles.subStat}>
-                        <span className={styles.subStatLabel}>Correct</span>
-                        <span className={styles.subStatGreen}>{sub.correct}</span>
+                      <div className={styles.statItem}>
+                        <span className={styles.statLabel}>Right</span>
+                        <span className={styles.statVal} style={{ color: '#16A34A' }}>
+                          {sub.correct}
+                        </span>
                       </div>
-                      <div className={styles.subStat}>
-                        <span className={styles.subStatLabel}>Wrong</span>
-                        <span className={styles.subStatRed}>{sub.wrong}</span>
+                      <div className={styles.statItem}>
+                        <span className={styles.statLabel}>Wrong</span>
+                        <span className={styles.statVal} style={{ color: '#DC2626' }}>
+                          {sub.wrong}
+                        </span>
                       </div>
-                      <div className={styles.subStat}>
-                        <span className={styles.subStatLabel}>Skipped</span>
-                        <span className={styles.subStatGray}>{sub.unattempted}</span>
+                      <div className={styles.statItem}>
+                        <span className={styles.statLabel}>Skip</span>
+                        <span className={styles.statVal} style={{ color: '#4B5168' }}>
+                          {sub.unattempted}
+                        </span>
                       </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
-
-          {/* Recommendation Banner */}
-          <div className={styles.recommendationBox}>
-            <Sparkles size={24} className={styles.recIcon} />
-            <div>
-              <h4 className={styles.recTitle}>AI Recommendation for HP Police Constable</h4>
-              <p className={styles.recText}>
-                Your English and Reasoning scores are on track for selection! To gain an extra{' '}
-                <strong>+6 to +8 marks</strong>, practice the mistakes made in Hindi Grammar (Sandhi & Samas)
-                and revise HP Geography using the Mistake Book.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= TAB 2: QUESTION-BY-QUESTION REVIEW ================= */}
-      {activeTab === 'review' && (
-        <div className={styles.reviewTabContent}>
-          {/* Review Filter Bar */}
-          <div className={styles.reviewControls}>
-            <div className={styles.filterGroup}>
-              <Filter size={15} className={styles.filterIcon} />
-              <button
-                type="button"
-                className={`${styles.filterBtn} ${
-                  reviewFilter === 'all' ? styles.filterBtnActive : ''
-                }`}
-                onClick={() => setReviewFilter('all')}
-              >
-                All ({questions.length})
-              </button>
-              <button
-                type="button"
-                className={`${styles.filterBtn} ${
-                  reviewFilter === 'correct' ? styles.filterBtnActive : ''
-                }`}
-                onClick={() => setReviewFilter('correct')}
-              >
-                Correct
-              </button>
-              <button
-                type="button"
-                className={`${styles.filterBtn} ${
-                  reviewFilter === 'wrong' ? styles.filterBtnActive : ''
-                }`}
-                onClick={() => setReviewFilter('wrong')}
-              >
-                Incorrect
-              </button>
-              <button
-                type="button"
-                className={`${styles.filterBtn} ${
-                  reviewFilter === 'unattempted' ? styles.filterBtnActive : ''
-                }`}
-                onClick={() => setReviewFilter('unattempted')}
-              >
-                Unattempted
-              </button>
-              <button
-                type="button"
-                className={`${styles.filterBtn} ${
-                  reviewFilter === 'bookmarked' ? styles.filterBtnActive : ''
-                }`}
-                onClick={() => setReviewFilter('bookmarked')}
-              >
-                Bookmarked ({bookmarkedSet.size})
-              </button>
-            </div>
-
-            <button
-              type="button"
-              className={styles.langToggleBtn}
-              onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
-            >
-              <Languages size={15} />
-              <span>{lang === 'en' ? 'हिन्दी में देखें' : 'View in English'}</span>
-            </button>
-          </div>
-
-          {/* Question Review Cards */}
-          <div className={styles.questionsList}>
-            {filteredQuestions.map((q, idx) => {
-              const isCorrect = q.isCorrect;
-              const isAnswered = q.isAnswered;
-              const isBookmarked = bookmarkedSet.has(q.questionId);
-              const isInMistakes = mistakeBookSet.has(q.questionId);
-
-              return (
-                <div
-                  key={q.questionId}
-                  className={`${styles.reviewCard} ${
-                    !isAnswered
-                      ? styles.reviewCardUnattempted
-                      : isCorrect
-                      ? styles.reviewCardCorrect
-                      : styles.reviewCardWrong
-                  }`}
-                >
-                  <div className={styles.reviewCardHeader}>
-                    <div className={styles.reviewCardMeta}>
-                      <span className={styles.reviewQNum}>Question {q.questionNumber}</span>
-                      <Badge variant="neutral" size="sm">
-                        {q.subjectName}
-                      </Badge>
-                      <span className={styles.reviewTopic}>{q.topicName}</span>
-                    </div>
-
-                    <div className={styles.reviewCardActions}>
-                      {isCorrect && (
-                        <Badge variant="success" size="sm" icon={<CheckCircle2 size={13} />}>
-                          Correct (+{q.marks})
-                        </Badge>
-                      )}
-                      {isAnswered && !isCorrect && (
-                        <Badge variant="error" size="sm" icon={<XCircle size={13} />}>
-                          Wrong (-{q.negativeMarks})
-                        </Badge>
-                      )}
-                      {!isAnswered && (
-                        <Badge variant="neutral" size="sm">
-                          Unattempted
-                        </Badge>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => toggleBookmark(q.questionId)}
-                        className={`${styles.reviewActionBtn} ${
-                          isBookmarked ? styles.activeBookmarkBtn : ''
-                        }`}
-                        title="Bookmark question"
-                      >
-                        <Bookmark size={15} />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => toggleMistakeBook(q.questionId)}
-                        className={`${styles.reviewActionBtn} ${
-                          isInMistakes ? styles.activeMistakeBtn : ''
-                        }`}
-                        title="Add to Mistake Book"
-                      >
-                        <BookOpen size={15} />
-                        <span>{isInMistakes ? 'In Mistake Book' : 'Add to Mistakes'}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <p className={styles.reviewQuestionText}>
-                    {lang === 'hi' ? q.questionTextHi : q.questionText}
-                  </p>
-
-                  {/* Options */}
-                  <div className={styles.reviewOptionsList}>
-                    {q.options.map((opt) => {
-                      const isUserChoice = q.userAnswer === opt.label;
-                      const isCorrectChoice = q.correctOption === opt.label;
-
-                      let optClass = styles.reviewOption;
-                      if (isCorrectChoice) optClass += ` ${styles.optionRight}`;
-                      if (isUserChoice && !isCorrectChoice)
-                        optClass += ` ${styles.optionWrongChoice}`;
-
-                      return (
-                        <div key={opt.id} className={optClass}>
-                          <span className={styles.optionMarkerLabel}>{opt.label}</span>
-                          <span className={styles.optionContentText}>
-                            {lang === 'hi' ? opt.textHi : opt.text}
-                          </span>
-                          {isCorrectChoice && (
-                            <span className={styles.correctBadgeTag}>
-                              <Check size={13} /> Correct Answer
-                            </span>
-                          )}
-                          {isUserChoice && !isCorrectChoice && (
-                            <span className={styles.wrongBadgeTag}>Your Selection</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Detailed Step-by-Step Solution */}
-                  <div className={styles.explanationBox}>
-                    <div className={styles.explanationHeader}>
-                      <BookOpen size={16} />
-                      <span>Detailed Step-by-Step Solution</span>
-                    </div>
-                    <p className={styles.explanationText}>
-                      {lang === 'hi' ? q.explanationHi : q.explanation}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
           </div>
         </div>
       )}
@@ -669,7 +648,7 @@ function TestAnalysisInner() {
 
 export default function TestAnalysisPage() {
   return (
-    <Suspense fallback={<div style={{ padding: '5rem', textAlign: 'center' }}>Loading analysis...</div>}>
+    <Suspense fallback={<div style={{ padding: '6rem', textAlign: 'center', color: '#4B5168' }}>Loading analysis...</div>}>
       <TestAnalysisInner />
     </Suspense>
   );
