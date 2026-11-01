@@ -13,15 +13,9 @@ export async function GET(req: NextRequest) {
 
     const userId = session.user.id;
 
-    // Batched queries within Supabase connection limit
-    const [
-      attempts,
-      mistakesCount,
-      bookmarksCount,
-      activeAttemptRecord,
-      purchases,
-      recentMistakes,
-    ] = await Promise.all([
+    // Safe 2-wave batching: maximum concurrency = 3 (strictly <= connection_limit 5)
+    // Wave 1: Core aggregate data (3 queries concurrent)
+    const [attempts, bookmarksCount, recentMistakes] = await Promise.all([
       // 1. Submitted attempts
       prisma.testAttempt.findMany({
         where: {
@@ -36,16 +30,31 @@ export async function GET(req: NextRequest) {
         orderBy: { submittedAt: 'desc' },
       }),
 
-      // 2. Unrevised mistakes count
-      prisma.mistakeBook.count({
-        where: { userId, isMastered: false },
-      }),
-
-      // 3. Bookmarks count
+      // 2. Bookmarks count
       prisma.bookmark.count({
         where: { userId },
       }),
 
+      // 3. Unmastered mistakes (provides both count and topic breakdown in 1 query)
+      prisma.mistakeBook.findMany({
+        where: { userId, isMastered: false },
+        select: {
+          id: true,
+          question: {
+            select: {
+              subject: { select: { name: true } },
+              topic: { select: { name: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    const mistakesCount = recentMistakes.length;
+
+    // Wave 2: Auxiliary progress data (2 queries concurrent)
+    const [activeAttemptRecord, purchases] = await Promise.all([
       // 4. In-progress active attempt (if any)
       prisma.testAttempt.findFirst({
         where: { userId, status: 'IN_PROGRESS' },
@@ -79,21 +88,6 @@ export async function GET(req: NextRequest) {
             },
           },
         },
-      }),
-
-      // 6. Recent mistakes for weak topic detection
-      prisma.mistakeBook.findMany({
-        where: { userId, isMastered: false },
-        select: {
-          question: {
-            select: {
-              subject: { select: { name: true } },
-              topic: { select: { name: true } },
-            },
-          },
-        },
-        take: 30,
-        orderBy: { createdAt: 'desc' },
       }),
     ]);
 

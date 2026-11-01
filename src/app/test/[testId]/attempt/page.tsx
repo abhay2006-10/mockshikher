@@ -588,7 +588,7 @@ function TestAttemptInner() {
     });
   };
 
-  // Auto-save in-progress draft: localStorage + periodic server draft sync
+  // Auto-save in-progress draft keyed by attemptId (temporary draft only)
   useEffect(() => {
     if (!attemptId || Object.keys(answers).length === 0) return;
     try {
@@ -596,34 +596,6 @@ function TestAttemptInner() {
     } catch {
       // ignore quota errors
     }
-
-    // Sync draft to server DB so resume works across devices/incognito
-    const activeTest = testRef.current;
-    if (!activeTest?.id || isSubmittingRef.current) return;
-
-    const syncTimer = setTimeout(async () => {
-      try {
-        const finalAnswers: Record<string, UserAnswerState> = {};
-        for (const [qId, state] of Object.entries(answers)) {
-          finalAnswers[qId] = {
-            ...state,
-            timeSpent: timeSpentMapRef.current[qId] ?? state.timeSpent ?? 0,
-          };
-        }
-        await fetch(`/api/tests/${encodeURIComponent(activeTest.id)}/attempt/draft`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            attemptId,
-            answers: finalAnswers,
-          }),
-        });
-      } catch {
-        // silent fail to avoid interrupting active exam flow
-      }
-    }, 2500);
-
-    return () => clearTimeout(syncTimer);
   }, [answers, attemptId]);
 
   const isAmberTime = timeLeft <= 600 && timeLeft > 120;

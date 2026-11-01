@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
 
     const userId = session.user.id;
     const body = await req.json().catch(() => ({}));
-    const limit = typeof body.limit === 'number' && body.limit > 0 ? Math.min(body.limit, 50) : 20;
+    const limit = typeof body.limit === 'number' && body.limit > 0 ? Math.min(body.limit, 20) : 10;
     const subjectId = body.subjectId && typeof body.subjectId === 'string' ? body.subjectId : undefined;
 
     // Fetch unmastered mistakes for practice session

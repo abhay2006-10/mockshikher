@@ -98,9 +98,9 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #E0F2FE;
-  color: #0369A1;
-  border: 1.5px solid #BAE6FD;
+  background: #EEF1FF;
+  color: #312E81;
+  border: 1.5px solid #C7D2FE;
   padding: 6px 12px;
   border-radius: 10px;
   font-family: var(--font-jakarta, 'Plus Jakarta Sans', monospace);
