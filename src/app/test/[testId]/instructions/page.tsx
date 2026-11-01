@@ -1,21 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import {
-  ArrowLeft,
-  Clock,
-  HelpCircle,
-  AlertCircle,
-  Languages,
-  CheckCircle,
-  Play,
-  AlertTriangle,
-  RefreshCw,
-} from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
+import { ArrowLeft, ArrowRight, Play, AlertCircle } from '@/components/v2/Icons';
+import { Chip } from '@/components/v2/Chip';
 import styles from './page.module.css';
 
 interface TestInfo {
@@ -30,13 +19,15 @@ interface TestInfo {
   marksPerQuestion: number;
   examSlug?: string;
   examName?: string;
-  examPrice?: number;
+  category?: string;
 }
 
 export default function TestInstructionsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const testId = params?.testId as string;
+  const isPreview = searchParams?.get('preview') === 'true';
 
   const [test, setTest] = useState<TestInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,11 +38,29 @@ export default function TestInstructionsPage() {
 
   const [requiresPurchase, setRequiresPurchase] = useState(false);
   const [requiresAuth, setRequiresAuth] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
     if (!testId) return;
+
+    if (isPreview) {
+      setTest({
+        id: testId,
+        name: 'HP Patwari 2026 · Full Simulation Mock 1',
+        testNumber: 1,
+        totalQuestions: 100,
+        durationMinutes: 90,
+        totalMarks: 100,
+        negativeMarksPerQuestion: 0.25,
+        marksPerQuestion: 1,
+        isFree: true,
+        examName: 'HP Patwari Exam',
+        examSlug: 'hp-patwari',
+        category: 'Revenue Department',
+      });
+      setIsLoading(false);
+      return;
+    }
 
     const loadMeta = async () => {
       try {
@@ -65,12 +74,12 @@ export default function TestInstructionsPage() {
         }
         if (data.requiresPurchase) {
           setRequiresPurchase(true);
-          setError('This premium mock test is locked. Please purchase the test series to unlock access.');
+          setError('This mock test is part of the full series. Unlock the series to attempt.');
           return;
         }
         if (data.requiresAuth) {
           setRequiresAuth(true);
-          setError('Please log in to access this mock test.');
+          setError('Please sign in to access this mock test.');
           return;
         }
         setTest(data.test);
@@ -86,23 +95,17 @@ export default function TestInstructionsPage() {
                 if (qData.test?.id && qData.test.id !== testId) {
                   sessionStorage.setItem(`mockshikhar_questions_${qData.test.id}`, str);
                 }
-                if (data.test?.id && data.test.id !== testId) {
-                  sessionStorage.setItem(`mockshikhar_questions_${data.test.id}`, str);
-                }
               } catch {
-                // Ignore storage quota
+                // Ignore quota
               }
             }
           })
           .catch(() => {});
-      } catch (err: unknown) {
+      } catch (err: any) {
         if (!isMounted) return;
-        const message = err instanceof Error ? err.message : 'Unable to connect to the server. Please try again.';
-        setError(message);
+        setError(err.message || 'Unable to connect to the server.');
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        if (isMounted) setIsLoading(false);
       }
     };
 
@@ -111,7 +114,7 @@ export default function TestInstructionsPage() {
     return () => {
       isMounted = false;
     };
-  }, [testId, reloadKey]);
+  }, [testId]);
 
   const handleStartTest = () => {
     if (!hasAgreed || !test || test.totalQuestions === 0) return;
@@ -120,320 +123,245 @@ export default function TestInstructionsPage() {
 
   if (isLoading) {
     return (
-      <div className={styles.container}>
-        <div style={{ padding: '4rem 1rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-          <RefreshCw className="animate-spin" size={32} style={{ margin: '0 auto 1rem' }} />
+      <main className={styles.container}>
+        <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--slate)' }}>
           <p>Loading test configuration...</p>
         </div>
-      </div>
+      </main>
     );
   }
 
   if (requiresPurchase) {
     return (
-      <div className={styles.container}>
-        <div style={{ maxWidth: '600px', margin: '4rem auto', padding: '2.5rem', textAlign: 'center', background: 'var(--color-bg-primary, #1e293b)', borderRadius: '16px', border: '1px solid var(--color-border, #334155)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <AlertTriangle size={32} />
-          </div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--color-text-primary)' }}>Premium Mock Test Locked</h2>
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', margin: 0, lineHeight: 1.5 }}>
-            This mock test is part of the full test series. Purchase the bundle to unlock all 10 full-length mock tests permanently.
+      <main className={styles.container}>
+        <div className={styles.headerCard} style={{ textAlign: 'center', alignItems: 'center' }}>
+          <AlertCircle size={40} color="#F59E0B" />
+          <h1 className={styles.title}>Premium Test Series Required</h1>
+          <p className={styles.specSub}>
+            This mock test is locked. Purchase the test series for ₹1 to unlock all 10 full-length mocks permanently.
           </p>
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <Button variant="outline" size="md" onClick={() => router.back()}>
-              Go Back
-            </Button>
-            <Link href="/exams">
-              <Button variant="accent" size="md">
-                Unlock Test Series
-              </Button>
-            </Link>
-          </div>
+          <Link href="/exams" className={styles.startTestBtn} style={{ textDecoration: 'none' }}>
+            <span>Unlock Test Series (₹1)</span>
+            <ArrowRight size={16} />
+          </Link>
         </div>
-      </div>
+      </main>
     );
   }
 
   if (requiresAuth) {
     return (
-      <div className={styles.container}>
-        <div style={{ maxWidth: '600px', margin: '4rem auto', padding: '2.5rem', textAlign: 'center', background: 'var(--color-bg-primary, #1e293b)', borderRadius: '16px', border: '1px solid var(--color-border, #334155)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <AlertCircle size={48} color="#60a5fa" style={{ margin: '0 auto' }} />
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--color-text-primary)' }}>Login Required</h2>
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', margin: 0 }}>
-            Please sign in to verify your test series purchase and attempt this mock test.
+      <main className={styles.container}>
+        <div className={styles.headerCard} style={{ textAlign: 'center', alignItems: 'center' }}>
+          <AlertCircle size={40} color="#4338CA" />
+          <h1 className={styles.title}>Login Required</h1>
+          <p className={styles.specSub}>
+            Please sign in to attempt this mock test and save your progress.
           </p>
-          <Link href="/auth/login">
-            <Button variant="primary" size="md">
-              Sign In to Continue
-            </Button>
+          <Link href="/auth/login" className={styles.startTestBtn} style={{ textDecoration: 'none' }}>
+            <span>Sign In to Continue</span>
+            <ArrowRight size={16} />
           </Link>
         </div>
-      </div>
+      </main>
     );
   }
 
   if (error || !test) {
     return (
-      <div className={styles.container}>
-        <div style={{ maxWidth: '600px', margin: '4rem auto', padding: '2rem', textAlign: 'center', background: 'var(--color-bg-card, #1e293b)', borderRadius: '12px', border: '1px solid var(--color-border, #334155)' }}>
-          <AlertCircle size={48} color="#ef4444" style={{ margin: '0 auto 1rem' }} />
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>Failed to Load Mock Test</h2>
-          <p style={{ color: 'var(--color-text-secondary, #94a3b8)', marginBottom: '1.5rem' }}>{error || 'Test not found'}</p>
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-            <Button variant="outline" size="md" onClick={() => router.back()}>
-              Go Back
-            </Button>
-            <Button variant="primary" size="md" onClick={() => setReloadKey((k) => k + 1)}>
-              Retry
-            </Button>
-          </div>
+      <main className={styles.container}>
+        <div className={styles.headerCard} style={{ textAlign: 'center', alignItems: 'center' }}>
+          <AlertCircle size={40} color="#DC2626" />
+          <h1 className={styles.title}>Unable to Load Mock Test</h1>
+          <p className={styles.specSub}>{error || 'Test not found'}</p>
+          <Link href="/exams" className={styles.backLink}>
+            <ArrowLeft size={16} />
+            <span>Return to All Exams</span>
+          </Link>
         </div>
-      </div>
+      </main>
     );
   }
 
   const isEmpty = test.totalQuestions === 0;
 
   return (
-    <div className={styles.container}>
-      <Link href={test?.examSlug ? `/exams/${test.examSlug}` : '/exams'} className={styles.backLink}>
-        <ArrowLeft size={16} />
-        <span>Back to Exam Details</span>
-      </Link>
+    <main className={styles.container}>
+      {/* Back Link */}
+      <div>
+        <Link
+          href={test.examSlug ? `/exams/${test.examSlug}` : '/exams'}
+          className={styles.backLink}
+        >
+          <ArrowLeft size={16} />
+          <span>Back to Exam Series</span>
+        </Link>
+      </div>
 
-      <div className={styles.wrapper}>
-        {/* Test Summary Card */}
-        <header className={styles.headerCard}>
-          <div className={styles.headerBadgeRow}>
-            {test.isFree ? (
-              <Badge variant="success" size="sm">
-                FREE FULL-LENGTH MOCK
-              </Badge>
-            ) : (
-              <Badge variant="primary" size="sm">
-                PREMIUM MOCK TEST
-              </Badge>
-            )}
-            <Badge variant="neutral" size="sm">
-              Mock #{test.testNumber}
-            </Badge>
-          </div>
-
-          <h1 className={styles.testTitle}>{test.name}</h1>
-
-          {isEmpty ? (
-            <div
-              style={{
-                marginTop: '1.5rem',
-                padding: '1.5rem',
-                backgroundColor: 'rgba(239, 68, 68, 0.08)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '1rem',
-              }}
-            >
-              <AlertTriangle size={32} color="#f87171" />
-              <div>
-                <h3 style={{ margin: 0, color: '#f87171', fontSize: '1.1rem', fontWeight: 700 }}>
-                  No questions have been added to this test yet
-                </h3>
-                <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-secondary, #94a3b8)', fontSize: '0.9rem' }}>
-                  This test is currently being authored by the editorial team. Please select another mock test or check back soon.
-                </p>
-              </div>
-            </div>
+      {/* 1. Test Summary Header Card */}
+      <section className={styles.headerCard} aria-label="Test Details">
+        <div className={styles.badgeRow}>
+          <Chip category={test.category || test.examName || 'HP Exams'} />
+          {test.isFree ? (
+            <span style={{ fontSize: 12, fontWeight: 800, padding: '4px 9px', borderRadius: 999, background: '#DCFCE7', color: '#166534' }}>
+              Free Sample Mock
+            </span>
           ) : (
-            <div className={styles.specGrid}>
-              <div className={styles.specBox}>
-                <HelpCircle size={18} className={styles.specIcon} />
-                <div>
-                  <span className={styles.specVal}>{test.totalQuestions} Questions</span>
-                  <span className={styles.specSub}>Bilingual (EN / HI)</span>
-                </div>
-              </div>
-
-              <div className={styles.specBox}>
-                <Clock size={18} className={styles.specIcon} />
-                <div>
-                  <span className={styles.specVal}>{test.durationMinutes} Minutes</span>
-                  <span className={styles.specSub}>Continuous countdown</span>
-                </div>
-              </div>
-
-              <div className={styles.specBox}>
-                <CheckCircle size={18} className={styles.specIcon} />
-                <div>
-                  <span className={styles.specVal}>{test.totalMarks} Maximum Marks</span>
-                  <span className={styles.specSub}>+{test.marksPerQuestion} per question</span>
-                </div>
-              </div>
-
-              <div className={styles.specBox}>
-                {Number(test.negativeMarksPerQuestion) > 0 ? (
-                  <>
-                    <AlertCircle size={18} className={styles.negSpecIcon} />
-                    <div>
-                      <span className={styles.specVal}>-{test.negativeMarksPerQuestion} Negative Marking</span>
-                      <span className={styles.specSub}>For incorrect answers</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle size={18} className={styles.specIcon} style={{ color: '#10B981' }} />
-                    <div>
-                      <span className={styles.specVal}>No Negative Marking</span>
-                      <span className={styles.specSub}>0 penalty for wrong answers</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+            <span style={{ fontSize: 12, fontWeight: 800, padding: '4px 9px', borderRadius: 999, background: '#EEF1FF', color: '#4338CA' }}>
+              Full Mock Series
+            </span>
           )}
-        </header>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--slate)' }}>
+            Mock #{test.testNumber}
+          </span>
+        </div>
 
-        {/* Instructions Body */}
-        <div className={styles.instructionsCard}>
-          <h2 className={styles.sectionHeading}>Important Test Instructions</h2>
+        <h1 className={styles.title}>{test.name}</h1>
 
-          <div className={styles.rulesList}>
-            <div className={styles.ruleItem}>
-              <span className={styles.ruleNum}>1</span>
-              <div>
-                <strong>Server-Synched Timer:</strong> The clock is continuously counted down. When the timer hits 00:00:00, your test will be <strong>automatically submitted</strong> and your score calculated.
-              </div>
-            </div>
+        {/* 4-Spec Tiles */}
+        <div className={styles.specGrid}>
+          <div className={styles.specTile}>
+            <span className={styles.specVal}>{test.totalQuestions} Questions</span>
+            <span className={styles.specSub}>Bilingual (EN / HI)</span>
+          </div>
 
-            <div className={styles.ruleItem}>
-              <span className={styles.ruleNum}>2</span>
-              <div>
-                <strong>Marking Scheme:</strong> Each correct answer awards <strong>+{test.marksPerQuestion} mark</strong>.{' '}
-                {Number(test.negativeMarksPerQuestion) > 0 ? (
-                  <span>Each wrong answer deducts <strong>-{test.negativeMarksPerQuestion} mark</strong>. </span>
-                ) : (
-                  <span>There is <strong>no penalty (0 marks deducted)</strong> for wrong answers. </span>
-                )}
-                Unattempted questions carry zero penalty.
-              </div>
-            </div>
+          <div className={styles.specTile}>
+            <span className={styles.specVal}>{test.durationMinutes} Minutes</span>
+            <span className={styles.specSub}>Countdown timer</span>
+          </div>
 
-            <div className={styles.ruleItem}>
-              <span className={styles.ruleNum}>3</span>
-              <div>
-                <strong>Question Palette Legend:</strong>
-                <div className={styles.legendGrid}>
-                  <div className={styles.legendItem}>
-                    <span className={`${styles.paletteDot} ${styles.dotNotVisited}`} />
-                    <span>Not Visited</span>
-                  </div>
-                  <div className={styles.legendItem}>
-                    <span className={`${styles.paletteDot} ${styles.dotNotAnswered}`} />
-                    <span>Not Answered</span>
-                  </div>
-                  <div className={styles.legendItem}>
-                    <span className={`${styles.paletteDot} ${styles.dotAnswered}`} />
-                    <span>Answered</span>
-                  </div>
-                  <div className={styles.legendItem}>
-                    <span className={`${styles.paletteDot} ${styles.dotMarked}`} />
-                    <span>Marked for Review</span>
-                  </div>
-                  <div className={styles.legendItem}>
-                    <span className={`${styles.paletteDot} ${styles.dotAnsweredMarked}`} />
-                    <span>Answered & Marked (Evaluated)</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className={styles.specTile}>
+            <span className={styles.specVal}>{test.totalMarks} Total Marks</span>
+            <span className={styles.specSub}>+{test.marksPerQuestion} mark each</span>
+          </div>
 
-            <div className={styles.ruleItem}>
-              <span className={styles.ruleNum}>4</span>
-              <div>
-                <strong>Anti-Cheating Policy:</strong> Navigating away from this tab, opening developer consoles, or refreshing may trigger an automatic test submission.
-              </div>
+          <div className={styles.specTile}>
+            <span className={styles.specVal}>
+              {Number(test.negativeMarksPerQuestion) > 0
+                ? `-${test.negativeMarksPerQuestion} Penalty`
+                : 'No Penalty'}
+            </span>
+            <span className={styles.specSub}>Per incorrect response</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Instructions & Rules Card */}
+      <section className={styles.instructionsCard} aria-label="Important Instructions">
+        <h2 className={styles.sectionHeading}>Important Test Instructions</h2>
+
+        <div className={styles.rulesList}>
+          <div className={styles.ruleItem}>
+            <span className={styles.ruleNum}>1</span>
+            <div>
+              <strong>Server-Synched Timer:</strong> The countdown clock runs continuously. If time runs out, your test will <strong>automatically submit</strong> and your score will be computed instantly.
             </div>
           </div>
 
-          {/* Action Row */}
-          <div className={styles.declarationSection}>
-            <div className={styles.languageSelectRow}>
-              <div className={styles.langLabel}>
-                <Languages size={18} />
-                <span>Default Question Language:</span>
-              </div>
-              <div className={styles.langToggleGroup}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedLanguage('en')}
-                  className={`${styles.langBtn} ${
-                    selectedLanguage === 'en' ? styles.langBtnActive : ''
-                  }`}
-                >
-                  English
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedLanguage('hi')}
-                  className={`${styles.langBtn} ${
-                    selectedLanguage === 'hi' ? styles.langBtnActive : ''
-                  }`}
-                >
-                  हिन्दी (Hindi)
-                </button>
-              </div>
-            </div>
-
-            {!isEmpty && (
-              <div className={styles.declarationBox}>
-                <label className={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    id="agree-checkbox"
-                    checked={hasAgreed}
-                    onChange={(e) => setHasAgreed(e.target.checked)}
-                    className={styles.checkboxInput}
-                  />
-                  <span className={styles.declarationText}>
-                    I have read and understood all the test instructions and exam rules outlined above. I agree not to use unauthorized study materials during this attempt.
-                  </span>
-                </label>
-              </div>
-            )}
-
-            <div className={styles.startActionRow}>
-              {isEmpty ? (
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    disabled
-                  >
-                    No Questions Added (Cannot Start)
-                  </Button>
-                  <Link href={test?.examSlug ? `/exams/${test.examSlug}` : '/exams'}>
-                    <Button variant="primary" size="lg">
-                      Choose Another Mock Test
-                    </Button>
-                  </Link>
-                </div>
+          <div className={styles.ruleItem}>
+            <span className={styles.ruleNum}>2</span>
+            <div>
+              <strong>Marking &amp; Scoring:</strong> Each correct response awards <strong>+{test.marksPerQuestion} mark</strong>.{' '}
+              {Number(test.negativeMarksPerQuestion) > 0 ? (
+                <span>Each incorrect response deducts <strong>-{test.negativeMarksPerQuestion} mark</strong>. </span>
               ) : (
-                <Button
-                  variant="accent"
-                  size="lg"
-                  leftIcon={<Play size={18} />}
-                  disabled={!hasAgreed}
-                  onClick={handleStartTest}
-                >
-                  I Am Ready — Start Test
-                </Button>
+                <span>There is <strong>no negative marking</strong> for incorrect responses. </span>
               )}
+              Unanswered questions carry zero penalty.
+            </div>
+          </div>
+
+          <div className={styles.ruleItem}>
+            <span className={styles.ruleNum}>3</span>
+            <div>
+              <strong>Auto-Save &amp; Question Palette:</strong> Your responses are automatically saved in real time. You can navigate between questions, change your answers, or mark questions for review before submitting.
+              <div className={styles.legendGrid}>
+                <div className={styles.legendItem}>
+                  <span className={styles.dotGray} aria-hidden="true" />
+                  <span>Not Visited</span>
+                </div>
+                <div className={styles.legendItem}>
+                  <span className={styles.dotRed} aria-hidden="true" />
+                  <span>Not Answered</span>
+                </div>
+                <div className={styles.legendItem}>
+                  <span className={styles.dotGreen} aria-hidden="true" />
+                  <span>Answered</span>
+                </div>
+                <div className={styles.legendItem}>
+                  <span className={styles.dotPurple} aria-hidden="true" />
+                  <span>Marked for Review</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+
+        {/* Language Selection */}
+        <div className={styles.langRow}>
+          <span className={styles.langLabel}>Default Question Language:</span>
+          <div className={styles.langPillGroup} role="radiogroup" aria-label="Default Question Language">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={selectedLanguage === 'en'}
+              onClick={() => setSelectedLanguage('en')}
+              className={`${styles.langPill} ${selectedLanguage === 'en' ? styles.langPillActive : ''}`}
+            >
+              English
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={selectedLanguage === 'hi'}
+              onClick={() => setSelectedLanguage('hi')}
+              className={`${styles.langPill} ${selectedLanguage === 'hi' ? styles.langPillActive : ''}`}
+            >
+              <span className={styles.hindiLabel}>हिन्दी</span> (Hindi)
+            </button>
+          </div>
+        </div>
+
+        {/* Declaration Checkbox */}
+        {!isEmpty && (
+          <label className={styles.declarationRow}>
+            <span className={styles.customCheckbox}>
+              <input
+                type="checkbox"
+                className={styles.hiddenCheckbox}
+                checked={hasAgreed}
+                onChange={(e) => setHasAgreed(e.target.checked)}
+              />
+              <span className={`${styles.checkboxBox} ${hasAgreed ? styles.checkboxChecked : ''}`}>
+                {hasAgreed && (
+                  <svg viewBox="0 0 16 16" fill="none" className={styles.checkIcon}>
+                    <path d="M3.5 8.5L6.5 11.5L12.5 4.5" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </span>
+            </span>
+            <span className={styles.declarationText}>
+              I have read and understood all the exam instructions and rules outlined above. I am ready to begin the test.
+            </span>
+          </label>
+        )}
+
+        {/* ONE CLEAR START TEST BUTTON */}
+        <div className={styles.actionRow}>
+          <button
+            type="button"
+            className={styles.startTestBtn}
+            disabled={!hasAgreed || isEmpty}
+            onClick={handleStartTest}
+          >
+            <span>Start Test Now</span>
+            <ArrowRight size={18} />
+          </button>
+          {!hasAgreed && !isEmpty && (
+            <p className={styles.startHelperLine}>Tick the box above to start</p>
+          )}
+        </div>
+      </section>
+    </main>
   );
 }

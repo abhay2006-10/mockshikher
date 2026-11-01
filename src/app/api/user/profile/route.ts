@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { normalizeIndianPhone } from '@/lib/phone';
@@ -63,7 +64,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, phone, whatsappConsent } = body;
+    const { name, phone, whatsappConsent, currentPassword, newPassword } = body;
 
     const updateData: any = {};
     if (typeof name === 'string' && name.trim().length >= 2) {
@@ -87,6 +88,45 @@ export async function PATCH(req: NextRequest) {
 
     if (whatsappConsent !== undefined) {
       updateData.whatsappConsent = Boolean(whatsappConsent);
+    }
+
+    // Verify current password and hash new password with bcrypt
+    if (newPassword) {
+      if (!currentPassword) {
+        return NextResponse.json(
+          { error: 'Current password is required to change password.' },
+          { status: 400 }
+        );
+      }
+      if (typeof newPassword !== 'string' || newPassword.length < 8) {
+        return NextResponse.json(
+          { error: 'New password must be at least 8 characters long.' },
+          { status: 400 }
+        );
+      }
+
+      const userWithHash = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { passwordHash: true },
+      });
+
+      if (!userWithHash?.passwordHash) {
+        return NextResponse.json(
+          { error: 'Account does not have a local password set.' },
+          { status: 400 }
+        );
+      }
+
+      const isMatch = await bcrypt.compare(currentPassword, userWithHash.passwordHash);
+      if (!isMatch) {
+        return NextResponse.json(
+          { error: 'Incorrect current password.' },
+          { status: 400 }
+        );
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      updateData.passwordHash = await bcrypt.hash(newPassword, salt);
     }
 
     const updated = await prisma.user.update({

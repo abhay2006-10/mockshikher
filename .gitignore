@@ -68,3 +68,8 @@ scripts/search_repo.*
 scripts/setup_search.*
 /marketing-screenshots/
 
+/mockshikhar-design-reference/
+/mockshikhar-design-reference-tmp/
+
+/screenshots-v2/
+*.dump

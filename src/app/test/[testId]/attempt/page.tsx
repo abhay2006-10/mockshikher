@@ -125,6 +125,80 @@ function TestAttemptInner() {
   useEffect(() => {
     let isMounted = true;
 
+    if (searchParams?.get('preview') === 'true') {
+      const mockTest: TestMeta = {
+        id: testId || 'mock-1',
+        name: 'HP Patwari · Full Mock 1',
+        testNumber: 1,
+        isFree: true,
+        totalQuestions: 10,
+        durationMinutes: 90,
+        totalMarks: 100,
+        negativeMarksPerQuestion: 0.25,
+        marksPerQuestion: 1,
+      };
+      const mockQs: StudentQuestion[] = [
+        {
+          id: 'q-1',
+          mockTestId: testId || 'mock-1',
+          questionNumber: 1,
+          questionText: "Which present-day river was known as 'Vipasha' in the Vedic period?",
+          questionTextHi: "वैदिक काल में किस वर्तमान नदी को 'विपाशा' के नाम से जाना जाता था?",
+          marks: 1,
+          negativeMarks: 0.25,
+          difficulty: 'MEDIUM',
+          subjectId: 'sub-1',
+          subjectName: 'HP GK',
+          subjectNameHi: 'हिमाचल सामान्य ज्ञान',
+          topicId: 'top-1',
+          topicName: 'Rivers & Geography',
+          topicNameHi: 'नदियाँ और भूगोल',
+          options: [
+            { id: 'opt-1', label: 'A', text: 'Beas', textHi: 'ब्यास' },
+            { id: 'opt-2', label: 'B', text: 'Ravi', textHi: 'रावी' },
+            { id: 'opt-3', label: 'C', text: 'Chenab', textHi: 'चेनाब' },
+            { id: 'opt-4', label: 'D', text: 'Satluj', textHi: 'सतलुज' },
+          ],
+        },
+        {
+          id: 'q-2',
+          mockTestId: testId || 'mock-1',
+          questionNumber: 2,
+          questionText: 'Which district of Himachal Pradesh is the largest by geographic area?',
+          questionTextHi: 'भौगोलिक क्षेत्रफल की दृष्टि से हिमाचल प्रदेश का सबसे बड़ा जिला कौन सा है?',
+          marks: 1,
+          negativeMarks: 0.25,
+          difficulty: 'EASY',
+          subjectId: 'sub-1',
+          subjectName: 'HP GK',
+          subjectNameHi: 'हिमाचल सामान्य ज्ञान',
+          topicId: 'top-2',
+          topicName: 'District Profiles',
+          topicNameHi: 'जिला विवरण',
+          options: [
+            { id: 'opt-21', label: 'A', text: 'Kinnaur', textHi: 'किन्नौर' },
+            { id: 'opt-22', label: 'B', text: 'Lahaul and Spiti', textHi: 'लाहौल और स्पीति' },
+            { id: 'opt-23', label: 'C', text: 'Chamba', textHi: 'चंबा' },
+            { id: 'opt-24', label: 'D', text: 'Kangra', textHi: 'कांगड़ा' },
+          ],
+        },
+      ];
+      setTest(mockTest);
+      setQuestions(mockQs);
+      setAttemptId('preview-attempt-1');
+      setTimeLeft(5240);
+      setIsTimerInitialized(true);
+      setAnswers({
+        'q-1': { selectedOption: 'A', status: 'ANSWERED', timeSpent: 30 },
+        'q-2': { selectedOption: null, status: 'NOT_ANSWERED', timeSpent: 10 },
+      });
+      if (searchParams?.get('palette') === 'open') {
+        setIsMobilePaletteOpen(true);
+      }
+      setIsLoading(false);
+      return;
+    }
+
     const loadQuestionsAndAttempt = async () => {
       setLoadError(null);
 
@@ -524,16 +598,16 @@ function TestAttemptInner() {
     }
   }, [answers, attemptId]);
 
-
-
+  const isAmberTime = timeLeft <= 600 && timeLeft > 120;
+  const isRedTime = timeLeft <= 120;
   const isLowTime = timeLeft < 300;
 
   // Loading state
   if (isLoading) {
     return (
-      <div style={{ padding: '4rem 1rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-        <RefreshCw size={32} style={{ margin: '0 auto 1rem', display: 'block' }} />
-        <p>Loading test questions from database...</p>
+      <div style={{ padding: '6rem 1rem', textAlign: 'center', color: '#4B5168', fontFamily: "var(--font-jakarta, 'Plus Jakarta Sans', system-ui, sans-serif)" }}>
+        <RefreshCw size={36} style={{ margin: '0 auto 1.25rem', display: 'block', animation: 'v2-spin 1s linear infinite' }} />
+        <p style={{ fontWeight: 600, fontSize: '15px' }}>Loading test questions from database...</p>
       </div>
     );
   }
@@ -541,12 +615,12 @@ function TestAttemptInner() {
   // Error state
   if (loadError || !test || questions.length === 0) {
     return (
-      <div style={{ maxWidth: '600px', margin: '4rem auto', padding: '2rem', textAlign: 'center', background: 'var(--color-bg-card, #1e293b)', borderRadius: '12px', border: '1px solid var(--color-border, #334155)' }}>
-        <AlertCircle size={48} color="#ef4444" style={{ margin: '0 auto 1rem', display: 'block' }} />
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>
+      <div style={{ maxWidth: '580px', margin: '5rem auto', padding: '2.5rem', textAlign: 'center', background: '#FFFFFF', borderRadius: '20px', border: '1px solid #E3E6F5', boxShadow: '0 8px 30px -12px rgba(11, 16, 38, 0.08)', fontFamily: "var(--font-jakarta, 'Plus Jakarta Sans', system-ui, sans-serif)" }}>
+        <AlertCircle size={44} color="#EF4444" style={{ margin: '0 auto 1rem', display: 'block' }} />
+        <h2 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.5rem', color: '#0B1026' }}>
           {loadError ? 'Failed to Load Questions' : 'No Questions Available'}
         </h2>
-        <p style={{ color: 'var(--color-text-secondary, #94a3b8)', marginBottom: '1.5rem' }}>
+        <p style={{ color: '#4B5168', marginBottom: '1.5rem', fontSize: '14.5px', lineHeight: 1.5 }}>
           {loadError || 'No questions have been added to this test yet. Please contact your administrator.'}
         </p>
         <Button variant="primary" size="md" onClick={() => router.back()}>
@@ -586,7 +660,7 @@ function TestAttemptInner() {
             <span>{lang === 'en' ? 'हिन्दी' : 'English'}</span>
           </button>
 
-          <div className={`${styles.timerBox} ${isLowTime ? styles.timerLowTime : ''}`}>
+          <div className={`${styles.timerBox} ${isRedTime ? styles.timerRed : isAmberTime ? styles.timerAmber : ''}`}>
             <Clock size={16} className={styles.timerIcon} />
             <span className={styles.timeVal}>{formatTime(timeLeft)}</span>
             {isLowTime && <span className={styles.timeWarning}>!</span>}

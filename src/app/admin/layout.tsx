@@ -43,8 +43,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Mobile Topbar */}
       <div className={styles.mobileAdminBar}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <ShieldCheck size={20} color="#F5B301" />
-          <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#fff' }}>Mockshikhar Admin</span>
+          <ShieldCheck size={20} color="#4338CA" />
+          <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0B1026' }}>Mockshikhar Admin</span>
         </div>
         <button
           className={styles.mobileMenuBtn}
@@ -68,7 +68,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
           <div className={styles.sidebarBrand}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <ShieldCheck size={20} color="#F5B301" />
+              <ShieldCheck size={20} color="#4338CA" />
               <h2 className={styles.sidebarTitle}>Mockshikhar Admin</h2>
             </div>
             <span className={styles.sidebarSub}>Control Center</span>
@@ -88,7 +88,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             ))}
           </nav>
 
-          <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--color-border)' }}>
+          <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border, #E3E6F5)' }}>
             <Link href="/" className={styles.navItem} style={{ fontSize: '0.8rem' }}>
               <ArrowLeft size={16} />
               <span>Back to Student Site</span>

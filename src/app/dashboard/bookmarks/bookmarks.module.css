@@ -1,0 +1,341 @@
+/* MockShikhar V2 Bookmarks Styles — faithful to Mistake Book card system */
+
+.container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 80vh;
+}
+
+.headerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 15px;
+  color: var(--slate);
+}
+
+.langToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.langToggleBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Banner */
+.banner {
+  position: relative;
+  overflow: hidden;
+  background: var(--primary-dark);
+  color: #FFFFFF;
+  border-radius: 22px;
+  padding: 24px 28px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.mountainRidgeSvg {
+  position: absolute;
+  left: -20px;
+  right: -20px;
+  bottom: 0;
+  width: calc(100% + 40px);
+  height: 70px;
+  pointer-events: none;
+  animation: drift 20s ease-in-out infinite;
+}
+
+.bannerLeft {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bannerCount {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #FFFFFF;
+}
+
+.bannerLabel {
+  font-size: 13.5px;
+  color: #D9DBFF;
+  font-weight: 600;
+}
+
+.browseLink {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: #FCD34D;
+  color: #0B1026;
+  font-weight: 800;
+  font-size: 14.5px;
+  text-decoration: none;
+  transition: transform 0.18s ease;
+}
+
+.browseLink:hover {
+  transform: translateY(-2px);
+}
+
+/* Card System */
+.cardsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: rise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 20px 44px -30px rgba(49, 46, 129, 0.45);
+  border-color: #C7D2FE;
+}
+
+.cardTop {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardTopLeft {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.qNumber {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.removeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #FECACA;
+  background: #FEF2F2;
+  color: #DC2626;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.removeBtn:hover {
+  background: #FEE2E2;
+}
+
+.questionText {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.optionsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 14.5px;
+  color: var(--ink);
+}
+
+.optionRowCorrect {
+  border-color: #BBF7D0;
+  background: #F0FDF4;
+  color: #166534;
+  font-weight: 600;
+}
+
+.optionBadge {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+  background: var(--sky);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.optionBadgeCorrect {
+  background: #16A34A;
+  color: #FFFFFF;
+}
+
+.correctTag {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 800;
+  color: #166534;
+  background: #DCFCE7;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+/* Explanation */
+.explanationBox {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--sky-2);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #3B4160;
+  animation: open 0.3s ease both;
+}
+
+.explanationStrong {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.toggleExpBtn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.toggleExpBtn:hover {
+  background: var(--sky);
+}
+
+/* Empty State */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 48px 24px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  gap: 14px;
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.emptyDesc {
+  margin: 0;
+  font-size: 15px;
+  color: var(--slate);
+  max-width: 500px;
+  line-height: 1.5;
+}
+
+@keyframes open {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 720px) {
+  .container {
+    padding: 18px 14px 48px !important;
+  }
+  .card {
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+  .title {
+    font-size: 1.5rem !important;
+  }
+  .cardTop {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .removeBtn {
+    align-self: flex-start;
+  }
+}
+

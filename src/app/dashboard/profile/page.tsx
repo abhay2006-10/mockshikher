@@ -2,26 +2,24 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, User, Mail, Phone, Lock, CheckCircle2, ShieldCheck, AlertCircle, Eye, EyeOff, CreditCard } from 'lucide-react';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
+import { ArrowLeft, CheckIcon, AlertCircle } from '@/components/v2/Icons';
+import styles from './profile.module.css';
 
 export default function ProfilePage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [whatsappConsent, setWhatsappConsent] = useState(true);
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [isSaved, setIsSaved] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   useEffect(() => {
     async function loadProfile() {
@@ -74,310 +72,209 @@ export default function ProfilePage() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
     if (newPassword !== confirmPassword) {
-      alert("New passwords don't match");
+      setErrorMsg("New passwords do not match");
       return;
     }
     if (newPassword.length < 8) {
-      alert('Password must be at least 8 characters long');
+      setErrorMsg('Password must be at least 8 characters long');
       return;
     }
-    setIsUpdatingPassword(true);
-    setTimeout(() => {
-      setIsUpdatingPassword(false);
+
+    try {
+      const res = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || 'Failed to update password');
+        return;
+      }
+
+      setPasswordMsg('Password updated successfully!');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      alert('Password updated successfully!');
-    }, 800);
+      setTimeout(() => setPasswordMsg(null), 3000);
+    } catch {
+      setErrorMsg('Failed to update password. Please try again.');
+    }
   };
 
   return (
-    <div style={{ maxWidth: '720px', margin: '0 auto', padding: '2rem 1rem 5rem' }}>
-      <Link
-        href="/dashboard"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.4rem',
-          color: 'var(--color-text-secondary)',
-          fontSize: '0.875rem',
-          fontWeight: 600,
-          textDecoration: 'none',
-          marginBottom: '1.5rem',
-        }}
-      >
-        <ArrowLeft size={16} />
-        <span>Back to Dashboard</span>
-      </Link>
+    <main className={styles.container}>
+      {/* Back to Dashboard */}
+      <div>
+        <Link href="/dashboard" className={styles.backLink}>
+          <ArrowLeft size={16} />
+          <span>Back to Dashboard</span>
+        </Link>
+      </div>
 
-      <header style={{ marginBottom: '2rem' }}>
-        <h1
-          style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: '2rem',
-            fontWeight: 800,
-            color: 'var(--color-text-primary)',
-            margin: '0 0 0.5rem 0',
-          }}
-        >
-          My Profile & Account Settings
-        </h1>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', margin: 0 }}>
+      {/* Header */}
+      <header className={styles.header}>
+        <h1 className={styles.title}>My Profile &amp; Settings</h1>
+        <p className={styles.subtitle}>
           Manage your student account information, mobile updates consent, and credentials.
         </p>
       </header>
 
       {errorMsg && (
-        <div
-          style={{
-            marginBottom: '1.5rem',
-            padding: '0.75rem 1rem',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            borderRadius: '8px',
-            color: '#f87171',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontSize: '0.9rem',
-          }}
-        >
+        <div className={styles.errorMsg}>
           <AlertCircle size={16} />
           <span>{errorMsg}</span>
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-        {/* Personal Details */}
-        <div
-          style={{
-            background: 'var(--color-bg-primary)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-xl)',
-            padding: '1.75rem',
-            boxShadow: 'var(--shadow-sm)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0, color: 'var(--color-text-primary)' }}>
-              Personal Information
-            </h2>
-            <Badge variant="success" size="sm">
-              Active Student
-            </Badge>
-          </div>
+      {isSaved && (
+        <div className={styles.successMsg}>
+          <CheckIcon size={16} />
+          <span>Profile changes saved successfully!</span>
+        </div>
+      )}
 
-          <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <Input
-              label="Full Name"
+      {/* Card 1: Personal Details */}
+      <section className={styles.card} aria-label="Personal Details">
+        <div className={styles.cardHeader}>
+          <h2 className={styles.cardTitle}>Personal Information</h2>
+          <span className={styles.activeBadge}>Active Student</span>
+        </div>
+
+        <form onSubmit={handleUpdateProfile} className={styles.form}>
+          <div className={styles.fieldGroup}>
+            <label className={styles.label} htmlFor="profile-name">
+              Full Name
+            </label>
+            <input
+              id="profile-name"
+              type="text"
+              className={styles.input}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              leftIcon={<User size={16} />}
               required
             />
+          </div>
 
-            <Input
-              label="Email Address"
+          <div className={styles.fieldGroup}>
+            <label className={styles.label} htmlFor="profile-email">
+              Email Address
+            </label>
+            <input
+              id="profile-email"
+              type="email"
+              className={styles.input}
               value={email}
               disabled
-              leftIcon={<Mail size={16} />}
-              helperText="Email address cannot be modified after registration"
             />
+            <span className={styles.helperText}>
+              Email address cannot be modified after registration.
+            </span>
+          </div>
 
-            <Input
-              label="Mobile Number (WhatsApp)"
+          <div className={styles.fieldGroup}>
+            <label className={styles.label} htmlFor="profile-phone">
+              Mobile Number (WhatsApp)
+            </label>
+            <input
+              id="profile-phone"
+              type="tel"
+              className={styles.input}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="e.g. 9816012345"
-              leftIcon={<Phone size={16} />}
-              helperText="10-digit Indian mobile number for test notifications & announcements"
+              placeholder="e.g. 7876725758"
             />
-
-            {/* WhatsApp Updates & Opt-out setting */}
-            <div
-              style={{
-                marginTop: '0.25rem',
-                padding: '1rem',
-                background: 'var(--color-bg-secondary)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '8px',
-              }}
-            >
-              <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '0.75rem',
-                  fontSize: '0.9rem',
-                  color: 'var(--color-text-primary)',
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={whatsappConsent}
-                  onChange={(e) => setWhatsappConsent(e.target.checked)}
-                  style={{
-                    marginTop: '0.2rem',
-                    accentColor: 'var(--color-primary-600, #4f46e5)',
-                    cursor: 'pointer',
-                    width: '16px',
-                    height: '16px',
-                  }}
-                />
-                <div>
-                  <strong style={{ display: 'block', fontSize: '0.925rem' }}>
-                    WhatsApp Notifications & Course Announcements
-                  </strong>
-                  <span style={{ fontSize: '0.825rem', color: 'var(--color-text-secondary)', display: 'block', marginTop: '0.2rem' }}>
-                    {whatsappConsent
-                      ? 'You are currently subscribed to receive exam alerts, result updates and new test announcements. Uncheck this box to opt out anytime.'
-                      : 'You are currently opted out. Check this box to re-enable WhatsApp updates.'}
-                  </span>
-                </div>
-              </label>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-              <Button type="submit" variant="primary" size="md" isLoading={isSaving}>
-                {isSaved ? 'Changes Saved Successfully!' : 'Save Profile Changes'}
-              </Button>
-            </div>
-          </form>
-        </div>
-
-        {/* Change Password */}
-        <div
-          style={{
-            background: 'var(--color-bg-primary)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-xl)',
-            padding: '1.75rem',
-            boxShadow: 'var(--shadow-sm)',
-          }}
-        >
-          <div style={{ marginBottom: '1.25rem' }}>
-            <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0, color: 'var(--color-text-primary)' }}>
-              Security & Password
-            </h2>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: '0.25rem 0 0' }}>
-              Ensure your account is protected with a secure password.
-            </p>
+            <span className={styles.helperText}>
+              10-digit Indian mobile number for test notifications &amp; exam alerts.
+            </span>
           </div>
 
-          <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <Input
-              label="New Password"
-              type={showNewPassword ? 'text' : 'password'}
-              placeholder="••••••••"
+          <label className={styles.checkboxRow}>
+            <input
+              type="checkbox"
+              className={styles.checkbox}
+              checked={whatsappConsent}
+              onChange={(e) => setWhatsappConsent(e.target.checked)}
+            />
+            <div className={styles.checkboxText}>
+              <strong>WhatsApp Exam Alerts &amp; Test Updates</strong>
+              <span className={styles.helperText}>
+                Receive notification when new mock tests and official HP exam dates are released.
+              </span>
+            </div>
+          </label>
+
+          <button type="submit" className={styles.submitBtn} disabled={isSaving}>
+            <span>{isSaving ? 'Saving...' : 'Save Profile'}</span>
+          </button>
+        </form>
+      </section>
+
+      {/* Card 2: Security & Password */}
+      <section className={styles.card} aria-label="Security Settings">
+        <div className={styles.cardHeader}>
+          <h2 className={styles.cardTitle}>Change Password</h2>
+        </div>
+
+        {passwordMsg && (
+          <div className={styles.successMsg}>
+            <CheckIcon size={16} />
+            <span>{passwordMsg}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleChangePassword} className={styles.form}>
+          <div className={styles.fieldGroup}>
+            <label className={styles.label} htmlFor="current-pw">
+              Current Password
+            </label>
+            <input
+              id="current-pw"
+              type="password"
+              className={styles.input}
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label className={styles.label} htmlFor="new-pw">
+              New Password
+            </label>
+            <input
+              id="new-pw"
+              type="password"
+              className={styles.input}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              leftIcon={<Lock size={16} />}
-              rightIcon={
-                <button
-                  type="button"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--color-text-tertiary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '4px',
-                  }}
-                  onClick={() => setShowNewPassword((v) => !v)}
-                  aria-label={showNewPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              }
+              placeholder="At least 8 characters"
               required
             />
-
-            <Input
-              label="Confirm New Password"
-              type={showConfirmPassword ? 'text' : 'password'}
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              leftIcon={<Lock size={16} />}
-              rightIcon={
-                <button
-                  type="button"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--color-text-tertiary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '4px',
-                  }}
-                  onClick={() => setShowConfirmPassword((v) => !v)}
-                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              }
-              required
-            />
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-              <Button type="submit" variant="secondary" size="md" isLoading={isUpdatingPassword}>
-                Update Password
-              </Button>
-            </div>
-          </form>
-        </div>
-
-        {/* Payment History & Subscriptions Card */}
-        <div
-          style={{
-            background: 'var(--color-bg-primary)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-xl)',
-            padding: '1.5rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '1rem',
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div
-              style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '10px',
-                background: 'rgba(59, 130, 246, 0.15)',
-                color: '#60a5fa',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <CreditCard size={22} />
-            </div>
-            <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--color-text-primary)' }}>
-                Billing & Payment History
-              </h3>
-              <p style={{ fontSize: '0.825rem', color: 'var(--color-text-secondary)', margin: '0.2rem 0 0' }}>
-                View your verified test series receipts, transaction IDs, and active mock bundles.
-              </p>
-            </div>
           </div>
 
-          <Link href="/dashboard/payments">
-            <Button variant="outline" size="sm" rightIcon={<ArrowRight size={14} />}>
-              View Payment Receipts
-            </Button>
-          </Link>
-        </div>
-      </div>
-    </div>
+          <div className={styles.fieldGroup}>
+            <label className={styles.label} htmlFor="confirm-pw">
+              Confirm New Password
+            </label>
+            <input
+              id="confirm-pw"
+              type="password"
+              className={styles.input}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button type="submit" className={styles.submitBtn}>
+            <span>Update Password</span>
+          </button>
+        </form>
+      </section>
+    </main>
   );
 }

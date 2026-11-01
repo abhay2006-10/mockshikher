@@ -562,7 +562,7 @@ export default function AdminQuestionsPage() {
             padding: '0.85rem 1.25rem',
             borderRadius: '8px',
             background: toast.type === 'success' ? '#065F46' : '#991B1B',
-            color: '#FFFFFF',
+            color: 'var(--ink, #0B1026)',
             border: `1px solid ${toast.type === 'success' ? '#10B981' : '#EF4444'}`,
             boxShadow: '0 10px 25px rgba(0,0,0,0.4)',
             display: 'flex',
@@ -732,7 +732,7 @@ export default function AdminQuestionsPage() {
           ) : questions.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '3rem', background: 'var(--color-bg-primary)', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
               <Layers size={36} color="#F5B301" style={{ marginBottom: '0.75rem' }} />
-              <h3 style={{ color: '#fff', margin: '0 0 0.5rem 0' }}>No Questions Found</h3>
+              <h3 style={{ color: 'var(--ink, #0B1026)', margin: '0 0 0.5rem 0' }}>No Questions Found</h3>
               <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
                 {selectedExamSlug !== 'ALL'
                   ? `No questions in this series yet. Add questions or import via CSV/Excel.`
@@ -773,7 +773,7 @@ export default function AdminQuestionsPage() {
                         </td>
                         <td data-label="Question Text" style={{ maxWidth: '340px' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                            <span style={{ color: '#fff', fontSize: '0.875rem', lineHeight: 1.4 }}>
+                            <span style={{ color: 'var(--ink, #0B1026)', fontSize: '0.875rem', lineHeight: 1.4 }}>
                               {text}
                             </span>
                             {q.questionImage && (
@@ -865,7 +865,7 @@ export default function AdminQuestionsPage() {
       {/* ============================================================ */}
       {activeTab === 'author' && (
         <div style={{ background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '1.5rem', maxWidth: '850px' }}>
-          <h3 style={{ color: '#fff', fontSize: '1.1rem', margin: '0 0 1rem 0', fontWeight: 800 }}>
+          <h3 style={{ color: 'var(--ink, #0B1026)', fontSize: '1.1rem', margin: '0 0 1rem 0', fontWeight: 800 }}>
             Author Bilingual Question
           </h3>
 
@@ -949,7 +949,7 @@ export default function AdminQuestionsPage() {
             {/* Question Image Attachment */}
             <div style={{ background: 'var(--color-bg-secondary)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink, #0B1026)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   <ImageIcon size={14} color="#F5B301" /> Question Diagram / Image (Optional)
                 </span>
                 <input
@@ -1101,7 +1101,7 @@ export default function AdminQuestionsPage() {
       {activeTab === 'readiness' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ color: '#fff', fontSize: '1.1rem', margin: 0, fontWeight: 800 }}>
+            <h3 style={{ color: 'var(--ink, #0B1026)', fontSize: '1.1rem', margin: 0, fontWeight: 800 }}>
               Mock Test Readiness & Publishing Control
             </h3>
             <Button variant="outline" size="sm" leftIcon={<RefreshCw size={13} />} onClick={fetchReadiness}>
@@ -1135,7 +1135,7 @@ export default function AdminQuestionsPage() {
                   {readinessTests.map((t) => (
                     <tr key={t.id}>
                       <td data-label="Mock Test">
-                        <strong style={{ color: '#fff' }}>{t.name}</strong>
+                        <strong style={{ color: 'var(--ink, #0B1026)' }}>{t.name}</strong>
                       </td>
                       <td data-label="Exam Series" style={{ color: '#94A3B8' }}>
                         {t.examName}
@@ -1190,7 +1190,7 @@ export default function AdminQuestionsPage() {
       {activeTab === 'audit' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ color: '#fff', fontSize: '1.1rem', margin: 0, fontWeight: 800 }}>
+            <h3 style={{ color: 'var(--ink, #0B1026)', fontSize: '1.1rem', margin: 0, fontWeight: 800 }}>
               System Audit Trail (PostgreSQL audit_logs)
             </h3>
             <Button variant="outline" size="sm" leftIcon={<RefreshCw size={13} />} onClick={fetchAuditLogs}>

@@ -1,0 +1,251 @@
+/* MockShikhar V2 Payment History Styles */
+
+.container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-height: 80vh;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.headerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  font-size: 15px;
+  color: var(--slate);
+}
+
+.exploreBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 14.5px;
+  text-decoration: none;
+  transition: transform 0.18s ease, background 0.2s ease;
+}
+
+.exploreBtn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+/* Stats 4-Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.statCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.statLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--slate);
+}
+
+.statVal {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.statMeta {
+  font-size: 12px;
+  color: var(--slate);
+}
+
+/* Transactions Table Panel */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 4px 16px -8px rgba(11, 16, 38, 0.05);
+}
+
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.refreshBtn {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.refreshBtn:hover {
+  text-decoration: underline;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th {
+  padding: 12px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #6B7090;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.table td {
+  padding: 16px 14px;
+  border-top: 1px solid #EEF0F8;
+  font-size: 14.5px;
+  color: var(--ink);
+  vertical-align: middle;
+}
+
+.examName {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.examSub {
+  font-size: 12.5px;
+  color: var(--slate);
+}
+
+.priceTag {
+  font-weight: 800;
+  color: var(--primary);
+  font-size: 16px;
+}
+
+.badgeVerified {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #DCFCE7;
+  color: #166534;
+}
+
+.txCode {
+  font-family: monospace;
+  font-size: 12px;
+  background: var(--sky-2);
+  padding: 3px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  color: var(--slate);
+}
+
+.openExamBtn {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.openExamBtn:hover {
+  text-decoration: underline;
+}
+
+/* Empty State */
+.emptyState {
+  padding: 40px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--slate);
+  font-size: 15px;
+}
+
+@media (max-width: 720px) {
+  .container {
+    padding: 20px 16px 48px !important;
+  }
+  .title {
+    font-size: 1.5rem !important;
+  }
+  .panel {
+    padding: 16px !important;
+    border-radius: 18px !important;
+  }
+  .table th, .table td {
+    padding: 12px 8px !important;
+  }
+}
+

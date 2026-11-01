@@ -1,17 +1,19 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Outfit } from 'next/font/google';
+import { Plus_Jakarta_Sans, Noto_Sans_Devanagari } from 'next/font/google';
 import AppShell from '@/components/layout/AppShell';
 import './globals.css';
 
-const inter = Inter({
-  variable: '--font-inter',
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: '--font-plus-jakarta-sans',
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
 });
 
-const outfit = Outfit({
-  variable: '--font-outfit',
-  subsets: ['latin'],
+const notoSansDevanagari = Noto_Sans_Devanagari({
+  variable: '--font-noto-sans-devanagari',
+  subsets: ['devanagari', 'latin'],
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
 });
 
@@ -19,7 +21,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#0F0F1A',
+  themeColor: '#4338CA',
   viewportFit: 'cover',
 };
 
@@ -102,7 +104,7 @@ export default async function RootLayout({
     : null;
 
   return (
-    <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
+    <html lang="en" className={`${plusJakartaSans.variable} ${notoSansDevanagari.variable}`}>
       <body>
         <AuthProvider session={session}>
           <AppShell initialUser={initialUser}>{children}</AppShell>

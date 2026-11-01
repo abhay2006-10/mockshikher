@@ -1,621 +1,384 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  Trophy,
-  Target,
-  Clock,
-  BookOpen,
-  Bookmark,
-  TrendingUp,
-  TrendingDown,
-  Play,
-  RotateCcw,
-  Sparkles,
-  ArrowRight,
-  Lightbulb,
-  Zap,
-  BarChart3,
-  AlertCircle,
-  CheckCircle2,
-  HelpCircle,
-  CreditCard,
-} from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
-import WhatsAppUpdatesSection from '@/components/common/WhatsAppUpdatesSection';
-import NoticeBoard from '@/components/common/NoticeBoard';
+import { useSession } from 'next-auth/react';
+import { ArrowRight } from '@/components/v2/Icons';
+import { Chip, getAccuracyColor } from '@/components/v2';
 import styles from './dashboard.module.css';
 
+interface DashboardStats {
+  totalAttempts: number;
+  latestScore: number;
+  latestTotalMarks: number;
+  latestPercentage: number;
+  latestTestName: string;
+  overallAccuracy: number;
+  totalCorrect: number;
+  totalAnswered: number;
+  mistakesCount: number;
+  bookmarksCount: number;
+  unrevisedMistakes: number;
+  bestScore: number;
+  avgPercentage: number;
+}
+
+interface RecentAttempt {
+  id: string;
+  testId: string;
+  testName: string;
+  date: string;
+  score: number;
+  totalMarks: number;
+  percentage: number;
+  accuracy: number;
+  timeTaken: string;
+}
+
+interface ActiveAttempt {
+  id: string;
+  testId: string;
+  name: string;
+  answered: number;
+  total: number;
+  leftText: string;
+  progressPercent: number;
+}
+
+interface EnrolledProgress {
+  examId: string;
+  slug: string;
+  name: string;
+  category: string;
+  done: number;
+  total: number;
+  nextTestNumber: number;
+  nextTestId: string;
+}
+
+interface WeakTopic {
+  name: string;
+  mistakesCount: number;
+  accuracy: number;
+}
+
 export default function DashboardPage() {
-  const [stats, setStats] = React.useState<any>(null);
-  const [recentAttempts, setRecentAttempts] = React.useState<any[]>([]);
-  const [payments, setPayments] = React.useState<any[]>([]);
-  const [analysis, setAnalysis] = React.useState<any>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const { data: session } = useSession();
+  const userName = session?.user?.name || 'Aspirant';
 
-  React.useEffect(() => {
-    async function loadAllData() {
-      try {
-        const [statsRes, paymentsRes, analysisRes] = await Promise.all([
-          fetch('/api/user/dashboard-stats', { cache: 'no-store' }),
-          fetch('/api/user/payments', { cache: 'no-store' }),
-          fetch('/api/user/performance-analysis', { cache: 'no-store' }),
-        ]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentAttempts, setRecentAttempts] = useState<RecentAttempt[]>([]);
+  const [activeAttempt, setActiveAttempt] = useState<ActiveAttempt | null>(null);
+  const [enrolledProgress, setEnrolledProgress] = useState<EnrolledProgress[]>([]);
+  const [weakTopics, setWeakTopics] = useState<WeakTopic[]>([]);
+  const [loading, setLoading] = useState(true);
 
-        if (statsRes.ok) {
-          const data = await statsRes.json();
-          setStats(data.stats);
-          setRecentAttempts(data.recentAttempts || []);
-        }
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/user/dashboard-stats')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!isMounted || !data) return;
+        setStats(data.stats || null);
+        setRecentAttempts(data.recentAttempts || []);
+        setActiveAttempt(data.activeAttempt || null);
+        setEnrolledProgress(data.enrolledProgress || []);
+        setWeakTopics(data.weakTopics || []);
+      })
+      .catch((err) => console.error('Dashboard data load error:', err))
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
 
-        if (paymentsRes.ok) {
-          const payData = await paymentsRes.json();
-          setPayments(payData.payments || []);
-        }
-
-        if (analysisRes.ok) {
-          const analysisData = await analysisRes.json();
-          setAnalysis(analysisData);
-        }
-      } catch (err) {
-        console.error('Failed to load dashboard data:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadAllData();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const hasTestHistory = analysis?.hasData && analysis?.totalAttempts > 0;
-  const isBaselineOnly = analysis?.totalAttempts === 1;
-
   return (
-    <div className={styles.container}>
-      {/* Welcome Banner */}
-      <header className={styles.welcomeBanner}>
-        <div className={styles.welcomeLeft}>
-          <div className={styles.badgeRow}>
-            <Badge variant="accent" size="sm">
-              <Sparkles size={12} />
-              <span>Aspirant Portal</span>
-            </Badge>
-          </div>
-          <h1 className={styles.welcomeTitle}>Welcome Back, Aspirant!</h1>
-          <p className={styles.welcomeSubtitle}>
-            Track your performance, practice your mistakes, and get exam-ready.
-          </p>
+    <main className={styles.main}>
+      {/* 1. TOP GREETING */}
+      <div className={styles.greetingBar}>
+        <div className={styles.greetingText}>
+          <h1 className={styles.hello}>Welcome back, {userName}</h1>
+          <p className={styles.subHello}>One mock a day keeps the exam fear away.</p>
         </div>
+        <Link href="/exams" className={styles.browseExamsBtn}>
+          <span>Browse exams</span>
+          <ArrowRight size={16} />
+        </Link>
+      </div>
 
-        <div className={styles.welcomeAction}>
-          <Link href="/test/hp-patwari-mock-1/instructions">
-            <Button variant="accent" size="lg" leftIcon={<Play size={18} />}>
-              Resume Mock Preparation
-            </Button>
-          </Link>
-        </div>
-      </header>
+      {/* 2. MAIN 2-COLUMN DASHBOARD GRID */}
+      <div className={styles.dashboardGrid}>
+        {/* LEFT COLUMN (2fr) */}
+        <div className={styles.leftCol}>
+          {/* A. Resume Mock Panel */}
+          <section className={styles.resumePanel} aria-label="Current Mock Status">
+            {/* Mountain Ridge SVG */}
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 600 160"
+              preserveAspectRatio="none"
+              className={styles.mountainRidgeSvg}
+            >
+              <path
+                d="M0 160 L80 90 L150 120 L240 50 L330 115 L420 70 L510 120 L600 80 L600 160 Z"
+                fill="#3A378F"
+              />
+              <path
+                d="M240 50 L222 66 L234 62 L242 70 L252 62 L258 64 Z"
+                fill="#5B57B8"
+              />
+            </svg>
 
-      {/* Key Stats Metrics Grid */}
-      <section className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <div className={styles.statHeader}>
-            <span className={styles.statLabel}>Tests Attempted</span>
-            <div className={styles.statIconBox}>
-              <Trophy size={18} />
+            <div className={styles.resumeContent}>
+              {activeAttempt ? (
+                <>
+                  <span className={styles.resumePill}>Continue your mock</span>
+                  <h2 className={styles.resumeTitle}>{activeAttempt.name}</h2>
+                  <div className={styles.resumeMeta}>
+                    <span>
+                      {activeAttempt.answered} of {activeAttempt.total} answered
+                    </span>
+                    <span>{activeAttempt.leftText}</span>
+                  </div>
+                  <div className={styles.progressTrack}>
+                    <div
+                      className={styles.progressBarYellow}
+                      style={{ width: `${Math.max(4, activeAttempt.progressPercent)}%` }}
+                    />
+                  </div>
+                  <div className={styles.resumeActions}>
+                    <Link
+                      href={`/test/${activeAttempt.testId}/attempt`}
+                      className={styles.resumeBtn}
+                    >
+                      <span>Resume mock</span>
+                      <ArrowRight size={16} />
+                    </Link>
+                    <Link href="/exams" className={styles.newMockOutlineBtn}>
+                      Start a new mock
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span className={styles.resumePill}>Ready to practice</span>
+                  <h2 className={styles.resumeTitle}>Take your next mock test</h2>
+                  <p className={styles.resumeMeta}>
+                    Regular timed practice builds exam pacing and eliminates negative marking.
+                  </p>
+                  <div className={styles.resumeActions}>
+                    <Link href="/exams" className={styles.resumeBtn}>
+                      <span>Explore Test Series</span>
+                      <ArrowRight size={16} />
+                    </Link>
+                  </div>
+                </>
+              )}
             </div>
-          </div>
-          <div className={styles.statNumber}>{stats?.totalAttempts ?? 0}</div>
-          <span className={styles.statMeta}>{stats?.latestTestName || 'No tests taken yet'}</span>
-        </div>
+          </section>
 
-        <div className={styles.statCard}>
-          <div className={styles.statHeader}>
-            <span className={styles.statLabel}>Latest Score</span>
-            <div className={styles.statIconBox} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
-              <TrendingUp size={18} />
+          {/* B. My Test Series Panel */}
+          <section className={styles.panel} aria-label="Enrolled Test Series">
+            <div className={styles.panelHeader}>
+              <h2 className={styles.panelTitle}>My test series</h2>
+              <Link href="/exams" className={styles.panelActionLink}>
+                View all
+              </Link>
             </div>
-          </div>
-          <div className={styles.statNumber}>{stats?.latestPercentage ?? 0}%</div>
-          <span className={styles.statMeta}>{stats ? `${stats.latestScore} / ${stats.latestTotalMarks} Marks` : '—'}</span>
-        </div>
 
-        <div className={styles.statCard}>
-          <div className={styles.statHeader}>
-            <span className={styles.statLabel}>Overall Accuracy</span>
-            <div className={styles.statIconBox} style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>
-              <Target size={18} />
-            </div>
-          </div>
-          <div className={styles.statNumber}>{stats?.overallAccuracy ?? 0}%</div>
-          <span className={styles.statMeta}>{stats ? `${stats.totalCorrect} Correct / ${stats.totalAnswered} Attempted` : '—'}</span>
-        </div>
-
-        <div className={styles.statCard}>
-          <div className={styles.statHeader}>
-            <span className={styles.statLabel}>Mistakes to Review</span>
-            <div className={styles.statIconBox} style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171' }}>
-              <BookOpen size={18} />
-            </div>
-          </div>
-          <div className={styles.statNumber}>{stats?.mistakesCount ?? 0}</div>
-          <span className={styles.statMeta}>
-            <Link href="/dashboard/mistakes" className={styles.inlineLink}>
-              Practice in Mistake Book →
-            </Link>
-          </span>
-        </div>
-      </section>
-
-      {/* Mockshikhar In-App Notice Board — Prominently placed for high student visibility */}
-      <NoticeBoard />
-
-      {/* ========================================================
-          1. TIPS TO IMPROVE PROGRESS (DEDICATED SECTION)
-         ======================================================== */}
-      {hasTestHistory && analysis?.tips?.length > 0 && (
-        <section className={styles.historySection}>
-          <div className={styles.performanceHeader}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Lightbulb size={20} style={{ color: '#fbbf24' }} />
-                <h2 className={styles.sectionTitle} style={{ fontSize: '1.25rem', margin: 0 }}>
-                  Tips to Improve Progress
-                </h2>
+            {enrolledProgress.length > 0 ? (
+              <div className={styles.seriesList}>
+                {enrolledProgress.map((item) => {
+                  const pct =
+                    item.total > 0 ? Math.round((item.done / item.total) * 100) : 0;
+                  return (
+                    <div key={item.examId} className={styles.seriesRow}>
+                      <div className={styles.seriesRowLeft}>
+                        <div className={styles.seriesNameRow}>
+                          <Chip category={item.category} />
+                          <span className={styles.seriesName}>{item.name}</span>
+                        </div>
+                        <div className={styles.seriesProgressWrap}>
+                          <div className={styles.seriesTrack}>
+                            <div
+                              className={styles.seriesBarPrimary}
+                              style={{ width: `${Math.max(4, pct)}%` }}
+                            />
+                          </div>
+                          <span className={styles.seriesProgressMeta}>
+                            {item.done} of {item.total} mocks
+                          </span>
+                        </div>
+                      </div>
+                      <Link
+                        href={`/test/${item.nextTestId}/instructions`}
+                        className={styles.startMockBtn}
+                      >
+                        Start Mock {item.nextTestNumber}
+                      </Link>
+                    </div>
+                  );
+                })}
               </div>
-              <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: '0.35rem 0 0' }}>
-                Personalized recommendations generated from your actual mock test results, accuracy, and solving pace.
-              </p>
+            ) : (
+              <div className={styles.emptyStateBox}>
+                <span>
+                  You haven&apos;t enrolled in any full test series yet. Take a free mock test to get started!
+                </span>
+                <Link href="/exams" className={styles.emptyStateLink}>
+                  Browse HP Exam Series →
+                </Link>
+              </div>
+            )}
+          </section>
+
+          {/* C. Recent Results Panel */}
+          <section className={styles.panel} aria-label="Recent Test Results">
+            <div className={styles.panelHeader}>
+              <h2 className={styles.panelTitle}>Recent results</h2>
+              {recentAttempts.length > 0 && (
+                <span className={styles.panelActionLink}>
+                  {recentAttempts.length} attempt{recentAttempts.length > 1 ? 's' : ''}
+                </span>
+              )}
             </div>
 
-            {analysis?.overallTrend && (
-              <div
-                className={`${styles.trendBadge} ${
-                  analysis.overallTrend === 'IMPROVING'
-                    ? styles.trendImproving
-                    : analysis.overallTrend === 'NEEDS_FOCUS'
-                    ? styles.trendNeedsFocus
-                    : styles.trendConsistent
-                }`}
-              >
-                {analysis.overallTrend === 'IMPROVING' && <TrendingUp size={14} />}
-                {analysis.overallTrend === 'NEEDS_FOCUS' && <TrendingDown size={14} />}
-                {analysis.overallTrend === 'CONSISTENT' && <Zap size={14} />}
+            {recentAttempts.length > 0 ? (
+              <>
+                <div className={styles.resultsHeader}>
+                  <span>Mock</span>
+                  <span>Score</span>
+                  <span>Accuracy</span>
+                  <span />
+                </div>
+                <div className={styles.seriesList}>
+                  {recentAttempts.slice(0, 5).map((att) => {
+                    const accColor = getAccuracyColor(att.accuracy);
+                    return (
+                      <Link
+                        key={att.id}
+                        href={`/test/${att.testId}/result?attemptId=${att.id}`}
+                        className={styles.resultRow}
+                      >
+                        <div className={styles.resultNameCol}>
+                          <span className={styles.resultName}>{att.testName}</span>
+                          <span className={styles.resultDate}>{att.date}</span>
+                        </div>
+                        <span className={styles.resultScore}>
+                          {att.score} / {att.totalMarks}
+                        </span>
+                        <div className={styles.resultAccuracy}>
+                          <span
+                            className={styles.accPill}
+                            style={{
+                              backgroundColor: accColor.bg,
+                              color: accColor.text,
+                            }}
+                          >
+                            {att.accuracy}%
+                          </span>
+                        </div>
+                        <span className={styles.reviewLink}>Review</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <div className={styles.emptyStateBox}>
                 <span>
-                  Trajectory:{' '}
-                  {analysis.overallTrend === 'IMPROVING'
-                    ? 'Upward (+Score)'
-                    : analysis.overallTrend === 'NEEDS_FOCUS'
-                    ? 'Needs Revision'
-                    : 'Steady Performance'}
+                  No completed mock tests yet. Take your first mock to see your score, accuracy, and detailed question review here.
+                </span>
+                <Link href="/exams" className={styles.emptyStateLink}>
+                  Attempt a Free Mock →
+                </Link>
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* RIGHT COLUMN (1fr) */}
+        <div className={styles.rightCol}>
+          {/* A. Your Progress (Stats Tiles 2x2) */}
+          <section className={styles.panel} aria-label="Progress Statistics">
+            <h2 className={styles.panelTitle}>Your progress</h2>
+            <div className={styles.statsTilesGrid}>
+              {/* Mocks Taken */}
+              <div className={styles.statTile} style={{ background: '#EEF1FF' }}>
+                <span className={styles.statTileLabel}>Mocks taken</span>
+                <span className={styles.statTileValue}>
+                  {stats?.totalAttempts ?? 0}
+                </span>
+              </div>
+
+              {/* Avg Score */}
+              <div className={styles.statTile} style={{ background: '#FEF3C7' }}>
+                <span className={styles.statTileLabel}>Avg score</span>
+                <span className={styles.statTileValue}>
+                  {stats?.avgPercentage ?? 0}%
+                </span>
+              </div>
+
+              {/* Accuracy */}
+              <div className={styles.statTile} style={{ background: '#DCFCE7' }}>
+                <span className={styles.statTileLabel}>Accuracy</span>
+                <span className={styles.statTileValue}>
+                  {stats?.overallAccuracy ?? 0}%
+                </span>
+              </div>
+
+              {/* Best Score */}
+              <div className={styles.statTile} style={{ background: '#FCE7F3' }}>
+                <span className={styles.statTileLabel}>Best score</span>
+                <span className={styles.statTileValue}>
+                  {stats?.bestScore ?? 0}
+                </span>
+              </div>
+            </div>
+          </section>
+
+          {/* B. Topics to Improve */}
+          <section className={styles.panel} aria-label="Topics to Improve">
+            <div className={styles.weakHeader}>
+              <h2 className={styles.panelTitle}>Topics to improve</h2>
+              <span className={styles.weakSub}>Based on your recorded mistakes</span>
+            </div>
+
+            {weakTopics.length > 0 ? (
+              <div className={styles.weakList}>
+                {weakTopics.map((topic) => (
+                  <div key={topic.name} className={styles.weakItem}>
+                    <div className={styles.weakItemTop}>
+                      <span>{topic.name}</span>
+                      <span className={styles.weakItemPct}>{topic.accuracy}%</span>
+                    </div>
+                    <div className={styles.weakTrack}>
+                      <div
+                        className={styles.weakBar}
+                        style={{ width: `${Math.min(100, topic.accuracy)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className={styles.emptyStateBox}>
+                <span>
+                  No weak topics identified yet. As you solve questions, topics where incorrect answers occur will appear here for focused revision.
                 </span>
               </div>
             )}
-          </div>
 
-          {isBaselineOnly && (
-            <div className={styles.calibrationBanner}>
-              <HelpCircle size={18} style={{ color: '#fbbf24', flexShrink: 0 }} />
-              <div>
-                <strong>Initial Baseline Active:</strong> You have completed 1 mock test. Recommendations will automatically calibrate and become more precise as you complete additional mocks.
-              </div>
-            </div>
-          )}
-
-          <div className={styles.tipsGrid}>
-            {analysis.tips.map((tip: any) => {
-              let catClass = styles.tipCategoryStrategy;
-              if (tip.category === 'SUBJECT') catClass = styles.tipCategorySubject;
-              if (tip.category === 'SPEED') catClass = styles.tipCategorySpeed;
-              if (tip.category === 'ACCURACY') catClass = styles.tipCategoryAccuracy;
-
-              return (
-                <div key={tip.id} className={styles.tipCard}>
-                  <div>
-                    <div className={styles.tipCardHeader}>
-                      <span className={`${styles.tipCategory} ${catClass}`}>
-                        {tip.category}
-                      </span>
-                    </div>
-                    <h3 className={styles.tipTitle} style={{ marginTop: '0.6rem' }}>
-                      {tip.title}
-                    </h3>
-                    <p className={styles.tipDescription} style={{ marginTop: '0.4rem' }}>
-                      {tip.description}
-                    </p>
-                  </div>
-
-                  {tip.actionLabel && tip.actionUrl && (
-                    <div className={styles.tipAction}>
-                      <Link href={tip.actionUrl}>
-                        <Button variant="outline" size="sm" rightIcon={<ArrowRight size={14} />}>
-                          {tip.actionLabel}
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* ========================================================
-          2. SECTION-WISE ANALYSIS ACROSS ALL MOCKS
-         ======================================================== */}
-      {hasTestHistory && analysis?.sectionAnalysis?.length > 0 && (
-        <section className={styles.historySection}>
-          <div className={styles.sectionHeader}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <BarChart3 size={20} style={{ color: '#60a5fa' }} />
-                <h2 className={styles.sectionTitle} style={{ fontSize: '1.25rem', margin: 0 }}>
-                  Section-wise Performance Breakdown
-                </h2>
-              </div>
-              <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: '0.35rem 0 0' }}>
-                Your cumulative accuracy, marks earned, and speed across each examination subject.
-              </p>
-            </div>
-          </div>
-
-          <div className={styles.sectionsGrid}>
-            {analysis.sectionAnalysis.map((sec: any) => {
-              const isHigh = sec.accuracy >= 70;
-              const isLow = sec.accuracy < 50;
-              const barColor = isHigh ? '#10b981' : isLow ? '#ef4444' : '#3b82f6';
-
-              return (
-                <div key={sec.subjectId} className={styles.sectionCard}>
-                  <div className={styles.sectionHeaderRow}>
-                    <span className={styles.sectionTitle}>{sec.subjectName}</span>
-                    <Badge
-                      variant={sec.status === 'STRONG' ? 'success' : sec.status === 'WEAK' ? 'error' : 'info'}
-                      size="sm"
-                    >
-                      {sec.status}
-                    </Badge>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                    <span className={styles.accuracyNumber} style={{ color: barColor }}>
-                      {sec.accuracy}%
-                    </span>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)' }}>
-                      Accuracy ({sec.correctCount} / {sec.attemptedCount} attempted)
-                    </span>
-                  </div>
-
-                  <div className={styles.progressBar}>
-                    <div
-                      className={styles.progressFill}
-                      style={{ width: `${Math.min(sec.accuracy, 100)}%`, backgroundColor: barColor }}
-                    />
-                  </div>
-
-                  <div className={styles.sectionStatsRow}>
-                    <span>Score: {sec.scoreEarned} / {sec.maxMarksPossible} M</span>
-                    <span>Avg Pace: {sec.avgTimePerQSeconds}s/Q</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* ========================================================
-          3. WEAK TOPIC DETECTION & TARGETED PRACTICE
-         ======================================================== */}
-      {hasTestHistory && analysis?.weakTopics?.length > 0 && (
-        <section className={styles.historySection}>
-          <div className={styles.sectionHeader}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Target size={20} style={{ color: '#f87171' }} />
-                <h2 className={styles.sectionTitle} style={{ fontSize: '1.25rem', margin: 0 }}>
-                  Weak Topic Detection
-                </h2>
-              </div>
-              <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: '0.35rem 0 0' }}>
-                Topics where incorrect answers repeatedly occurred. Target these for maximum score gains.
-              </p>
-            </div>
-            <Link href="/dashboard/mistakes" className={styles.viewMoreLink}>
-              Review in Mistake Book →
+            <Link href="/dashboard/mistakes" className={styles.mistakeBookBtn}>
+              <span>Practise in Mistake Book</span>
+              <ArrowRight size={16} />
             </Link>
-          </div>
-
-          <div className={styles.weakTopicsGrid}>
-            {analysis.weakTopics.map((top: any) => (
-              <div key={top.topicId} className={styles.weakTopicCard}>
-                <div className={styles.weakTopicLeft}>
-                  <span className={styles.weakTopicSubject}>{top.subjectName}</span>
-                  <span className={styles.weakTopicName}>{top.topicName}</span>
-                  <span className={styles.weakTopicMeta}>
-                    {top.wrongCount} incorrect • {top.accuracy}% accuracy
-                  </span>
-                </div>
-                <Link href={top.practiceUrl}>
-                  <Button variant="secondary" size="sm" rightIcon={<ArrowRight size={13} />}>
-                    Practice
-                  </Button>
-                </Link>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ========================================================
-          4. TIME MANAGEMENT & PACING ANALYSIS
-         ======================================================== */}
-      {hasTestHistory && analysis?.timeAnalysis && (
-        <section className={styles.historySection}>
-          <div className={styles.sectionHeader}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Clock size={20} style={{ color: '#38bdf8' }} />
-                <h2 className={styles.sectionTitle} style={{ fontSize: '1.25rem', margin: 0 }}>
-                  Time Management Analysis
-                </h2>
-              </div>
-              <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: '0.35rem 0 0' }}>
-                Comparing time spent versus total test duration and identifying potential time-sink traps.
-              </p>
-            </div>
-          </div>
-
-          <div className={styles.timeAnalysisCard}>
-            <div className={styles.timePacingGrid}>
-              <div className={styles.timePacingBox}>
-                <span className={styles.timePacingLabel}>Avg Time per Question</span>
-                <span className={styles.timePacingValue}>
-                  {analysis.timeAnalysis.avgTimePerQuestionSec}s
-                </span>
-              </div>
-              <div className={styles.timePacingBox}>
-                <span className={styles.timePacingLabel}>Time on Correct Questions</span>
-                <span className={styles.timePacingValue} style={{ color: '#10b981' }}>
-                  {analysis.timeAnalysis.avgTimePerCorrectSec}s
-                </span>
-              </div>
-              <div className={styles.timePacingBox}>
-                <span className={styles.timePacingLabel}>Time on Wrong Questions</span>
-                <span className={styles.timePacingValue} style={{ color: '#f87171' }}>
-                  {analysis.timeAnalysis.avgTimePerWrongSec}s
-                </span>
-              </div>
-              <div className={styles.timePacingBox}>
-                <span className={styles.timePacingLabel}>Exam Time Utilization</span>
-                <span className={styles.timePacingValue}>
-                  {analysis.timeAnalysis.timeUtilizationPercent}%
-                </span>
-              </div>
-            </div>
-
-            <div className={styles.timeAdviceBox}>
-              <Sparkles size={22} style={{ color: '#38bdf8', flexShrink: 0 }} />
-              <div>
-                <strong style={{ color: 'var(--color-text-primary)' }}>
-                  Pacing Diagnostic: {analysis.timeAnalysis.verdict}
-                </strong>
-                <p className={styles.timeAdviceText}>{analysis.timeAnalysis.advice}</p>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Practice Tools Navigation Cards */}
-      <section className={styles.toolsSection}>
-        <div className={styles.toolCard}>
-          <div className={styles.toolHeader}>
-            <div className={styles.toolIconWrap} style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171' }}>
-              <BookOpen size={24} />
-            </div>
-            <div>
-              <h3 className={styles.toolTitle}>Personal Mistake Book</h3>
-              <p className={styles.toolDesc}>
-                {stats?.mistakesCount ?? 0} question(s) automatically catalogued from your incorrect mock answers.
-              </p>
-            </div>
-          </div>
-          <Link href="/dashboard/mistakes">
-            <Button variant="outline" size="md" rightIcon={<ArrowRight size={16} />}>
-              Open Mistake Book
-            </Button>
-          </Link>
+          </section>
         </div>
-
-        <div className={styles.toolCard}>
-          <div className={styles.toolHeader}>
-            <div className={styles.toolIconWrap} style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24' }}>
-              <Bookmark size={24} />
-            </div>
-            <div>
-              <h3 className={styles.toolTitle}>Saved Bookmarks</h3>
-              <p className={styles.toolDesc}>
-                {stats?.bookmarksCount ?? 0} question(s) marked for revision.
-              </p>
-            </div>
-          </div>
-          <Link href="/dashboard/bookmarks">
-            <Button variant="outline" size="md" rightIcon={<ArrowRight size={16} />}>
-              View Bookmarks
-            </Button>
-          </Link>
-        </div>
-
-        <div className={styles.toolCard}>
-          <div className={styles.toolHeader}>
-            <div className={styles.toolIconWrap} style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>
-              <CreditCard size={24} />
-            </div>
-            <div>
-              <h3 className={styles.toolTitle}>Payment History & Purchases</h3>
-              <p className={styles.toolDesc}>
-                {payments.length} verified order(s). View receipts and unlocked test bundles.
-              </p>
-            </div>
-          </div>
-          <Link href="/dashboard/payments">
-            <Button variant="outline" size="md" rightIcon={<ArrowRight size={16} />}>
-              View Payment History
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      {/* Mockshikhar Updates — Official WhatsApp Channel */}
-      <WhatsAppUpdatesSection sourceContext="dashboard" />
-
-      {/* Recent Test Attempts History */}
-      <section className={styles.historySection}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Recent Test Attempts & Progress</h2>
-          <Link href="/exams/hp-patwari" className={styles.viewMoreLink}>
-            Browse More Mocks →
-          </Link>
-        </div>
-
-        <div className={styles.historyTableWrapper}>
-          <table className={styles.historyTable}>
-            <thead>
-              <tr>
-                <th>Test Name</th>
-                <th>Attempt Date</th>
-                <th>Score</th>
-                <th>Accuracy</th>
-                <th>Time Spent</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentAttempts.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--color-text-secondary)' }}>
-                    No test attempts recorded yet. Take your first mock to see your performance history and tips here!
-                  </td>
-                </tr>
-              ) : (
-                recentAttempts.map((att) => (
-                  <tr key={att.id}>
-                    <td>
-                      <strong>{att.testName}</strong>
-                    </td>
-                    <td>{att.date}</td>
-                    <td>
-                      <span className={styles.scoreHighlight}>
-                        {att.score} / {att.totalMarks} ({att.percentage}%)
-                      </span>
-                    </td>
-                    <td>{att.accuracy}%</td>
-                    <td>{att.timeTaken}</td>
-                    <td>
-                      <div className={styles.rowActions}>
-                        <Link href={`/test/${att.testId}/result?attemptId=${att.id}`}>
-                          <Button variant="secondary" size="sm">
-                            Scorecard
-                          </Button>
-                        </Link>
-                        <Link href={`/test/${att.testId}/analysis?attemptId=${att.id}`}>
-                          <Button variant="outline" size="sm">
-                            Analysis
-                          </Button>
-                        </Link>
-                        <Link href={`/test/${att.testId}/instructions`}>
-                          <Button variant="ghost" size="sm" leftIcon={<RotateCcw size={13} />}>
-                            Reattempt
-                          </Button>
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Student Payment History */}
-      <section className={styles.historySection}>
-        <div className={styles.sectionHeader}>
-          <div>
-            <h2 className={styles.sectionTitle}>Payment & Subscription History</h2>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: '0.25rem 0 0' }}>
-              Verified purchases and unlocked mock test bundles for your account.
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <Link href="/dashboard/payments" className={styles.viewMoreLink}>
-              Full Receipts & Invoices →
-            </Link>
-            <Link href="/exams" className={styles.viewMoreLink}>
-              Explore Test Series →
-            </Link>
-          </div>
-        </div>
-
-        <div className={styles.historyTableWrapper}>
-          <table className={styles.historyTable}>
-            <thead>
-              <tr>
-                <th>Purchased Series</th>
-                <th>Payment Date</th>
-                <th>Amount Paid</th>
-                <th>Mocks Included</th>
-                <th>Status</th>
-                <th>Transaction ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {payments.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--color-text-secondary)' }}>
-                    No payment records found. All free mock tests can be accessed without payment.
-                  </td>
-                </tr>
-              ) : (
-                payments.map((p) => (
-                  <tr key={p.id}>
-                    <td>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <strong style={{ color: 'var(--color-text-primary)' }}>{p.examName}</strong>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)' }}>Full Exam Bundle</span>
-                      </div>
-                    </td>
-                    <td>{p.date}</td>
-                    <td>
-                      <span className={styles.scoreHighlight} style={{ fontSize: '1rem' }}>
-                        ₹{p.amount}
-                      </span>
-                    </td>
-                    <td>
-                      <Badge variant="accent" size="sm">
-                        {p.mockCount} Mock Tests
-                      </Badge>
-                    </td>
-                    <td>
-                      <Badge variant="success" size="sm">
-                        Verified
-                      </Badge>
-                    </td>
-                    <td>
-                      <code style={{ fontSize: '0.8rem', background: 'var(--color-bg-secondary)', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
-                        {p.transactionId}
-                      </code>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+      </div>
+    </main>
   );
 }
