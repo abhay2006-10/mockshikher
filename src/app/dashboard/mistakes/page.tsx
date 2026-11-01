@@ -1,380 +1,398 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
-  ArrowLeft,
-  BookOpen,
-  CheckCircle2,
-  Filter,
-  Play,
-  Languages,
-  Check,
-  RotateCcw,
-  Sparkles,
-  AlertCircle,
-} from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
+  ArrowRight,
+  CheckIcon,
+  XIcon,
+} from '@/components/v2/Icons';
+import { Chip, UnderlineTabs } from '@/components/v2';
+import styles from './mistakes.module.css';
 
 interface QuestionOption {
   id: string;
-  label: string;
-  text: string;
-  textHi: string;
+  optionLabel: string;
+  optionText: string;
+  optionTextHi?: string | null;
 }
 
-interface MistakeQuestion {
+interface MistakeItem {
   id: string;
   questionId: string;
-  questionNumber: number;
   questionText: string;
-  questionTextHi: string;
+  questionTextHi?: string | null;
   subjectName: string;
-  topicName: string;
-  options: QuestionOption[];
-  correctOption: string;
+  topicName?: string | null;
+  sourceText: string;
   userAnswer: string | null;
-  marks: number;
-  negativeMarks: number;
-  explanation: string;
-  explanationHi: string;
+  correctOption: string;
+  explanation?: string | null;
+  explanationHi?: string | null;
+  isMastered: boolean;
+  options: QuestionOption[];
 }
 
 export default function MistakeBookPage() {
-  const [mistakeQuestions, setMistakeQuestions] = useState<MistakeQuestion[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const [selectedSubject, setSelectedSubject] = useState<string>('All');
-  const [masteredIds, setMasteredIds] = useState<Set<string>>(new Set());
+  const [mistakes, setMistakes] = useState<MistakeItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTab, setSelectedTab] = useState<string>('all');
   const [lang, setLang] = useState<'en' | 'hi'>('en');
-  const [practiceMode, setPracticeMode] = useState(false);
-  const [practiceAnswers, setPracticeAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [expandedExplanations, setExpandedExplanations] = useState<Record<string, boolean>>({});
+  const [reattemptingId, setReattemptingId] = useState<string | null>(null);
+  const [selectedReattemptOption, setSelectedReattemptOption] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadMistakesFromDb() {
-      setIsLoading(true);
-      try {
-        const res = await fetch('/api/user/mistakes', { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          setMistakeQuestions(data.mistakes || []);
-          const initialMastered = new Set<string>();
-          data.mistakes?.forEach((m: any) => {
-            if (m.isMastered) initialMastered.add(m.questionId);
-          });
-          setMasteredIds(initialMastered);
-        }
-      } catch (err) {
-        console.error('Failed to load mistakes from database:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
+    let isMounted = true;
+    fetch('/api/user/mistakes')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!isMounted || !data) return;
+        const rawList = data.mistakes || [];
+        const formatted: MistakeItem[] = rawList.map((m: any) => {
+          const q = m.question || {};
+          const attemptName = m.attempt?.mockTest?.name || 'Mock Test';
+          return {
+            id: m.id,
+            questionId: q.id,
+            questionText: q.text || q.questionText || '',
+            questionTextHi: q.textHi || q.questionTextHi || null,
+            subjectName: q.subject?.name || 'General',
+            topicName: q.topic?.name || null,
+            sourceText: attemptName,
+            userAnswer: m.userAnswer || m.selectedOption || null,
+            correctOption: q.correctOption || '',
+            explanation: q.explanation || null,
+            explanationHi: q.explanationHi || null,
+            isMastered: !!m.isMastered,
+            options: (q.options || []).map((opt: any) => ({
+              id: opt.id,
+              optionLabel: opt.optionLabel || opt.label || '',
+              optionText: opt.optionText || opt.text || '',
+              optionTextHi: opt.optionTextHi || opt.textHi || null,
+            })),
+          };
+        });
+        setMistakes(formatted);
+      })
+      .catch((err) => console.error('Failed to load mistakes:', err))
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
 
-    loadMistakesFromDb();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const subjects = ['All', ...Array.from(new Set(mistakeQuestions.map((q) => q.subjectName)))];
+  // Compute stats
+  const toReviseCount = useMemo(
+    () => mistakes.filter((m) => !m.isMastered).length,
+    [mistakes]
+  );
+  const masteredCount = useMemo(
+    () => mistakes.filter((m) => m.isMastered).length,
+    [mistakes]
+  );
 
-  const filteredQuestions = mistakeQuestions.filter((q) => {
-    if (masteredIds.has(q.questionId)) return false;
-    return selectedSubject === 'All' || q.subjectName === selectedSubject;
-  });
+  // Compute tabs
+  const tabs = useMemo(() => {
+    const subjects = Array.from(new Set(mistakes.map((m) => m.subjectName)));
+    const tabList = [
+      { id: 'all', label: 'All' },
+      ...subjects.map((s) => ({ id: s, label: s })),
+      { id: 'mastered', label: 'Mastered' },
+    ];
+    return tabList;
+  }, [mistakes]);
 
-  const toggleMastered = async (qId: string) => {
-    const isNowMastered = !masteredIds.has(qId);
-    setMasteredIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(qId)) next.delete(qId);
-      else next.add(qId);
-      return next;
+  // Filter items
+  const filteredMistakes = useMemo(() => {
+    return mistakes.filter((m) => {
+      if (selectedTab === 'all') return !m.isMastered;
+      if (selectedTab === 'mastered') return m.isMastered;
+      return m.subjectName === selectedTab && !m.isMastered;
     });
+  }, [mistakes, selectedTab]);
 
-    const m = mistakeQuestions.find((item) => item.questionId === qId);
-    if (m?.id) {
-      try {
-        await fetch(`/api/user/mistakes/${encodeURIComponent(m.id)}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ isMastered: isNowMastered }),
-        });
-      } catch (e) {
-        console.warn('Failed to sync mastered state with DB', e);
-      }
-    }
-  };
-
-  const handlePracticeOption = (qId: string, opt: 'A' | 'B' | 'C' | 'D') => {
-    setPracticeAnswers((prev) => ({
+  const toggleExplanation = (id: string) => {
+    setExpandedExplanations((prev) => ({
       ...prev,
-      [qId]: opt,
+      [id]: !prev[id],
     }));
   };
 
-  if (isLoading) {
-    return (
-      <div style={{ maxWidth: '960px', margin: '0 auto', padding: '2rem 1rem 5rem' }}>
-        <p style={{ color: 'var(--color-text-secondary)' }}>Loading mistake book...</p>
-      </div>
+  const handleToggleMastered = async (item: MistakeItem) => {
+    const nextState = !item.isMastered;
+    // Optimistic UI update
+    setMistakes((prev) =>
+      prev.map((m) => (m.id === item.id ? { ...m, isMastered: nextState } : m))
     );
-  }
+
+    try {
+      await fetch(`/api/user/mistakes/${item.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isMastered: nextState }),
+      });
+    } catch (err) {
+      console.error('Failed to update mastered state:', err);
+    }
+  };
+
+  const handleReattemptClick = (id: string) => {
+    if (reattemptingId === id) {
+      setReattemptingId(null);
+      setSelectedReattemptOption(null);
+    } else {
+      setReattemptingId(id);
+      setSelectedReattemptOption(null);
+    }
+  };
 
   return (
-    <div style={{ maxWidth: '960px', margin: '0 auto', padding: '2rem 1rem 5rem' }}>
-      <Link
-        href="/dashboard"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.4rem',
-          color: 'var(--color-text-secondary)',
-          fontSize: '0.875rem',
-          fontWeight: 600,
-          textDecoration: 'none',
-          marginBottom: '1.5rem',
-        }}
-      >
-        <ArrowLeft size={16} />
-        <span>Back to Dashboard</span>
-      </Link>
-
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          flexWrap: 'wrap',
-          gap: '1rem',
-          marginBottom: '1.5rem',
-        }}
-      >
-        <div>
-          <h1
-            style={{
-              fontSize: '1.5rem',
-              fontWeight: 800,
-              margin: 0,
-              background: 'linear-gradient(135deg, #f43f5e, #f97316)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Mistake Book
-          </h1>
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: '0.25rem 0 0' }}>
-            Questions you answered incorrectly — sourced from your actual test results.
+    <main className={styles.container}>
+      {/* 1. TITLE & BILINGUAL TOGGLE */}
+      <div className={styles.headerRow}>
+        <div className={styles.headerText}>
+          <h1 className={styles.title}>Mistake Book</h1>
+          <p className={styles.subtitle}>
+            Every question you got wrong, saved with the correct answer and explanation.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<Languages size={15} />}
-            onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
-          >
-            {lang === 'en' ? 'हिन्दी' : 'English'}
-          </Button>
-          <Button
-            variant={practiceMode ? 'accent' : 'primary'}
-            size="sm"
-            leftIcon={practiceMode ? <RotateCcw size={15} /> : <Play size={15} />}
-            onClick={() => setPracticeMode(!practiceMode)}
-          >
-            {practiceMode ? 'Exit Practice' : 'Practice Mode'}
-          </Button>
-        </div>
-      </header>
-
-      {mistakeQuestions.length === 0 ? (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '4rem 2rem',
-            background: 'var(--color-bg-card, #1e293b)',
-            borderRadius: '12px',
-            border: '1px solid var(--color-border, #334155)',
-          }}
+        <button
+          type="button"
+          onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
+          className={styles.langToggleBtn}
+          aria-label="Toggle language between English and Hindi"
         >
-          <Sparkles size={48} style={{ margin: '0 auto 1rem', color: 'var(--color-text-secondary)' }} />
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>No Mistakes Found</h3>
-          <p style={{ color: 'var(--color-text-secondary)' }}>
-            Complete a mock test first, and any questions you get wrong will appear here automatically.
-          </p>
-        </div>
-      ) : (
-        <>
-          {/* Subject Filter */}
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-            <Filter size={16} style={{ color: 'var(--color-text-secondary)', alignSelf: 'center' }} />
-            {subjects.map((s) => (
-              <button
-                key={s}
-                onClick={() => setSelectedSubject(s)}
-                style={{
-                  padding: '0.3rem 0.9rem',
-                  borderRadius: '999px',
-                  border: `1px solid ${selectedSubject === s ? 'var(--color-accent, #818cf8)' : 'var(--color-border, #334155)'}`,
-                  background: selectedSubject === s ? 'rgba(129,140,248,0.15)' : 'transparent',
-                  color: selectedSubject === s ? 'var(--color-accent, #818cf8)' : 'var(--color-text-secondary)',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                {s}
-              </button>
-            ))}
+          <span>Mode: {lang === 'en' ? 'English' : 'हिन्दी'}</span>
+        </button>
+      </div>
+
+      {/* 2. PRACTICE BANNER */}
+      <section className={styles.practiceBanner} aria-label="Mistake Practice Summary">
+        {/* Mountain Silhouette SVG */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 600 160"
+          preserveAspectRatio="none"
+          className={styles.mountainRidgeSvg}
+        >
+          <path
+            d="M0 160 L80 90 L150 120 L240 50 L330 115 L420 70 L510 120 L600 80 L600 160 Z"
+            fill="#3A378F"
+          />
+        </svg>
+
+        <div className={styles.bannerStats}>
+          <div className={styles.bannerStatItem}>
+            <span className={styles.statValWhite}>{toReviseCount}</span>
+            <span className={styles.statLabel}>to revise</span>
           </div>
+          <div className={styles.bannerStatItem}>
+            <span className={styles.statValGreen}>{masteredCount}</span>
+            <span className={styles.statLabel}>mastered</span>
+          </div>
+        </div>
 
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
-            Showing {filteredQuestions.length} of {mistakeQuestions.length} mistake(s)
-            {masteredIds.size > 0 && ` (${masteredIds.size} mastered, hidden)`}
-          </p>
+        {toReviseCount > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              const firstUnmastered = mistakes.find((m) => !m.isMastered);
+              if (firstUnmastered) handleReattemptClick(firstUnmastered.id);
+            }}
+            className={styles.practiceBtn}
+          >
+            <span>Practise {Math.min(10, toReviseCount)} mistakes</span>
+            <ArrowRight size={16} />
+          </button>
+        )}
+      </section>
 
-          {filteredQuestions.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>
-              <p>All questions in this subject have been mastered!</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              {filteredQuestions.map((q, idx) => {
-                const practiceAns = practiceAnswers[q.questionId];
-                const isPracticeAnswered = practiceMode && !!practiceAns;
-                const isPracticeCorrect = isPracticeAnswered && practiceAns === q.correctOption;
+      {/* 3. UNDERLINE TABS (SUBJECTS / MASTERED) */}
+      <UnderlineTabs
+        tabs={tabs}
+        activeTab={selectedTab}
+        onChange={(tabId) => setSelectedTab(tabId)}
+        ariaLabel="Mistake Book filters"
+      />
 
-                return (
-                  <div
-                    key={q.questionId}
-                    style={{
-                      background: 'var(--color-bg-card, #1e293b)',
-                      border: '1px solid var(--color-border, #334155)',
-                      borderRadius: '12px',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        flexWrap: 'wrap',
-                        gap: '0.5rem',
-                        padding: '0.75rem 1rem',
-                        borderBottom: '1px solid var(--color-border, #334155)',
-                        background: 'rgba(239,68,68,0.06)',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>Q{q.questionNumber}</span>
-                        <Badge variant="neutral" size="sm">{q.subjectName}</Badge>
-                        <Badge variant="neutral" size="sm">{q.topicName}</Badge>
-                        <Badge variant="error" size="sm">Your answer: {q.userAnswer || '—'}</Badge>
-                      </div>
-                      <button
-                        onClick={() => toggleMastered(q.questionId)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.3rem',
-                          padding: '0.4rem 0.75rem',
-                          minHeight: '36px',
-                          borderRadius: '6px',
-                          border: '1px solid var(--color-border)',
-                          background: 'transparent',
-                          color: 'var(--color-text-secondary)',
-                          fontSize: '0.8rem',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <CheckCircle2 size={14} />
-                        Mark Mastered
-                      </button>
-                    </div>
+      {/* 4. MISTAKE CARDS */}
+      <div className={styles.mistakesList}>
+        {loading ? (
+          <div className={styles.emptyState}>
+            <span>Loading your mistakes...</span>
+          </div>
+        ) : filteredMistakes.length === 0 ? (
+          <div className={styles.emptyState}>
+            <h2 className={styles.emptyTitle}>
+              {selectedTab === 'mastered' ? 'No mastered questions yet' : 'Zero mistakes recorded!'}
+            </h2>
+            <p className={styles.emptyDesc}>
+              {selectedTab === 'mastered'
+                ? 'Questions you mark as mastered will appear here for reference.'
+                : 'When you answer questions incorrectly in your mock tests, they will automatically be catalogued here for targeted revision.'}
+            </p>
+            <Link href="/exams" className={styles.practiceBtn}>
+              <span>Explore Test Series</span>
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+        ) : (
+          filteredMistakes.map((item, idx) => {
+            const isExpanded = !!expandedExplanations[item.id];
+            const isReattempting = reattemptingId === item.id;
+            const qText =
+              lang === 'hi' && item.questionTextHi ? item.questionTextHi : item.questionText;
+            const expText =
+              lang === 'hi' && item.explanationHi ? item.explanationHi : item.explanation;
 
-                    <div style={{ padding: '1rem' }}>
-                      <p style={{ fontWeight: 600, marginBottom: '1rem', lineHeight: 1.6 }}>
-                        {lang === 'hi' ? q.questionTextHi : q.questionText}
-                      </p>
+            // Find label / text of student's wrong answer and correct answer
+            const wrongOpt = item.options.find(
+              (o) => o.optionLabel === item.userAnswer || o.id === item.userAnswer
+            );
+            const correctOpt = item.options.find(
+              (o) => o.optionLabel === item.correctOption || o.id === item.correctOption
+            );
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {q.options.map((opt) => {
-                          const isCorrect = opt.label === q.correctOption;
-                          const isYourWrong = opt.label === q.userAnswer && !isCorrect;
-                          const isPracticeChoice = practiceMode && practiceAns === opt.label;
-                          const isPracticeCorrectChoice = isPracticeAnswered && isCorrect;
-                          const isPracticeWrongChoice = isPracticeAnswered && isPracticeChoice && !isCorrect;
+            const wrongText = wrongOpt
+              ? `${wrongOpt.optionLabel}. ${lang === 'hi' && wrongOpt.optionTextHi ? wrongOpt.optionTextHi : wrongOpt.optionText}`
+              : item.userAnswer
+              ? `Option ${item.userAnswer}`
+              : 'Not answered';
 
-                          const showCorrect = !practiceMode ? isCorrect : isPracticeAnswered && isPracticeCorrectChoice;
-                          const showWrong = !practiceMode ? isYourWrong : isPracticeWrongChoice;
+            const correctText = correctOpt
+              ? `${correctOpt.optionLabel}. ${lang === 'hi' && correctOpt.optionTextHi ? correctOpt.optionTextHi : correctOpt.optionText}`
+              : `Option ${item.correctOption}`;
 
-                          return (
-                            <div
-                              key={opt.id}
-                              onClick={() => practiceMode && !isPracticeAnswered ? handlePracticeOption(q.questionId, opt.label as 'A' | 'B' | 'C' | 'D') : undefined}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.75rem',
-                                padding: '0.65rem 0.875rem',
-                                minHeight: '44px',
-                                borderRadius: '8px',
-                                border: `1px solid ${showCorrect ? '#22c55e' : showWrong ? '#ef4444' : 'var(--color-border, #334155)'}`,
-                                background: showCorrect ? 'rgba(34,197,94,0.08)' : showWrong ? 'rgba(239,68,68,0.08)' : 'transparent',
-                                cursor: practiceMode && !isPracticeAnswered ? 'pointer' : 'default',
-                              }}
-                            >
-                              <span
-                                style={{
-                                  width: 28,
-                                  height: 28,
-                                  borderRadius: '50%',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: '0.85rem',
-                                  fontWeight: 700,
-                                  flexShrink: 0,
-                                  background: showCorrect ? '#22c55e' : showWrong ? '#ef4444' : 'var(--color-bg-subtle, #334155)',
-                                  color: showCorrect || showWrong ? '#fff' : 'var(--color-text-secondary)',
-                                }}
-                              >
-                                {opt.label}
-                              </span>
-                              <span style={{ flex: 1 }}>{lang === 'hi' ? opt.textHi : opt.text}</span>
-                              {showCorrect && <Check size={16} style={{ color: '#22c55e', flexShrink: 0 }} />}
-                            </div>
-                          );
-                        })}
-                      </div>
+            return (
+              <article
+                key={item.id}
+                className={`${styles.card} ${item.isMastered ? styles.cardMastered : ''}`}
+                style={{ animationDelay: `${idx * 0.06}s` }}
+              >
+                {/* Card Top */}
+                <div className={styles.cardTop}>
+                  <div className={styles.metaGroup}>
+                    <Chip category={item.subjectName} />
+                    <span className={styles.sourceLabel}>{item.sourceText}</span>
+                  </div>
+                  {item.isMastered && (
+                    <span className={styles.masteredBadge}>Mastered ✓</span>
+                  )}
+                </div>
 
-                      {/* Explanation — always shown in review, shown after practice answer */}
-                      {(!practiceMode || isPracticeAnswered) && q.explanation && (
-                        <div
-                          style={{
-                            marginTop: '1rem',
-                            padding: '0.875rem',
-                            background: 'rgba(99,102,241,0.07)',
-                            borderRadius: '8px',
-                            borderLeft: '3px solid var(--color-accent, #818cf8)',
-                          }}
-                        >
-                          <p style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.3rem', color: 'var(--color-accent, #818cf8)' }}>
-                            Explanation
-                          </p>
-                          <p style={{ fontSize: '0.875rem', lineHeight: 1.6, margin: 0 }}>
-                            {lang === 'hi' ? (q.explanationHi || q.explanation) : q.explanation}
-                          </p>
-                        </div>
-                      )}
+                {/* Question Text */}
+                <h2 className={styles.questionText}>{qText}</h2>
+
+                {/* Red / Green Comparison Boxes */}
+                <div className={styles.answersGrid}>
+                  {/* Your Answer (Red) */}
+                  <div className={styles.answerBoxWrong}>
+                    <span className={styles.answerIconWrong} aria-hidden="true">
+                      <XIcon size={18} />
+                    </span>
+                    <div className={styles.answerTextGroup}>
+                      <span className={styles.answerLabelWrong}>Your answer</span>
+                      <span className={styles.answerVal}>{wrongText}</span>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </>
-      )}
-    </div>
+
+                  {/* Correct Answer (Green) */}
+                  <div className={styles.answerBoxCorrect}>
+                    <span className={styles.answerIconCorrect} aria-hidden="true">
+                      <CheckIcon size={18} />
+                    </span>
+                    <div className={styles.answerTextGroup}>
+                      <span className={styles.answerLabelCorrect}>Correct answer</span>
+                      <span className={styles.answerVal}>{correctText}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expandable Explanation */}
+                {isExpanded && expText && (
+                  <div className={styles.explanationBox}>
+                    <span className={styles.explanationStrong}>Explanation: </span>
+                    {expText}
+                  </div>
+                )}
+
+                {/* Interactive In-Card Re-attempting Tray */}
+                {isReattempting && item.options.length > 0 && (
+                  <div className={styles.reattemptTray}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--slate)' }}>
+                      Select the correct option to re-attempt:
+                    </span>
+                    {item.options.map((opt) => {
+                      const isChosen = selectedReattemptOption === opt.optionLabel;
+                      const isCorrect = opt.optionLabel === item.correctOption;
+                      let btnCls = styles.reattemptOptionBtn;
+                      if (selectedReattemptOption) {
+                        if (isCorrect) btnCls = `${styles.reattemptOptionBtn} ${styles.reattemptCorrect}`;
+                        else if (isChosen) btnCls = `${styles.reattemptOptionBtn} ${styles.reattemptWrong}`;
+                      }
+
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          className={btnCls}
+                          onClick={() => setSelectedReattemptOption(opt.optionLabel)}
+                        >
+                          <strong>{opt.optionLabel}.</strong>
+                          <span>
+                            {lang === 'hi' && opt.optionTextHi ? opt.optionTextHi : opt.optionText}
+                          </span>
+                          {selectedReattemptOption && isCorrect && (
+                            <span style={{ marginLeft: 'auto', fontWeight: 800 }}>✓ Correct</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Card Action Buttons */}
+                <div className={styles.cardActions}>
+                  {expText && (
+                    <button
+                      type="button"
+                      onClick={() => toggleExplanation(item.id)}
+                      className={styles.toggleExpBtn}
+                      aria-expanded={isExpanded}
+                    >
+                      {isExpanded ? 'Hide explanation' : 'Show explanation'}
+                    </button>
+                  )}
+
+                  <div className={styles.actionRightButtons}>
+                    {item.options.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleReattemptClick(item.id)}
+                        className={styles.reattemptBtn}
+                      >
+                        {isReattempting ? 'Close practice' : 'Re-attempt'}
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggleMastered(item)}
+                      className={item.isMastered ? styles.masterBtnDone : styles.masterBtnPending}
+                    >
+                      {item.isMastered ? 'Mastered ✓' : 'Mark as mastered'}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            );
+          })
+        )}
+      </div>
+    </main>
   );
 }

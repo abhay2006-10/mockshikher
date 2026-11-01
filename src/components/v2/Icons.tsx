@@ -57,6 +57,16 @@ export function Check({ size = 20, strokeWidth = 2.4, ...props }: IconProps) {
   );
 }
 
+export { Check as CheckIcon };
+
+export function Play({ size = 20, strokeWidth = 2.4, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none" {...props}>
+      <polygon points="6 3 20 12 6 21 6 3" />
+    </svg>
+  );
+}
+
 export function XIcon({ size = 20, strokeWidth = 2.4, ...props }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" {...props}>
