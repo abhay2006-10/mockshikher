@@ -72,3 +72,4 @@ scripts/setup_search.*
 /mockshikhar-design-reference-tmp/
 
 /screenshots-v2/
+*.dump
