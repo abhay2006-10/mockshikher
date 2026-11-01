@@ -8,12 +8,13 @@ import {
   MountainLogo,
   ChevronDown,
   MenuIcon,
-  XIcon,
   UserIcon,
   BookOpenIcon,
   BookmarkIcon,
   CreditCardIcon,
   LogOutIcon,
+  HomeIcon,
+  GridIcon,
 } from './Icons';
 import AuthModal, { AuthModalTab } from '@/components/ui/AuthModal';
 import { NotificationBell, NotificationDrawer } from '@/components/common/NotificationCenter';
@@ -32,7 +33,7 @@ interface NavbarProps {
 
 export function Navbar({ initialUser }: NavbarProps) {
   const pathname = usePathname();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
   // Active user: prioritize client session, fall back to server initialUser
   const [isPreviewUser, setIsPreviewUser] = useState(false);
@@ -49,10 +50,9 @@ export function Navbar({ initialUser }: NavbarProps) {
 
   const isLoggedIn = !!user;
 
-  // Dropdown & mobile drawer states
+  // Dropdown (desktop) & bottom sheet (mobile) states
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [notificationDrawerOpen, setNotificationDrawerOpen] = useState(false);
+  const [menuSheetOpen, setMenuSheetOpen] = useState(false);
   const [unreadMistakes, setUnreadMistakes] = useState<number>(0);
 
   // Auth modal
@@ -61,27 +61,23 @@ export function Navbar({ initialUser }: NavbarProps) {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // URL query hooks for automated preview screenshots
+  // URL query hooks for automated preview screenshots & close menus on route change
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const search = window.location.search;
-      if (search.includes('previewUser=true')) {
-        setIsPreviewUser(true);
-      }
-      if (search.includes('dropdown=open')) {
-        setIsPreviewUser(true);
-        setDropdownOpen(true);
-      }
-      if (search.includes('drawer=open')) {
-        setMobileMenuOpen(true);
-      }
-    }
-  }, [pathname]);
+      const isPreview = search.includes('previewUser=true');
+      const shouldOpenDropdown = search.includes('dropdown=open');
+      const shouldOpenMenu =
+        search.includes('drawer=open') ||
+        search.includes('menu=open') ||
+        search.includes('sheet=open');
 
-  // Close menus on route change
-  useEffect(() => {
-    setDropdownOpen(false);
-    setMobileMenuOpen(false);
+      if (isPreview) {
+        setIsPreviewUser(true);
+      }
+      setDropdownOpen(shouldOpenDropdown);
+      setMenuSheetOpen(shouldOpenMenu);
+    }
   }, [pathname]);
 
   // Fetch unread mistakes count when logged in
@@ -101,7 +97,7 @@ export function Navbar({ initialUser }: NavbarProps) {
     };
   }, [isLoggedIn, pathname]);
 
-  // Close dropdown on outside click or Esc
+  // Close dropdown or sheet on outside click or Esc
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -111,7 +107,7 @@ export function Navbar({ initialUser }: NavbarProps) {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setDropdownOpen(false);
-        setMobileMenuOpen(false);
+        setMenuSheetOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -125,13 +121,13 @@ export function Navbar({ initialUser }: NavbarProps) {
   const openLogin = () => {
     setAuthModalTab('login');
     setAuthModalOpen(true);
-    setMobileMenuOpen(false);
+    setMenuSheetOpen(false);
   };
 
   const openSignup = () => {
     setAuthModalTab('signup');
     setAuthModalOpen(true);
-    setMobileMenuOpen(false);
+    setMenuSheetOpen(false);
   };
 
   const getInitial = (name: string) => {
@@ -140,7 +136,12 @@ export function Navbar({ initialUser }: NavbarProps) {
 
   const isHome = pathname === '/';
   const isExams = pathname?.startsWith('/exams');
-  const isDashboard = pathname === '/dashboard' || (pathname?.startsWith('/dashboard') && !pathname?.startsWith('/dashboard/'));
+  const isDashboard =
+    pathname === '/dashboard' ||
+    (pathname?.startsWith('/dashboard') && !pathname?.startsWith('/dashboard/'));
+
+  // Hide bottom bar on /test/* and /admin/* routes
+  const hideBottomBar = pathname?.startsWith('/test/') || pathname?.startsWith('/admin');
 
   return (
     <>
@@ -154,13 +155,25 @@ export function Navbar({ initialUser }: NavbarProps) {
 
           {/* Desktop Navlinks */}
           <nav className={styles.navLinks} aria-label="Main Navigation">
-            <Link href="/" className={`${styles.navLink} ${isHome ? styles.active : ''}`}>
+            <Link
+              href="/"
+              className={`${styles.navLink} ${isHome ? styles.active : ''}`}
+              aria-current={isHome ? 'page' : undefined}
+            >
               Home
             </Link>
-            <Link href="/exams" className={`${styles.navLink} ${isExams ? styles.active : ''}`}>
+            <Link
+              href="/exams"
+              className={`${styles.navLink} ${isExams ? styles.active : ''}`}
+              aria-current={isExams ? 'page' : undefined}
+            >
               Exams
             </Link>
-            <Link href="/dashboard" className={`${styles.navLink} ${isDashboard ? styles.active : ''}`}>
+            <Link
+              href="/dashboard"
+              className={`${styles.navLink} ${isDashboard ? styles.active : ''}`}
+              aria-current={isDashboard ? 'page' : undefined}
+            >
               Dashboard
             </Link>
           </nav>
@@ -190,7 +203,7 @@ export function Navbar({ initialUser }: NavbarProps) {
                 {/* Bell icon for notifications */}
                 <NotificationBell />
 
-                {/* Profile Account Menu */}
+                {/* Profile Account Menu (Desktop) */}
                 <div className={styles.profileWrap} ref={dropdownRef}>
                   <button
                     type="button"
@@ -276,115 +289,234 @@ export function Navbar({ initialUser }: NavbarProps) {
               </>
             )}
 
-            {/* Mobile Controls */}
+            {/* Mobile Top Header Controls (No hamburger!) */}
             <div className={styles.mobileControls}>
-              {!isLoggedIn && (
+              {!isLoggedIn ? (
                 <button
                   type="button"
                   onClick={openSignup}
-                  className={styles.signupBtn}
-                  style={{ padding: '9px 13px', fontSize: 14 }}
-                >
-                  Sign up
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className={styles.hamburgerBtn}
-                aria-label="Toggle navigation drawer"
-                aria-expanded={mobileMenuOpen}
-              >
-                {mobileMenuOpen ? <XIcon size={22} /> : <MenuIcon size={22} />}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Dropdown Drawer */}
-        {mobileMenuOpen && (
-          <div className={styles.mobileDrawer} role="dialog" aria-modal="true">
-            {isLoggedIn && (
-              <div className={styles.userCard} style={{ padding: '4px 0 12px', borderBottom: '1px solid var(--border)' }}>
-                <span className={styles.avatarCircle}>{getInitial(user.name)}</span>
-                <div className={styles.userCardInfo}>
-                  <div className={styles.userCardName}>{user.name}</div>
-                  <div className={styles.userCardEmail}>{user.email}</div>
-                </div>
-              </div>
-            )}
-
-            <Link href="/" className={`${styles.mobileLink} ${isHome ? styles.active : ''}`}>
-              <span>Home</span>
-            </Link>
-            <Link href="/exams" className={`${styles.mobileLink} ${isExams ? styles.active : ''}`}>
-              <span>Exams</span>
-            </Link>
-            <Link href="/dashboard" className={`${styles.mobileLink} ${isDashboard ? styles.active : ''}`}>
-              <span>Dashboard</span>
-            </Link>
-
-            {isLoggedIn && (
-              <>
-                <div className={styles.sectionLabel}>Account</div>
-                <Link href="/dashboard/profile" className={styles.mobileLink}>
-                  <span>Profile</span>
-                </Link>
-                <Link href="/dashboard/mistakes" className={styles.mobileLink}>
-                  <span>Mistake Book</span>
-                  {unreadMistakes > 0 && <span className={styles.badgeAmber}>{unreadMistakes}</span>}
-                </Link>
-                <Link href="/dashboard/bookmarks" className={styles.mobileLink}>
-                  <span>Bookmarks</span>
-                </Link>
-                <Link href="/dashboard/payments" className={styles.mobileLink}>
-                  <span>Payment history</span>
-                </Link>
-                {user.role === 'ADMIN' && (
-                  <Link href="/admin" className={styles.mobileLink}>
-                    <span>Admin Panel</span>
-                  </Link>
-                )}
-                <button
-                  type="button"
-                  onClick={() => signOut({ callbackUrl: '/' })}
-                  className={`${styles.mobileLink} ${styles.logoutItem}`}
-                  style={{ border: 'none', background: 'transparent', textAlign: 'left', cursor: 'pointer' }}
-                >
-                  <span>Log out</span>
-                </button>
-              </>
-            )}
-
-            {!isLoggedIn && (
-              <div className={styles.mobileAuthButtons}>
-                <button
-                  type="button"
-                  onClick={openLogin}
-                  className={styles.loginTextBtn}
-                  style={{
-                    border: '1.5px solid var(--border)',
-                    textAlign: 'center',
-                    padding: '12px',
-                    borderRadius: 12,
-                  }}
-                >
-                  Log in
-                </button>
-                <button
-                  type="button"
-                  onClick={openSignup}
-                  className={styles.signupBtn}
-                  style={{ width: '100%', padding: '13px', borderRadius: 12 }}
+                  className={styles.mobileSignupBtn}
                 >
                   Sign up free
                 </button>
-              </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setMenuSheetOpen(true)}
+                  className={styles.mobileAvatarBtn}
+                  aria-label="Open profile menu"
+                >
+                  <span className={styles.avatarCircle}>{getInitial(user.name)}</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Bottom Navigation (≤ 720px only, hidden on /test/* and /admin/*) */}
+      {!hideBottomBar && (
+        <nav className={styles.bottomNav} aria-label="Mobile Bottom Navigation">
+          <Link
+            href="/"
+            className={`${styles.bottomNavItem} ${isHome ? styles.bottomNavItemActive : ''}`}
+            aria-current={isHome ? 'page' : undefined}
+          >
+            {isHome && <span className={styles.bottomNavIndicator} />}
+            <HomeIcon size={21} />
+            <span>Home</span>
+          </Link>
+
+          <Link
+            href="/exams"
+            className={`${styles.bottomNavItem} ${isExams ? styles.bottomNavItemActive : ''}`}
+            aria-current={isExams ? 'page' : undefined}
+          >
+            {isExams && <span className={styles.bottomNavIndicator} />}
+            <BookOpenIcon size={21} />
+            <span>Exams</span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setMenuSheetOpen(true)}
+            className={`${styles.bottomNavItem} ${menuSheetOpen ? styles.bottomNavItemActive : ''}`}
+            aria-expanded={menuSheetOpen}
+            aria-label="Open Menu"
+          >
+            {menuSheetOpen && <span className={styles.bottomNavIndicator} />}
+            <MenuIcon size={21} />
+            <span>Menu</span>
+          </button>
+        </nav>
+      )}
+
+      {/* Mobile Bottom Sheet Menu (opened by Menu tab or mobile avatar) */}
+      {!hideBottomBar && menuSheetOpen && (
+        <>
+          <div
+            className={styles.bottomSheetScrim}
+            onClick={() => setMenuSheetOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            className={styles.bottomSheet}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu navigation"
+          >
+            <div className={styles.sheetHandle} />
+
+            {isLoggedIn ? (
+              <>
+                <div className={styles.sheetUserCard}>
+                  <span className={styles.avatarCircle} style={{ width: 42, height: 42, fontSize: 16 }}>
+                    {getInitial(user.name)}
+                  </span>
+                  <div className={styles.sheetUserInfo}>
+                    <div className={styles.sheetUserName}>{user.name}</div>
+                    <div className={styles.sheetUserEmail}>{user.email}</div>
+                  </div>
+                </div>
+
+                <div className={styles.sheetDivider} />
+
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMenuSheetOpen(false)}
+                  className={styles.sheetLink}
+                >
+                  <span className={styles.sheetLinkInner}>
+                    <GridIcon size={18} />
+                    <span>Dashboard</span>
+                  </span>
+                </Link>
+
+                <Link
+                  href="/dashboard/mistakes"
+                  onClick={() => setMenuSheetOpen(false)}
+                  className={styles.sheetLink}
+                >
+                  <span className={styles.sheetLinkInner}>
+                    <BookOpenIcon size={18} />
+                    <span>Mistake Book</span>
+                  </span>
+                  {unreadMistakes > 0 && (
+                    <span className={styles.badgeAmber}>{unreadMistakes}</span>
+                  )}
+                </Link>
+
+                <Link
+                  href="/dashboard/bookmarks"
+                  onClick={() => setMenuSheetOpen(false)}
+                  className={styles.sheetLink}
+                >
+                  <span className={styles.sheetLinkInner}>
+                    <BookmarkIcon size={18} />
+                    <span>Bookmarks</span>
+                  </span>
+                </Link>
+
+                <Link
+                  href="/dashboard/payments"
+                  onClick={() => setMenuSheetOpen(false)}
+                  className={styles.sheetLink}
+                >
+                  <span className={styles.sheetLinkInner}>
+                    <CreditCardIcon size={18} />
+                    <span>Payment history</span>
+                  </span>
+                </Link>
+
+                <Link
+                  href="/dashboard/profile"
+                  onClick={() => setMenuSheetOpen(false)}
+                  className={styles.sheetLink}
+                >
+                  <span className={styles.sheetLinkInner}>
+                    <UserIcon size={18} />
+                    <span>Profile</span>
+                  </span>
+                </Link>
+
+                {user.role === 'ADMIN' && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setMenuSheetOpen(false)}
+                    className={styles.sheetLink}
+                  >
+                    <span className={styles.sheetLinkInner}>
+                      <UserIcon size={18} />
+                      <span>Admin Panel</span>
+                    </span>
+                  </Link>
+                )}
+
+                <div className={styles.sheetDivider} />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuSheetOpen(false);
+                    signOut({ callbackUrl: '/' });
+                  }}
+                  className={`${styles.sheetLink} ${styles.sheetLogout}`}
+                >
+                  <span className={styles.sheetLinkInner}>
+                    <LogOutIcon size={18} />
+                    <span>Log out</span>
+                  </span>
+                </button>
+              </>
+            ) : (
+              <>
+                <div className={styles.sheetAuthButtons}>
+                  <button
+                    type="button"
+                    onClick={openLogin}
+                    className={styles.sheetLoginBtn}
+                  >
+                    Log in
+                  </button>
+                  <button
+                    type="button"
+                    onClick={openSignup}
+                    className={styles.sheetSignupBtn}
+                  >
+                    Sign up free
+                  </button>
+                </div>
+
+                <div className={styles.sheetDivider} />
+
+                <div className={styles.sheetLegalLinks}>
+                  <Link
+                    href="/privacy"
+                    onClick={() => setMenuSheetOpen(false)}
+                    className={styles.sheetLegalLink}
+                  >
+                    Privacy Policy
+                  </Link>
+                  <Link
+                    href="/terms"
+                    onClick={() => setMenuSheetOpen(false)}
+                    className={styles.sheetLegalLink}
+                  >
+                    Terms of Service
+                  </Link>
+                  <Link
+                    href="/refund-policy"
+                    onClick={() => setMenuSheetOpen(false)}
+                    className={styles.sheetLegalLink}
+                  >
+                    Refund Policy
+                  </Link>
+                </div>
+              </>
             )}
           </div>
-        )}
-      </header>
+        </>
+      )}
 
       {/* Auth Modal */}
       <AuthModal

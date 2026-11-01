@@ -238,9 +238,7 @@ export default function AdminMarketingPage() {
       {/* Filter and Search Bar */}
       <div
         style={{
-          background: 'var(--color-bg-primary)',
-          border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-xl)',
+          background: '#FFFFFF', border: '1px solid #E3E6F5', borderRadius: '16px', boxShadow: '0 1px 3px rgba(11, 16, 38, 0.04)',
           padding: '1.25rem',
           marginBottom: '1.5rem',
           display: 'flex',
@@ -255,7 +253,7 @@ export default function AdminMarketingPage() {
           style={{ display: 'flex', gap: '0.5rem', flex: 1, minWidth: '280px', maxWidth: '450px' }}
         >
           <Input
-            placeholder="Search by student name, email, or phone..."
+            placeholder="Search name, email or phone"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             leftIcon={<Search size={16} />}
@@ -265,34 +263,56 @@ export default function AdminMarketingPage() {
           </Button>
         </form>
 
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>
-            Consent Filter:
-          </span>
-          <Button
-            variant={consentFilter === 'all' ? 'primary' : 'outline'}
-            size="sm"
-            onClick={() => setConsentFilter('all')}
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className={styles.segmentedControl} role="tablist" aria-label="Consent filter">
+            <button
+              type="button"
+              className={`${styles.segmentedBtn} ${consentFilter === 'all' ? styles.segmentedBtnActive : ''}`}
+              onClick={() => setConsentFilter('all')}
+              role="tab"
+              aria-selected={consentFilter === 'all'}
+            >
+              All Students
+            </button>
+            <button
+              type="button"
+              className={`${styles.segmentedBtn} ${consentFilter === 'opted_in' ? styles.segmentedBtnActive : ''}`}
+              onClick={() => setConsentFilter('opted_in')}
+              role="tab"
+              aria-selected={consentFilter === 'opted_in'}
+            >
+              Consented
+            </button>
+            <button
+              type="button"
+              className={`${styles.segmentedBtn} ${consentFilter === 'opted_out' ? styles.segmentedBtnActive : ''}`}
+              onClick={() => setConsentFilter('opted_out')}
+              role="tab"
+              aria-selected={consentFilter === 'opted_out'}
+            >
+              Opted Out
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={fetchContacts}
+            title="Refresh list"
+            aria-label="Refresh contacts list"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              border: '1.5px solid #D5D9EC',
+              background: '#FFFFFF',
+              color: '#4B5168',
+              cursor: 'pointer',
+            }}
           >
-            All Students
-          </Button>
-          <Button
-            variant={consentFilter === 'opted_in' ? 'accent' : 'outline'}
-            size="sm"
-            onClick={() => setConsentFilter('opted_in')}
-          >
-            Consented Only
-          </Button>
-          <Button
-            variant={consentFilter === 'opted_out' ? 'danger' : 'outline'}
-            size="sm"
-            onClick={() => setConsentFilter('opted_out')}
-          >
-            Opted Out
-          </Button>
-          <Button variant="ghost" size="sm" onClick={fetchContacts} title="Refresh list">
             <RefreshCw size={15} />
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -389,15 +409,27 @@ export default function AdminMarketingPage() {
                     </span>
                   </td>
                   <td data-label="Actions">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleToggleConsent(s)}
-                      isLoading={updatingId === s.id}
-                      title={s.whatsappConsent ? 'Switch to Opted Out' : 'Switch to Opted In'}
-                    >
-                      {s.whatsappConsent ? 'Mark Opt-Out' : 'Mark Opt-In'}
-                    </Button>
+                    {s.whatsappConsent ? (
+                      <button
+                        type="button"
+                        className={styles.outlineDangerBtn}
+                        onClick={() => handleToggleConsent(s)}
+                        disabled={updatingId === s.id}
+                        title="Mark student as Opted Out"
+                      >
+                        {updatingId === s.id ? 'Updating...' : 'Mark Opt-Out'}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.outlineSuccessBtn}
+                        onClick={() => handleToggleConsent(s)}
+                        disabled={updatingId === s.id}
+                        title="Mark student as Consented"
+                      >
+                        {updatingId === s.id ? 'Updating...' : 'Mark Opt-In'}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))

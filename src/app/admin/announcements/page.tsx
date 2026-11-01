@@ -38,23 +38,23 @@ interface Announcement {
   updatedAt: string;
 }
 
-const TYPE_OPTIONS: { value: AnnouncementType; label: string; icon: React.ReactNode; color: string }[] = [
-  { value: 'INFO', label: 'Info', icon: <Info size={14} />, color: '#60a5fa' },
-  { value: 'SUCCESS', label: 'Update', icon: <CheckCircle2 size={14} />, color: '#34d399' },
-  { value: 'WARNING', label: 'Notice', icon: <AlertTriangle size={14} />, color: '#fbbf24' },
-  { value: 'URGENT', label: 'Urgent', icon: <Zap size={14} />, color: '#f87171' },
-  { value: 'NEW_TEST', label: 'New Test', icon: <BookOpen size={14} />, color: '#a78bfa' },
-  { value: 'OFFER', label: 'Offer', icon: <Tag size={14} />, color: '#fb923c' },
-];
-
-const TYPE_COLORS: Record<AnnouncementType, string> = {
-  INFO: '#60a5fa',
-  SUCCESS: '#34d399',
-  WARNING: '#fbbf24',
-  URGENT: '#f87171',
-  NEW_TEST: '#a78bfa',
-  OFFER: '#fb923c',
+const TYPE_CONFIG: Record<AnnouncementType, { label: string; icon: React.ReactNode; bg: string; color: string; border: string }> = {
+  INFO: { label: 'Info', icon: <Info size={13} />, bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' },
+  SUCCESS: { label: 'Update', icon: <CheckCircle2 size={13} />, bg: '#DCFCE7', color: '#166534', border: '#BBF7D0' },
+  WARNING: { label: 'Notice', icon: <AlertTriangle size={13} />, bg: '#FEF3C7', color: '#92400E', border: '#FDE68A' },
+  URGENT: { label: 'Urgent', icon: <Zap size={13} />, bg: '#FEE2E2', color: '#991B1B', border: '#FECACA' },
+  NEW_TEST: { label: 'New Test', icon: <BookOpen size={13} />, bg: '#EEF1FF', color: '#4338CA', border: '#C7D2FE' },
+  OFFER: { label: 'Offer', icon: <Tag size={13} />, bg: '#FFEDD5', color: '#9A3412', border: '#FED7AA' },
 };
+
+const TYPE_OPTIONS: { value: AnnouncementType; label: string; icon: React.ReactNode; bg: string; color: string; border: string }[] = [
+  { value: 'INFO', ...TYPE_CONFIG.INFO },
+  { value: 'SUCCESS', ...TYPE_CONFIG.SUCCESS },
+  { value: 'WARNING', ...TYPE_CONFIG.WARNING },
+  { value: 'URGENT', ...TYPE_CONFIG.URGENT },
+  { value: 'NEW_TEST', ...TYPE_CONFIG.NEW_TEST },
+  { value: 'OFFER', ...TYPE_CONFIG.OFFER },
+];
 
 const emptyForm = {
   title: '',
@@ -187,28 +187,29 @@ export default function AdminAnnouncementsPage() {
       {/* Stats Row */}
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.75rem', flexWrap: 'wrap' }}>
         {[
-          { label: 'Total', value: items.length, color: '#94a3b8' },
-          { label: 'Active', value: activeCount, color: '#34d399' },
-          { label: 'Pinned', value: pinnedCount, color: '#fbbf24' },
-          { label: 'Inactive', value: items.length - activeCount, color: '#f87171' },
+          { label: 'Total', value: items.length, color: '#0B1026' },
+          { label: 'Active', value: activeCount, color: '#166534' },
+          { label: 'Pinned', value: pinnedCount, color: '#92400E' },
+          { label: 'Inactive', value: items.length - activeCount, color: '#991B1B' },
         ].map((s) => (
           <div
             key={s.label}
             style={{
-              background: 'var(--color-bg-card)',
-              border: '1px solid var(--color-border)',
-              borderRadius: '10px',
-              padding: '0.75rem 1.25rem',
+              background: '#FFFFFF',
+              border: '1px solid #E3E6F5',
+              borderRadius: '14px',
+              padding: '0.85rem 1.4rem',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.1rem',
-              minWidth: '90px',
+              gap: '0.15rem',
+              minWidth: '100px',
+              boxShadow: '0 1px 3px rgba(11, 16, 38, 0.04)',
             }}
           >
-            <span style={{ fontSize: '1.4rem', fontWeight: 800, color: s.color, fontFamily: 'var(--font-display)' }}>
+            <span style={{ fontSize: '1.5rem', fontWeight: 800, color: s.color, fontFamily: 'var(--font-heading)' }}>
               {s.value}
             </span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
+            <span style={{ fontSize: '0.78rem', color: '#4B5168', fontWeight: 600 }}>
               {s.label}
             </span>
           </div>
@@ -240,12 +241,12 @@ export default function AdminAnnouncementsPage() {
       {showForm && (
         <div
           style={{
-            background: 'linear-gradient(145deg, rgba(20, 28, 46, 0.95) 0%, rgba(12, 17, 28, 0.98) 100%)',
-            border: '1px solid rgba(37, 99, 235, 0.25)',
+            background: '#FFFFFF',
+            border: '1px solid #E3E6F5',
             borderRadius: '16px',
             padding: '1.75rem',
             marginBottom: '2rem',
-            boxShadow: '0 0 0 1px rgba(37, 99, 235, 0.1), 0 12px 36px rgba(0,0,0,0.4)',
+            boxShadow: '0 4px 20px rgba(11, 16, 38, 0.06)',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', alignItems: 'center' }}>
@@ -311,10 +312,7 @@ export default function AdminAnnouncementsPage() {
                 style={{
                   width: '100%',
                   padding: '0.65rem 1rem',
-                  background: 'var(--color-bg-input)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: '10px',
-                  color: 'var(--color-text-primary)',
+                  background: '#FFFFFF', border: '1.5px solid #D5D9EC', borderRadius: '12px', color: '#0B1026', minHeight: '44px',
                   fontSize: '0.9rem',
                   outline: 'none',
                   fontFamily: 'var(--font-sans)',
@@ -340,10 +338,7 @@ export default function AdminAnnouncementsPage() {
                 style={{
                   width: '100%',
                   padding: '0.65rem 1rem',
-                  background: 'var(--color-bg-input)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: '10px',
-                  color: 'var(--color-text-primary)',
+                  background: '#FFFFFF', border: '1.5px solid #D5D9EC', borderRadius: '12px', color: '#0B1026', minHeight: '44px',
                   fontSize: '0.875rem',
                   outline: 'none',
                   resize: 'vertical',
@@ -520,10 +515,7 @@ export default function AdminAnnouncementsPage() {
                   style={{
                     width: '100%',
                     padding: '0.65rem 1rem',
-                    background: 'var(--color-bg-input)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: '10px',
-                    color: 'var(--color-text-primary)',
+                    background: '#FFFFFF', border: '1.5px solid #D5D9EC', borderRadius: '12px', color: '#0B1026', minHeight: '44px',
                     fontSize: '0.875rem',
                     outline: 'none',
                     fontFamily: 'var(--font-sans)',
@@ -543,10 +535,7 @@ export default function AdminAnnouncementsPage() {
                   style={{
                     width: '100%',
                     padding: '0.65rem 1rem',
-                    background: 'var(--color-bg-input)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: '10px',
-                    color: 'var(--color-text-primary)',
+                    background: '#FFFFFF', border: '1.5px solid #D5D9EC', borderRadius: '12px', color: '#0B1026', minHeight: '44px',
                     fontSize: '0.875rem',
                     outline: 'none',
                     fontFamily: 'var(--font-sans)',
@@ -712,153 +701,196 @@ export default function AdminAnnouncementsPage() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {items.map((item) => (
-            <div
-              key={item.id}
-              style={{
-                background: item.isActive
-                  ? 'linear-gradient(145deg, rgba(20, 28, 46, 0.9) 0%, rgba(12, 17, 28, 0.95) 100%)'
-                  : 'rgba(12,17,28,0.6)',
-                border: item.isPinned
-                  ? '1px solid rgba(245, 158, 11, 0.3)'
-                  : '1px solid var(--color-border)',
-                borderRadius: '12px',
-                padding: '1.25rem 1.5rem',
-                opacity: item.isActive ? 1 : 0.6,
-                transition: 'opacity 0.2s',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: '200px' }}>
-                  {/* Badges row */}
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.6rem', alignItems: 'center' }}>
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        padding: '0.2rem 0.6rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.72rem',
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        color: TYPE_COLORS[item.type],
-                        background: `${TYPE_COLORS[item.type]}18`,
-                        border: `1px solid ${TYPE_COLORS[item.type]}35`,
-                      }}
-                    >
-                      {item.type}
-                    </span>
-                    {item.isPinned && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.72rem', color: '#fbbf24', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: '9999px', padding: '0.2rem 0.6rem', fontWeight: 600 }}>
-                        <Pin size={11} /> Pinned
+          {items.map((item) => {
+            const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.INFO;
+            return (
+              <div
+                key={item.id}
+                style={{
+                  background: '#FFFFFF',
+                  border: item.isPinned ? '1.5px solid #FCD34D' : '1px solid #E3E6F5',
+                  borderRadius: '16px',
+                  padding: '1.25rem 1.5rem',
+                  opacity: item.isActive ? 1 : 0.65,
+                  boxShadow: item.isPinned ? '0 4px 16px rgba(245, 158, 11, 0.08)' : '0 1px 3px rgba(11, 16, 38, 0.04)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.25rem', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: '240px' }}>
+                    {/* Badges row */}
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.65rem', alignItems: 'center' }}>
+                      {/* Type Badge */}
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.25rem 0.65rem',
+                          borderRadius: '9999px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          color: config.color,
+                          background: config.bg,
+                          border: `1px solid ${config.border}`,
+                        }}
+                      >
+                        {config.icon}
+                        {config.label}
                       </span>
+
+                      {/* Pinned Pill */}
+                      {item.isPinned && (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            fontSize: '0.75rem',
+                            color: '#92400E',
+                            background: '#FEF3C7',
+                            border: '1px solid #FDE68A',
+                            borderRadius: '9999px',
+                            padding: '0.25rem 0.65rem',
+                            fontWeight: 700,
+                          }}
+                        >
+                          <Pin size={12} /> Pinned
+                        </span>
+                      )}
+
+                      {/* Active / Draft Pill */}
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          color: item.isActive ? '#166534' : '#475569',
+                          background: item.isActive ? '#DCFCE7' : '#F1F5F9',
+                          border: `1px solid ${item.isActive ? '#BBF7D0' : '#E2E8F0'}`,
+                          borderRadius: '9999px',
+                          padding: '0.25rem 0.65rem',
+                        }}
+                      >
+                        {item.isActive ? <Eye size={12} /> : <EyeOff size={12} />}
+                        {item.isActive ? 'Active' : 'Draft'}
+                      </span>
+
+                      {/* Created date */}
+                      <span style={{ fontSize: '0.78rem', color: '#6E7591', marginLeft: 'auto' }}>
+                        {new Date(item.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+
+                    {/* Title: #0B1026, 600-700 weight */}
+                    <h3 style={{ fontWeight: 700, fontSize: '1.05rem', color: '#0B1026', marginBottom: '0.45rem', margin: '0 0 0.45rem 0', lineHeight: 1.4 }}>
+                      {item.title}
+                    </h3>
+
+                    {/* Description: #4B5168 */}
+                    <p style={{ fontSize: '0.9rem', color: '#4B5168', lineHeight: '1.6', margin: 0 }}>
+                      {item.body}
+                    </p>
+
+                    {/* CTA link: #4338CA */}
+                    {item.ctaLabel && (
+                      <div style={{ marginTop: '0.75rem', fontSize: '0.85rem' }}>
+                        <span style={{ color: '#6E7591', marginRight: '6px' }}>Action:</span>
+                        <a
+                          href={item.ctaUrl || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            color: '#4338CA',
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <span>{item.ctaLabel}</span>
+                          <span aria-hidden="true">&rarr;</span>
+                        </a>
+                      </div>
                     )}
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        fontSize: '0.72rem',
-                        fontWeight: 600,
-                        color: item.isActive ? '#34d399' : '#94a3b8',
-                        background: item.isActive ? 'rgba(16,185,129,0.1)' : 'rgba(148,163,184,0.1)',
-                        border: `1px solid ${item.isActive ? 'rgba(16,185,129,0.25)' : 'rgba(148,163,184,0.15)'}`,
-                        borderRadius: '9999px',
-                        padding: '0.2rem 0.6rem',
-                      }}
-                    >
-                      {item.isActive ? <Eye size={11} /> : <EyeOff size={11} />}
-                      {item.isActive ? 'Active' : 'Draft'}
-                    </span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
-                      {new Date(item.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </span>
                   </div>
 
-                  {/* Title */}
-                  <p style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--color-text-primary)', marginBottom: '0.35rem', fontFamily: 'var(--font-display)' }}>
-                    {item.title}
-                  </p>
+                  {/* 40px Icon Buttons with aria-labels */}
+                  <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      onClick={() => toggleField(item.id, 'isPinned', item.isPinned)}
+                      aria-label={item.isPinned ? 'Unpin announcement' : 'Pin announcement to top'}
+                      title={item.isPinned ? 'Unpin' : 'Pin to top'}
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '10px',
+                        border: '1.5px solid #D5D9EC',
+                        background: item.isPinned ? '#FEF3C7' : '#FFFFFF',
+                        color: item.isPinned ? '#92400E' : '#4B5168',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {item.isPinned ? <PinOff size={16} /> : <Pin size={16} />}
+                    </button>
 
-                  {/* Body */}
-                  <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', lineHeight: '1.6', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {item.body}
-                  </p>
+                    <button
+                      type="button"
+                      onClick={() => toggleField(item.id, 'isActive', item.isActive)}
+                      aria-label={item.isActive ? 'Hide announcement' : 'Make announcement active'}
+                      title={item.isActive ? 'Hide' : 'Make active'}
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '10px',
+                        border: '1.5px solid #D5D9EC',
+                        background: item.isActive ? '#EEF1FF' : '#FFFFFF',
+                        color: item.isActive ? '#4338CA' : '#4B5168',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {item.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
 
-                  {/* CTA info */}
-                  {item.ctaLabel && (
-                    <p style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: 'var(--color-text-tertiary)' }}>
-                      CTA: <strong style={{ color: '#60a5fa' }}>{item.ctaLabel}</strong> → {item.ctaUrl}
-                    </p>
-                  )}
-                </div>
-
-                {/* Action Buttons */}
-                <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-                  <button
-                    onClick={() => toggleField(item.id, 'isPinned', item.isPinned)}
-                    title={item.isPinned ? 'Unpin' : 'Pin to top'}
-                    style={{
-                      width: '34px',
-                      height: '34px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--color-border)',
-                      background: item.isPinned ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.04)',
-                      color: item.isPinned ? '#fbbf24' : 'var(--color-text-tertiary)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {item.isPinned ? <PinOff size={15} /> : <Pin size={15} />}
-                  </button>
-
-                  <button
-                    onClick={() => toggleField(item.id, 'isActive', item.isActive)}
-                    title={item.isActive ? 'Deactivate' : 'Activate'}
-                    style={{
-                      width: '34px',
-                      height: '34px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--color-border)',
-                      background: item.isActive ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)',
-                      color: item.isActive ? '#34d399' : 'var(--color-text-tertiary)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {item.isActive ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(item.id, item.title)}
-                    title="Delete permanently"
-                    style={{
-                      width: '34px',
-                      height: '34px',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(239,68,68,0.2)',
-                      background: 'rgba(239,68,68,0.08)',
-                      color: '#f87171',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    <Trash2 size={15} />
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(item.id, item.title)}
+                      aria-label="Delete announcement"
+                      title="Delete announcement"
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '10px',
+                        border: '1.5px solid #FECACA',
+                        background: '#FFFFFF',
+                        color: '#991B1B',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

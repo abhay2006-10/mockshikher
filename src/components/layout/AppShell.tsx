@@ -42,7 +42,11 @@ export default function AppShell({ children, initialUser }: AppShellProps) {
   const isTestRoute = pathname?.startsWith('/test/');
 
   return (
-    <div id="app-root" style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', backgroundColor: 'var(--surface)' }}>
+    <div
+      id="app-root"
+      className={!isTestRoute ? 'has-mobile-bottom-nav' : ''}
+      style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', backgroundColor: 'var(--surface)' }}
+    >
       <Navbar initialUser={initialUser} />
       <main style={{ flex: 1, minWidth: 0 }}>{children}</main>
       {!isTestRoute && <Footer />}
