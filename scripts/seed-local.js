@@ -1,23 +1,64 @@
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
-const { PrismaClient } = require('@prisma/client');
 
-// Safety check: ensure we are NOT accidentally connected to production
+// Load .env or .env.local if not already in process.env
+function loadLocalEnv() {
+  const envPath = path.resolve(__dirname, '../.env.local');
+  const fallbackEnv = path.resolve(__dirname, '../.env');
+  const target = fs.existsSync(envPath) ? envPath : fs.existsSync(fallbackEnv) ? fallbackEnv : null;
+  if (target) {
+    const lines = fs.readFileSync(target, 'utf-8').split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const idx = trimmed.indexOf('=');
+      if (idx !== -1) {
+        const key = trimmed.slice(0, idx).trim();
+        let val = trimmed.slice(idx + 1).trim();
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+          val = val.slice(1, -1);
+        }
+        if (!process.env[key]) {
+          process.env[key] = val;
+        }
+      }
+    }
+  }
+}
+
+loadLocalEnv();
+
+const dbUrl = process.env.DATABASE_URL || '';
+
+// HARD SAFETY CHECK: Refuse to run unless host is strictly localhost or 127.0.0.1
+try {
+  const parsed = new URL(dbUrl);
+  const host = parsed.hostname.toLowerCase();
+  const allowed = ['localhost', '127.0.0.1', '::1'];
+
+  if (!allowed.includes(host)) {
+    console.error('\n❌ FATAL SAFETY ERROR: seed-local.js CANNOT run on non-local database!');
+    console.error(`Detected host: "${host}". Only [localhost, 127.0.0.1] are permitted.`);
+    console.error('Execution aborted to protect cloud/remote databases.\n');
+    process.exit(1);
+  }
+} catch (e) {
+  console.error('\n❌ FATAL: Invalid DATABASE_URL provided. Aborting.', e.message);
+  process.exit(1);
+}
+
+const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-async function runStagingSeed() {
-  console.log('--- MockShikhar Staging Database Seed ---');
+async function runLocalSeed() {
+  console.log('--- MockShikhar Local Database Seed ---');
+  console.log('Connecting to verified local Postgres instance...');
 
-  // Verify DB connection
-  const dbUrl = process.env.DATABASE_URL || '';
-  if (dbUrl.includes('mockshikhar-prod') || (!dbUrl.includes('staging') && !dbUrl.includes('localhost') && !dbUrl.includes('127.0.0.1'))) {
-    console.warn('⚠️ Safety Notice: Please verify that you are running this against your staging Supabase database.');
-  }
+  const rawPassword = process.env.TEST_USER_PASSWORD || 'Test@12345';
+  const passwordHash = await bcrypt.hash(rawPassword, 10);
 
   // 1. Create or upsert 2 test users
-  const passwordHash = await bcrypt.hash('Test@12345', 10);
-
   const testStudent = await prisma.user.upsert({
     where: { email: 'student@test.mockshikhar.com' },
     update: {
@@ -109,10 +150,12 @@ async function runStagingSeed() {
         slug: ex.slug,
         name: ex.name,
         nameHi: ex.nameHi,
+        description: `Mock Test Series for ${ex.name}`,
         category: ex.category,
         price: ex.price,
         totalQuestions: ex.totalQuestions,
         durationMinutes: ex.durationMinutes,
+        difficulty: 'MEDIUM',
         isPopular: ex.isPopular,
       },
     });
@@ -126,7 +169,7 @@ async function runStagingSeed() {
         },
       },
       update: {
-        name: `${exam.name} · Mock 1 (Sample)`,
+        name: `${exam.name} · Mock 1 (Free Sample)`,
         isFree: true,
         isPublished: true,
         totalQuestions: 10,
@@ -135,7 +178,7 @@ async function runStagingSeed() {
       create: {
         examId: exam.id,
         testNumber: 1,
-        name: `${exam.name} · Mock 1 (Sample)`,
+        name: `${exam.name} · Mock 1 (Free Sample)`,
         isFree: true,
         isPublished: true,
         totalQuestions: 10,
@@ -147,48 +190,39 @@ async function runStagingSeed() {
     console.log(`✓ Seeded exam & Mock 1 for: ${exam.name}`);
   }
 
-  // 3. Create a sample announcement for the notice board
+  // 3. Create a local notice board announcement
   try {
-    await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS public.announcements (
-        id text PRIMARY KEY DEFAULT gen_random_uuid()::text,
-        title text NOT NULL,
-        body text NOT NULL,
-        type text NOT NULL DEFAULT 'NEW_TEST',
-        is_pinned boolean NOT NULL DEFAULT false,
-        is_active boolean NOT NULL DEFAULT true,
-        cta_label text,
-        cta_url text,
-        expires_at timestamp with time zone,
-        created_at timestamp with time zone NOT NULL DEFAULT now(),
-        updated_at timestamp with time zone NOT NULL DEFAULT now()
-      );
-    `);
+    const { ensureAnnouncementsTable } = require('../src/lib/announcement-db.ts');
+  } catch {}
 
+  try {
+    const id = 'seed-announcement-1';
     await prisma.$executeRawUnsafe(`
-      INSERT INTO public.announcements (title, body, type, is_pinned, is_active, cta_label, cta_url)
+      INSERT INTO "announcements" ("id", "title", "body", "type", "isPinned", "isActive", "ctaLabel", "ctaUrl", "updatedAt")
       VALUES (
-        '🎯 HP Patwari & Police Constable 2026 Staging Tests Active!',
-        'Staging environment is live for UI verification and test taking.',
-        'NEW_TEST',
+        '${id}',
+        '🎯 HP Patwari & Police Constable 2026 Test Series Live!',
+        'Prepare with updated syllabus, bilingual questions, and instant scorecards.',
+        'NEW_TEST'::"AnnouncementType",
         true,
         true,
         'Explore Tests',
-        '/exams'
+        '/exams',
+        CURRENT_TIMESTAMP
       )
-      ON CONFLICT DO NOTHING;
+      ON CONFLICT ("id") DO NOTHING;
     `);
-    console.log('✓ Staging notice board announcement created');
+    console.log('✓ Notice board announcement created');
   } catch (err) {
-    console.log('Notice board check skipped:', err.message);
+    console.log('Notice board creation note:', err.message);
   }
 
-  console.log('\n✅ Staging database seeding complete!');
-  console.log('Student Account: student@test.mockshikhar.com / Test@12345');
-  console.log('Admin Account: admin@test.mockshikhar.com / Test@12345');
+  console.log('\n✅ Local database seeding complete!');
+  console.log('Student Account: student@test.mockshikhar.com / (configured password)');
+  console.log('Admin Account: admin@test.mockshikhar.com / (configured password)');
 }
 
-runStagingSeed()
+runLocalSeed()
   .catch((e) => {
     console.error('Seed error:', e);
     process.exit(1);

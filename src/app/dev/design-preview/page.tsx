@@ -12,3 +12,4 @@ export const metadata = {
 export default function DesignPreviewPage() {
   return <DesignPreviewClient />;
 }
+
