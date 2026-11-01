@@ -10,4 +10,6 @@ export * from './SectionHeading';
 export * from './Navbar';
 export * from './Footer';
 export * from './HeroParallaxScene';
+export * from './NoticeBoard';
+export * from './ExamSeriesCard';
 

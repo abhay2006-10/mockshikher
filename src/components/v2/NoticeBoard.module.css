@@ -1,0 +1,300 @@
+.section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 20px 24px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 20px 50px -34px rgba(49, 46, 129, 0.45);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.titleGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.iconBox {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--sky);
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.heading {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--success-text);
+  background: var(--success-tint);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 1.6s ease-out infinite;
+}
+
+.viewAllBtn {
+  font-weight: 700;
+  font-size: 15px;
+  padding: 8px 12px;
+  color: var(--primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.viewAllBtn:hover {
+  background: var(--sky);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px 16px;
+  padding: 14px 12px;
+  border: none;
+  border-top: 1px solid #EEF0F8;
+  background: transparent;
+  text-decoration: none;
+  color: var(--ink);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.2s ease, transform 0.2s ease;
+  animation: slidein 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.row:hover {
+  background: var(--sky-2);
+}
+
+.row:hover .arrow {
+  transform: translateX(4px);
+  color: var(--primary-dark);
+}
+
+.date {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate);
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.noticeTitle {
+  flex: 1 1 320px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.newBadge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--amber-text);
+  background: var(--amber-tint);
+  padding: 4px 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.arrow {
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
+  margin-left: auto;
+}
+
+/* Skeleton */
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.skeletonRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+}
+
+.skeletonDate {
+  width: 70px;
+  height: 16px;
+  background: #E8EBF8;
+  border-radius: 4px;
+}
+
+.skeletonTitle {
+  flex: 1;
+  height: 16px;
+  background: #E8EBF8;
+  border-radius: 4px;
+}
+
+.empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--slate);
+  font-size: 15px;
+}
+
+/* Modal */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(11, 16, 38, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.modalBox {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 28px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 24px 60px -20px rgba(11, 16, 38, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: drop 0.25s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: var(--slate);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeBtn:hover {
+  background: var(--sky-2);
+  color: var(--ink);
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.modalBody {
+  font-size: 15px;
+  color: var(--slate);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.modalFooter {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.ctaLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.ctaLink:hover {
+  background: var(--primary-dark);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 720px) {
+  .section {
+    padding: 24px 16px 16px;
+  }
+  .card {
+    padding: 18px;
+    border-radius: 18px;
+  }
+  .noticeTitle {
+    font-size: 15px;
+    white-space: normal;
+  }
+}
+
