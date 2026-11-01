@@ -17,10 +17,22 @@ html {
 }
 
 body {
+  font-family: var(--font-body), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   min-height: 100dvh;
   line-height: 1.6;
+  color: var(--ink, #0B1026);
+  background-color: var(--page, #F6F7FC);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+input, button, textarea, select {
+  font: inherit;
+  font-family: inherit;
+}
+
+:lang(hi), [lang="hi"], .hindi, [data-lang="hi"] {
+  font-family: var(--font-hindi), var(--font-body), system-ui, sans-serif;
 }
 
 #app-root {
@@ -97,7 +109,11 @@ ul, ol {
   --chip-upcoming-text: #3F4460;
 
   /* Font bindings */
-  --font-body: var(--font-plus-jakarta-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-body: var(--font-plus-jakarta-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: var(--font-plus-jakarta-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: var(--font-plus-jakarta-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: var(--font-plus-jakarta-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-jakarta: var(--font-plus-jakarta-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-hindi: var(--font-noto-sans-devanagari), 'Noto Sans Devanagari', sans-serif;
 
   /* Brand Core (Electric Cobalt / Himalayan Azure) */
@@ -142,25 +158,25 @@ ul, ol {
   --color-info-light: rgba(56, 189, 248, 0.14);
   --color-info-border: rgba(56, 189, 248, 0.3);
 
-  /* Neutrals (High-Depth Obsidian Slate) */
-  --color-bg: #080C14;
-  --color-bg-elevated: #0F1523;
-  --color-bg-card: #141C2E;
-  --color-bg-input: #101726;
-  --color-bg-hover: rgba(255, 255, 255, 0.05);
-  --color-surface: #141C2E;
-  --color-surface-hover: #1C273E;
-  --color-border: rgba(255, 255, 255, 0.09);
-  --color-border-hover: rgba(255, 255, 255, 0.18);
-  --color-border-focus: var(--color-primary);
+  /* Neutrals (SHIKHAR CREST Light Theme System) */
+  --color-bg: var(--page, #F6F7FC);
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-card: #FFFFFF;
+  --color-bg-input: #FFFFFF;
+  --color-bg-hover: #F5F6FF;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F5F6FF;
+  --color-border: #E3E6F5;
+  --color-border-hover: #D5D9EC;
+  --color-border-focus: #4338CA;
 
   /* High Contrast Typography */
-  --color-text: #F8FAFC;
-  --color-text-primary: #F8FAFC;
-  --color-text-secondary: #94A3B8;
-  --color-text-tertiary: #64748B;
-  --color-text-muted: #64748B;
-  --color-text-inverse: #080C14;
+  --color-text: #0B1026;
+  --color-text-primary: #0B1026;
+  --color-text-secondary: #4B5168;
+  --color-text-tertiary: #6E7591;
+  --color-text-muted: #6E7591;
+  --color-text-inverse: #FFFFFF;
 
   /* Premium Gradients */
   --gradient-primary: linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #60A5FA 100%);
@@ -255,27 +271,22 @@ ul, ol {
   --container-2xl: 1440px;
 
   /* Aliases — referenced in component CSS modules */
-  --color-bg-primary: #141C2E;
-  --color-bg-secondary: #0F1523;
-  --color-bg-tertiary: #192338;
-  --color-border-subtle: rgba(255, 255, 255, 0.07);
-  --font-heading: var(--font-display);
-  --font-body: var(--font-sans);
+  --color-bg-primary: #FFFFFF;
+  --color-bg-secondary: #F8F9FE;
+  --color-bg-tertiary: #EEF1FF;
+  --color-border-subtle: #EEF1FF;
+  
   --max-w-6xl: 1240px;
   --max-w-4xl: 940px;
   --max-w-2xl: 680px;
 }
 
-/* ---------- Base Body Styles ---------- */
+/* ---------- Base Body Styles (Light Theme Default) ---------- */
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-body), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: var(--text-base);
-  color: var(--color-text);
-  background-color: var(--color-bg);
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -15%, rgba(37, 99, 235, 0.12) 0%, transparent 60%),
-    radial-gradient(circle at 90% 90%, rgba(245, 158, 11, 0.04) 0%, transparent 45%);
-  background-attachment: fixed;
+  color: var(--ink, #0B1026);
+  background-color: var(--page, #F6F7FC);
 }
 
 /* ---------- Typography ---------- */

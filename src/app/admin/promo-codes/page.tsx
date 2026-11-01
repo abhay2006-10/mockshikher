@@ -284,7 +284,7 @@ export default function AdminPromoCodesPage() {
             <span>Total Promo Codes</span>
             <Tag size={18} color="#818CF8" />
           </div>
-          <div className={styles.adminStatVal} style={{ color: '#FFFFFF' }}>
+          <div className={styles.adminStatVal} style={{ color: 'var(--ink, #0B1026)' }}>
             {stats?.totalCount ?? promoCodes.length}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>

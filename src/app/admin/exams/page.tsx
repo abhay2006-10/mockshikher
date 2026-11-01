@@ -760,7 +760,7 @@ export default function AdminExamsPage() {
             padding: '0.85rem 1.25rem',
             borderRadius: '8px',
             background: toast.type === 'success' ? '#065F46' : '#991B1B',
-            color: '#FFFFFF',
+            color: 'var(--ink, #0B1026)',
             border: `1px solid ${toast.type === 'success' ? '#10B981' : '#EF4444'}`,
             boxShadow: '0 10px 25px rgba(0,0,0,0.4)',
             display: 'flex',
@@ -837,7 +837,7 @@ export default function AdminExamsPage() {
           }}
         >
           <Layers size={40} color="#F5B301" style={{ marginBottom: '1rem' }} />
-          <h3 style={{ color: '#fff', marginBottom: '0.5rem' }}>No Exam Series Found</h3>
+          <h3 style={{ color: 'var(--ink, #0B1026)', marginBottom: '0.5rem' }}>No Exam Series Found</h3>
           <Button variant="primary" size="md" onClick={openAddExam}>
             Add New Exam Series
           </Button>
@@ -984,7 +984,7 @@ export default function AdminExamsPage() {
                       </td>
                       <td data-label="Exam Series">
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                          <strong style={{ color: '#fff', fontSize: '0.95rem' }}>{exam.name}</strong>
+                          <strong style={{ color: 'var(--ink, #0B1026)', fontSize: '0.95rem' }}>{exam.name}</strong>
                           <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
                             /{exam.slug}
                           </span>
@@ -1187,7 +1187,7 @@ export default function AdminExamsPage() {
                                         }}
                                       >
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                          <span style={{ fontWeight: 700, color: '#fff', fontSize: '0.9rem' }}>
+                                          <span style={{ fontWeight: 700, color: 'var(--ink, #0B1026)', fontSize: '0.9rem' }}>
                                             #{test.testNumber} &bull; {test.name}
                                           </span>
                                           {test.isFree ? (
@@ -1217,21 +1217,21 @@ export default function AdminExamsPage() {
                                           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
                                             <span>
                                               Dur:{' '}
-                                              <strong style={{ color: '#fff' }}>
+                                              <strong style={{ color: 'var(--ink, #0B1026)' }}>
                                                 {test.durationOverride ? `${test.durationOverride}m (ovr)` : `${exam.durationMinutes}m`}
                                               </strong>
                                             </span>
                                             <span style={{ margin: '0 0.35rem' }}>|</span>
                                             <span>
                                               Marks:{' '}
-                                              <strong style={{ color: '#fff' }}>
+                                              <strong style={{ color: 'var(--ink, #0B1026)' }}>
                                                 {test.marksOverride ? `+${test.marksOverride} (ovr)` : `+${exam.marksPerQuestion}`}
                                               </strong>
                                             </span>
                                             <span style={{ margin: '0 0.35rem' }}>|</span>
                                             <span>
                                               Neg:{' '}
-                                              <strong style={{ color: '#fff' }}>
+                                              <strong style={{ color: 'var(--ink, #0B1026)' }}>
                                                 {test.negativeMarksOverride ? `-${test.negativeMarksOverride} (ovr)` : `-${exam.negativeMarking}`}
                                               </strong>
                                             </span>
@@ -1314,7 +1314,7 @@ export default function AdminExamsPage() {
                                       >
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                                           <div>
-                                            <strong style={{ color: '#fff', fontSize: '0.9rem' }}>
+                                            <strong style={{ color: 'var(--ink, #0B1026)', fontSize: '0.9rem' }}>
                                               {subject.name}
                                             </strong>
                                             {subject.nameHi && (
@@ -1652,7 +1652,7 @@ export default function AdminExamsPage() {
 
                 {/* Status Toggle (Active vs Archived) */}
                 <div style={{ background: 'var(--color-bg-secondary)', padding: '0.85rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', display: 'block', marginBottom: '0.4rem' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--ink, #0B1026)', display: 'block', marginBottom: '0.4rem' }}>
                     Exam Status
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', color: editArchived ? '#F59E0B' : '#10B981', fontWeight: 600 }}>
@@ -1728,7 +1728,7 @@ export default function AdminExamsPage() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }} className="formGrid">
                   <div style={{ background: 'var(--color-bg-secondary)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fff', display: 'block', marginBottom: '0.35rem' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink, #0B1026)', display: 'block', marginBottom: '0.35rem' }}>
                       Pricing
                     </label>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
@@ -1745,7 +1745,7 @@ export default function AdminExamsPage() {
                   </div>
 
                   <div style={{ background: 'var(--color-bg-secondary)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fff', display: 'block', marginBottom: '0.35rem' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink, #0B1026)', display: 'block', marginBottom: '0.35rem' }}>
                       Publishing State
                     </label>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
@@ -1850,7 +1850,7 @@ export default function AdminExamsPage() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }} className="formGrid">
                   <div style={{ background: 'var(--color-bg-secondary)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fff', display: 'block', marginBottom: '0.35rem' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink, #0B1026)', display: 'block', marginBottom: '0.35rem' }}>
                       Pricing
                     </label>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
@@ -1867,7 +1867,7 @@ export default function AdminExamsPage() {
                   </div>
 
                   <div style={{ background: 'var(--color-bg-secondary)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fff', display: 'block', marginBottom: '0.35rem' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink, #0B1026)', display: 'block', marginBottom: '0.35rem' }}>
                       Publishing State
                     </label>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>

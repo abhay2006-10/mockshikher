@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { MountainLogo } from './Icons';
+import { MountainLogo, WhatsAppIcon, InstagramIcon } from './Icons';
 import styles from './Footer.module.css';
 
 export function Footer() {
@@ -9,78 +9,62 @@ export function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>
-        <div className={styles.topGrid}>
-          {/* Brand Column */}
-          <div className={styles.brandCol}>
-            <div className={styles.brandTitle}>
-              <MountainLogo size={30} />
-              <span>MockShikhar</span>
-            </div>
-            <p className={styles.brandDesc}>
-              Himachal Pradesh State Examination Preparation. Ad-free, HP-focused mock tests with performance analysis.
-            </p>
-          </div>
+        {/* Row 1: Brand (Left) · Legal & Contact Links (Center) · Social Icon Buttons (Right) */}
+        <div className={styles.mainRow}>
+          <Link href="/" className={styles.brand} aria-label="MockShikhar Home">
+            <MountainLogo size={24} />
+            <span className={styles.brandName}>MockShikhar</span>
+          </Link>
 
-          {/* Platform Links */}
-          <div>
-            <div className={styles.colTitle}>Platform</div>
-            <div className={styles.linkList}>
-              <Link href="/exams" className={styles.linkItem}>
-                All Test Series
-              </Link>
-              <Link href="/exams/hp-patwari" className={styles.linkItem}>
-                HP Patwari 2026
-              </Link>
-              <Link href="/exams/hp-police-constable" className={styles.linkItem}>
-                HP Police Constable
-              </Link>
-              <Link href="/exams/hp-high-court" className={styles.linkItem}>
-                HP High Court / Judiciary
-              </Link>
-              <Link href="/exams/hp-tet" className={styles.linkItem}>
-                HP TET Series
-              </Link>
-              <Link href="/dashboard" className={styles.linkItem}>
-                Student Dashboard
-              </Link>
-            </div>
-          </div>
+          <nav className={styles.navLinks} aria-label="Footer Navigation">
+            <Link href="/privacy" className={styles.navLink}>
+              Privacy Policy
+            </Link>
+            <span className={styles.linkDot} aria-hidden="true">&bull;</span>
+            <Link href="/terms" className={styles.navLink}>
+              Terms
+            </Link>
+            <span className={styles.linkDot} aria-hidden="true">&bull;</span>
+            <Link href="/refund-policy" className={styles.navLink}>
+              Refund Policy
+            </Link>
+            <span className={styles.linkDot} aria-hidden="true">&bull;</span>
+            <a href="mailto:mockshikhar@gmail.com" className={styles.navLink}>
+              Contact
+            </a>
+          </nav>
 
-          {/* Legal & Support Links */}
-          <div>
-            <div className={styles.colTitle}>Legal & Support</div>
-            <div className={styles.linkList}>
-              <Link href="/privacy" className={styles.linkItem}>
-                Privacy Policy
-              </Link>
-              <Link href="/terms" className={styles.linkItem}>
-                Terms of Service
-              </Link>
-              <Link href="/refund-policy" className={styles.linkItem}>
-                Refund Policy
-              </Link>
-              <a href="mailto:support@mockshikhar.com" className={styles.linkItem}>
-                support@mockshikhar.com
-              </a>
-              <a href="https://whatsapp.com/channel/0029Va5I0zx0VycNW93eqO2P" target="_blank" rel="noopener noreferrer" className={styles.linkItem}>
-                WhatsApp Channel
-              </a>
-              <a href="https://www.instagram.com/mockshikhar" target="_blank" rel="noopener noreferrer" className={styles.linkItem}>
-                Instagram (@mockshikhar)
-              </a>
-            </div>
+          <div className={styles.socialIcons}>
+            <a
+              href="https://whatsapp.com/channel/0029Va5I0zx0VycNW93eqO2P"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.socialBtn}
+              aria-label="Join MockShikhar WhatsApp Channel"
+              title="Join WhatsApp Channel"
+            >
+              <WhatsAppIcon size={18} />
+            </a>
+            <a
+              href="https://www.instagram.com/mockshikhar"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.socialBtn}
+              aria-label="Follow MockShikhar on Instagram"
+              title="Follow on Instagram"
+            >
+              <InstagramIcon size={18} />
+            </a>
           </div>
         </div>
 
-        {/* Bottom Copyright */}
-        <div className={styles.bottomBar}>
-          <div>
-            &copy; {currentYear} MockShikhar. All rights reserved. Made for Himachal Pradesh aspirants.
-          </div>
-          <div>Bilingual &bull; Instant Analysis &bull; Real Exam Pattern</div>
+        {/* Row 2: Compact Centered Muted Copyright */}
+        <div className={styles.bottomRow}>
+          <p className={styles.copyright}>
+            &copy; {currentYear} MockShikhar. Made for Himachal Pradesh aspirants.
+          </p>
         </div>
       </div>
     </footer>
   );
 }
-

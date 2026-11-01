@@ -191,74 +191,132 @@
 /* Language Selection */
 .langRow {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 14px 18px;
   border-radius: 14px;
-  background: var(--sky-2);
-  border: 1px solid var(--border);
+  background: var(--sky-2, #F5F6FF);
+  border: 1px solid var(--border, #E3E6F5);
 }
 
 .langLabel {
   font-size: 14.5px;
   font-weight: 700;
-  color: var(--ink);
+  color: #0B1026;
 }
 
 .langPillGroup {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .langPill {
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: 1.5px solid var(--border);
+  min-height: 44px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1.5px solid #D5D9EC;
   background: #FFFFFF;
-  color: var(--slate);
+  color: #0B1026;
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.18s ease;
 }
 
-.langPillActive {
-  background: var(--primary);
-  border-color: var(--primary);
+.langPill:hover {
+  background: #F5F6FF;
+}
+
+.langPillActive,
+.langPillActive:hover {
+  background: #4338CA;
+  border-color: #4338CA;
   color: #FFFFFF;
 }
 
-/* Declaration Checkbox */
+.hindiLabel {
+  font-family: var(--font-hindi), 'Noto Sans Devanagari', sans-serif;
+  font-weight: 700;
+}
+
+/* Custom 22px Declaration Checkbox */
 .declarationRow {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
   border-radius: 14px;
   background: #F8F9FE;
   border: 1.5px solid #DDE2FA;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.18s ease, background 0.18s ease;
 }
 
-.checkboxInput {
-  width: 20px;
-  height: 20px;
-  margin-top: 2px;
-  cursor: pointer;
+.declarationRow:hover {
+  border-color: #C7D2FE;
+  background: #F4F6FF;
+}
+
+.customCheckbox {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hiddenCheckbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
+.checkboxBox {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid #4338CA;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+}
+
+.checkboxChecked {
+  background: #4338CA;
+  border-color: #4338CA;
+}
+
+.checkIcon {
+  width: 14px;
+  height: 14px;
 }
 
 .declarationText {
   font-size: 14px;
   font-weight: 600;
-  color: var(--ink);
+  color: #0B1026;
   line-height: 1.5;
 }
 
-/* Start Button Row */
+/* Start Button & Helper Line */
 .actionRow {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 8px;
   padding-top: 8px;
 }
 
@@ -269,9 +327,10 @@
   gap: 10px;
   width: 100%;
   max-width: 380px;
+  min-height: 48px;
   padding: 16px 28px;
   border-radius: 14px;
-  background: var(--primary);
+  background: #4338CA;
   color: #FFFFFF;
   font-weight: 800;
   font-size: 16px;
@@ -283,7 +342,7 @@
 }
 
 .startTestBtn:hover:not(:disabled) {
-  background: var(--primary-dark);
+  background: var(--primary-dark, #312E81);
   transform: translateY(-2px);
   box-shadow: 0 14px 30px -10px rgba(67, 56, 202, 0.65);
 }
@@ -301,14 +360,24 @@
 }
 
 .startTestBtn:disabled {
-  opacity: 0.55;
+  opacity: 1;
+  background: #E3E6F5;
+  color: #4B5168;
   cursor: not-allowed;
   box-shadow: none;
-  background: #8F97CA;
+  transform: none;
 }
 
 .startTestBtn:disabled::after {
   display: none;
+}
+
+.startHelperLine {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4B5168;
+  margin: 0;
+  text-align: center;
 }
 
 @media (max-width: 720px) {

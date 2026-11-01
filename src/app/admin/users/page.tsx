@@ -471,7 +471,7 @@ export default function AdminStudentActivityPage() {
                 href="/auth/login?callbackUrl=/admin/users"
                 style={{
                   background: '#ef4444',
-                  color: '#ffffff',
+                  color: 'var(--ink, #0B1026)',
                   padding: '0.45rem 1rem',
                   borderRadius: '6px',
                   fontSize: '0.82rem',

@@ -181,7 +181,7 @@ export default async function AdminPage() {
       </div>
 
       {/* Quick Action Cards */}
-      <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '1rem' }}>
+      <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--ink, #0B1026)', marginBottom: '1rem' }}>
         Admin Management Hub
       </h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '2.5rem' }} className="formGrid">
@@ -199,7 +199,7 @@ export default async function AdminPage() {
             }}
           >
             <div style={{ color: action.color }}>{action.icon}</div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
+            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--ink, #0B1026)', margin: 0 }}>
               {action.title}
             </h4>
             <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.5 }}>
@@ -226,7 +226,7 @@ export default async function AdminPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <History size={18} color="#F5B301" />
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--ink, #0B1026)', margin: 0 }}>
               Recent Audit Log Entries (Database)
             </h3>
           </div>

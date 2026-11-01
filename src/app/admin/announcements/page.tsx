@@ -671,7 +671,7 @@ export default function AdminAnnouncementsPage() {
                   fontSize: '0.875rem',
                   fontWeight: 700,
                   cursor: isSaving ? 'not-allowed' : 'pointer',
-                  color: '#fff',
+                  color: 'var(--ink, #0B1026)',
                   background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-700) 100%)',
                   border: 'none',
                   opacity: isSaving ? 0.7 : 1,

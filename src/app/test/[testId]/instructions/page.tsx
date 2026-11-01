@@ -300,9 +300,11 @@ export default function TestInstructionsPage() {
         {/* Language Selection */}
         <div className={styles.langRow}>
           <span className={styles.langLabel}>Default Question Language:</span>
-          <div className={styles.langPillGroup}>
+          <div className={styles.langPillGroup} role="radiogroup" aria-label="Default Question Language">
             <button
               type="button"
+              role="radio"
+              aria-checked={selectedLanguage === 'en'}
               onClick={() => setSelectedLanguage('en')}
               className={`${styles.langPill} ${selectedLanguage === 'en' ? styles.langPillActive : ''}`}
             >
@@ -310,10 +312,12 @@ export default function TestInstructionsPage() {
             </button>
             <button
               type="button"
+              role="radio"
+              aria-checked={selectedLanguage === 'hi'}
               onClick={() => setSelectedLanguage('hi')}
               className={`${styles.langPill} ${selectedLanguage === 'hi' ? styles.langPillActive : ''}`}
             >
-              हिन्दी (Hindi)
+              <span className={styles.hindiLabel}>हिन्दी</span> (Hindi)
             </button>
           </div>
         </div>
@@ -321,12 +325,21 @@ export default function TestInstructionsPage() {
         {/* Declaration Checkbox */}
         {!isEmpty && (
           <label className={styles.declarationRow}>
-            <input
-              type="checkbox"
-              className={styles.checkboxInput}
-              checked={hasAgreed}
-              onChange={(e) => setHasAgreed(e.target.checked)}
-            />
+            <span className={styles.customCheckbox}>
+              <input
+                type="checkbox"
+                className={styles.hiddenCheckbox}
+                checked={hasAgreed}
+                onChange={(e) => setHasAgreed(e.target.checked)}
+              />
+              <span className={`${styles.checkboxBox} ${hasAgreed ? styles.checkboxChecked : ''}`}>
+                {hasAgreed && (
+                  <svg viewBox="0 0 16 16" fill="none" className={styles.checkIcon}>
+                    <path d="M3.5 8.5L6.5 11.5L12.5 4.5" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </span>
+            </span>
             <span className={styles.declarationText}>
               I have read and understood all the exam instructions and rules outlined above. I am ready to begin the test.
             </span>
@@ -344,6 +357,9 @@ export default function TestInstructionsPage() {
             <span>Start Test Now</span>
             <ArrowRight size={18} />
           </button>
+          {!hasAgreed && !isEmpty && (
+            <p className={styles.startHelperLine}>Tick the box above to start</p>
+          )}
         </div>
       </section>
     </main>

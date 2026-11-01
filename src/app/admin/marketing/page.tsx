@@ -171,7 +171,7 @@ export default function AdminMarketingPage() {
       >
         <ShieldAlert size={28} color="#60a5fa" style={{ flexShrink: 0 }} />
         <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
-          <strong style={{ color: '#fff', display: 'block', marginBottom: '0.2rem' }}>
+          <strong style={{ color: 'var(--ink, #0B1026)', display: 'block', marginBottom: '0.2rem' }}>
             Privacy & Anti-Spam Policy
           </strong>
           No automated messages are sent by this system. Only export and contact students who have given explicit consent for WhatsApp course announcements. Students can update their opt-out status anytime in their profile.
@@ -186,7 +186,7 @@ export default function AdminMarketingPage() {
               <span>Total Students</span>
               <Users size={18} color="#94A3B8" />
             </div>
-            <div className={styles.adminStatVal} style={{ color: '#FFFFFF' }}>
+            <div className={styles.adminStatVal} style={{ color: 'var(--ink, #0B1026)' }}>
               {stats.totalStudents}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
@@ -327,7 +327,7 @@ export default function AdminMarketingPage() {
               students.map((s) => (
                 <tr key={s.id}>
                   <td data-label="Student Name">
-                    <strong style={{ color: '#fff' }}>{s.name}</strong>
+                    <strong style={{ color: 'var(--ink, #0B1026)' }}>{s.name}</strong>
                   </td>
                   <td data-label="Mobile Number">
                     {s.hasPhone ? (
