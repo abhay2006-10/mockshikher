@@ -125,6 +125,80 @@ function TestAttemptInner() {
   useEffect(() => {
     let isMounted = true;
 
+    if (searchParams?.get('preview') === 'true') {
+      const mockTest: TestMeta = {
+        id: testId || 'mock-1',
+        name: 'HP Patwari · Full Mock 1',
+        testNumber: 1,
+        isFree: true,
+        totalQuestions: 10,
+        durationMinutes: 90,
+        totalMarks: 100,
+        negativeMarksPerQuestion: 0.25,
+        marksPerQuestion: 1,
+      };
+      const mockQs: StudentQuestion[] = [
+        {
+          id: 'q-1',
+          mockTestId: testId || 'mock-1',
+          questionNumber: 1,
+          questionText: "Which present-day river was known as 'Vipasha' in the Vedic period?",
+          questionTextHi: "वैदिक काल में किस वर्तमान नदी को 'विपाशा' के नाम से जाना जाता था?",
+          marks: 1,
+          negativeMarks: 0.25,
+          difficulty: 'MEDIUM',
+          subjectId: 'sub-1',
+          subjectName: 'HP GK',
+          subjectNameHi: 'हिमाचल सामान्य ज्ञान',
+          topicId: 'top-1',
+          topicName: 'Rivers & Geography',
+          topicNameHi: 'नदियाँ और भूगोल',
+          options: [
+            { id: 'opt-1', label: 'A', text: 'Beas', textHi: 'ब्यास' },
+            { id: 'opt-2', label: 'B', text: 'Ravi', textHi: 'रावी' },
+            { id: 'opt-3', label: 'C', text: 'Chenab', textHi: 'चेनाब' },
+            { id: 'opt-4', label: 'D', text: 'Satluj', textHi: 'सतलुज' },
+          ],
+        },
+        {
+          id: 'q-2',
+          mockTestId: testId || 'mock-1',
+          questionNumber: 2,
+          questionText: 'Which district of Himachal Pradesh is the largest by geographic area?',
+          questionTextHi: 'भौगोलिक क्षेत्रफल की दृष्टि से हिमाचल प्रदेश का सबसे बड़ा जिला कौन सा है?',
+          marks: 1,
+          negativeMarks: 0.25,
+          difficulty: 'EASY',
+          subjectId: 'sub-1',
+          subjectName: 'HP GK',
+          subjectNameHi: 'हिमाचल सामान्य ज्ञान',
+          topicId: 'top-2',
+          topicName: 'District Profiles',
+          topicNameHi: 'जिला विवरण',
+          options: [
+            { id: 'opt-21', label: 'A', text: 'Kinnaur', textHi: 'किन्नौर' },
+            { id: 'opt-22', label: 'B', text: 'Lahaul and Spiti', textHi: 'लाहौल और स्पीति' },
+            { id: 'opt-23', label: 'C', text: 'Chamba', textHi: 'चंबा' },
+            { id: 'opt-24', label: 'D', text: 'Kangra', textHi: 'कांगड़ा' },
+          ],
+        },
+      ];
+      setTest(mockTest);
+      setQuestions(mockQs);
+      setAttemptId('preview-attempt-1');
+      setTimeLeft(5240);
+      setIsTimerInitialized(true);
+      setAnswers({
+        'q-1': { selectedOption: 'A', status: 'ANSWERED', timeSpent: 30 },
+        'q-2': { selectedOption: null, status: 'NOT_ANSWERED', timeSpent: 10 },
+      });
+      if (searchParams?.get('palette') === 'open') {
+        setIsMobilePaletteOpen(true);
+      }
+      setIsLoading(false);
+      return;
+    }
+
     const loadQuestionsAndAttempt = async () => {
       setLoadError(null);
 

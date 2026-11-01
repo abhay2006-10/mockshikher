@@ -69,6 +69,103 @@ function TestResultContent() {
   useEffect(() => {
     let isMounted = true;
 
+    if (searchParams?.get('preview') === 'true') {
+      setResult({
+        attemptId: 'preview-attempt-1',
+        testId: testId || 'mock-1',
+        testName: 'HP Patwari · Mock 1',
+        examName: 'HP Patwari Exam',
+        examSlug: 'hp-patwari',
+        submittedAt: new Date().toISOString(),
+        isAutoSubmit: false,
+        totalQuestions: 100,
+        correctCount: 78,
+        wrongCount: 16,
+        unansweredCount: 6,
+        score: 74,
+        totalPossibleMarks: 100,
+        percentage: 74,
+        accuracy: 83,
+        timeTaken: 4320,
+        questionResults: [
+          {
+            questionId: 'q-1',
+            questionNumber: 1,
+            questionText: "Which present-day river was known as 'Vipasha' in the Vedic period?",
+            questionTextHi: "वैदिक काल में किस वर्तमान नदी को 'विपाशा' के नाम से जाना जाता था?",
+            subjectId: 'sub-1',
+            subjectName: 'HP GK',
+            topicName: 'Rivers & Geography',
+            options: [
+              { id: 'opt-1', label: 1, text: 'Beas', textHi: 'ब्यास' },
+              { id: 'opt-2', label: 2, text: 'Ravi', textHi: 'रावी' },
+              { id: 'opt-3', label: 3, text: 'Chenab', textHi: 'चेनाब' },
+              { id: 'opt-4', label: 4, text: 'Satluj', textHi: 'सतलुज' },
+            ],
+            userAnswer: 1,
+            correctOption: 1,
+            isCorrect: true,
+            isAnswered: true,
+            marks: 1,
+            negativeMarks: 0.25,
+            explanation: 'Beas was known as Arjikiya in the Rigveda and Vipasha in later Sanskrit literature.',
+            explanationHi: 'ब्यास को ऋग्वेद में अर्जिकिया और बाद के संस्कृत साहित्य में विपाशा के नाम से जाना जाता था।',
+            timeSpent: 45,
+          },
+          {
+            questionId: 'q-2',
+            questionNumber: 2,
+            questionText: 'Which district of Himachal Pradesh is the largest by geographic area?',
+            questionTextHi: 'भौगोलिक क्षेत्रफल की दृष्टि से हिमाचल प्रदेश का सबसे बड़ा जिला कौन सा है?',
+            subjectId: 'sub-1',
+            subjectName: 'HP GK',
+            topicName: 'District Geography',
+            options: [
+              { id: 'opt-21', label: 1, text: 'Kinnaur', textHi: 'किन्नौर' },
+              { id: 'opt-22', label: 2, text: 'Lahaul and Spiti', textHi: 'लाहौल और स्पीति' },
+              { id: 'opt-23', label: 3, text: 'Chamba', textHi: 'चंबा' },
+              { id: 'opt-24', label: 4, text: 'Kangra', textHi: 'कांगड़ा' },
+            ],
+            userAnswer: 1,
+            correctOption: 2,
+            isCorrect: false,
+            isAnswered: true,
+            marks: 1,
+            negativeMarks: 0.25,
+            explanation: 'Lahaul and Spiti is the largest district covering 13,835 sq km (24.85% of total area).',
+            explanationHi: 'लाहौल और स्पीति 13,835 वर्ग किमी क्षेत्रफल के साथ सबसे बड़ा जिला है।',
+            timeSpent: 30,
+          },
+          {
+            questionId: 'q-3',
+            questionNumber: 3,
+            questionText: 'In which year did Himachal Pradesh achieve full statehood?',
+            questionTextHi: 'हिमाचल प्रदेश को पूर्ण राज्य का दर्जा किस वर्ष प्राप्त हुआ था?',
+            subjectId: 'sub-2',
+            subjectName: 'General Knowledge',
+            topicName: 'Modern History',
+            options: [
+              { id: 'opt-31', label: 1, text: '1948', textHi: '1948' },
+              { id: 'opt-32', label: 2, text: '1956', textHi: '1956' },
+              { id: 'opt-33', label: 3, text: '1971', textHi: '1971' },
+              { id: 'opt-34', label: 4, text: '1966', textHi: '1966' },
+            ],
+            userAnswer: null,
+            correctOption: 3,
+            isCorrect: false,
+            isAnswered: false,
+            marks: 1,
+            negativeMarks: 0.25,
+            explanation: 'Himachal Pradesh became the 18th state of India on 25 January 1971.',
+            explanationHi: '25 जनवरी 1971 को हिमाचल प्रदेश भारत का 18वां राज्य बना।',
+            timeSpent: 15,
+          },
+        ],
+      });
+      setIsLoading(false);
+      return;
+    }
+
     async function loadResultFromDb() {
       setIsLoading(true);
       setError(null);

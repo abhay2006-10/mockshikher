@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Play, AlertCircle } from '@/components/v2/Icons';
 import { Chip } from '@/components/v2/Chip';
@@ -25,7 +25,9 @@ interface TestInfo {
 export default function TestInstructionsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const testId = params?.testId as string;
+  const isPreview = searchParams?.get('preview') === 'true';
 
   const [test, setTest] = useState<TestInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +42,25 @@ export default function TestInstructionsPage() {
   useEffect(() => {
     let isMounted = true;
     if (!testId) return;
+
+    if (isPreview) {
+      setTest({
+        id: testId,
+        name: 'HP Patwari 2026 · Full Simulation Mock 1',
+        testNumber: 1,
+        totalQuestions: 100,
+        durationMinutes: 90,
+        totalMarks: 100,
+        negativeMarksPerQuestion: 0.25,
+        marksPerQuestion: 1,
+        isFree: true,
+        examName: 'HP Patwari Exam',
+        examSlug: 'hp-patwari',
+        category: 'Revenue Department',
+      });
+      setIsLoading(false);
+      return;
+    }
 
     const loadMeta = async () => {
       try {
