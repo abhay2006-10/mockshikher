@@ -531,9 +531,9 @@ function TestAttemptInner() {
   // Loading state
   if (isLoading) {
     return (
-      <div style={{ padding: '4rem 1rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-        <RefreshCw size={32} style={{ margin: '0 auto 1rem', display: 'block' }} />
-        <p>Loading test questions from database...</p>
+      <div style={{ padding: '6rem 1rem', textAlign: 'center', color: '#4B5168', fontFamily: "var(--font-jakarta, 'Plus Jakarta Sans', system-ui, sans-serif)" }}>
+        <RefreshCw size={36} style={{ margin: '0 auto 1.25rem', display: 'block', animation: 'v2-spin 1s linear infinite' }} />
+        <p style={{ fontWeight: 600, fontSize: '15px' }}>Loading test questions from database...</p>
       </div>
     );
   }
@@ -541,12 +541,12 @@ function TestAttemptInner() {
   // Error state
   if (loadError || !test || questions.length === 0) {
     return (
-      <div style={{ maxWidth: '600px', margin: '4rem auto', padding: '2rem', textAlign: 'center', background: 'var(--color-bg-card, #1e293b)', borderRadius: '12px', border: '1px solid var(--color-border, #334155)' }}>
-        <AlertCircle size={48} color="#ef4444" style={{ margin: '0 auto 1rem', display: 'block' }} />
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>
+      <div style={{ maxWidth: '580px', margin: '5rem auto', padding: '2.5rem', textAlign: 'center', background: '#FFFFFF', borderRadius: '20px', border: '1px solid #E3E6F5', boxShadow: '0 8px 30px -12px rgba(11, 16, 38, 0.08)', fontFamily: "var(--font-jakarta, 'Plus Jakarta Sans', system-ui, sans-serif)" }}>
+        <AlertCircle size={44} color="#EF4444" style={{ margin: '0 auto 1rem', display: 'block' }} />
+        <h2 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.5rem', color: '#0B1026' }}>
           {loadError ? 'Failed to Load Questions' : 'No Questions Available'}
         </h2>
-        <p style={{ color: 'var(--color-text-secondary, #94a3b8)', marginBottom: '1.5rem' }}>
+        <p style={{ color: '#4B5168', marginBottom: '1.5rem', fontSize: '14.5px', lineHeight: 1.5 }}>
           {loadError || 'No questions have been added to this test yet. Please contact your administrator.'}
         </p>
         <Button variant="primary" size="md" onClick={() => router.back()}>
