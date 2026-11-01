@@ -35,6 +35,7 @@ export function Navbar({ initialUser }: NavbarProps) {
   const { data: session, status } = useSession();
 
   // Active user: prioritize client session, fall back to server initialUser
+  const [isPreviewUser, setIsPreviewUser] = useState(false);
   const user = session?.user
     ? {
         name: session.user.name || 'Student',
@@ -42,6 +43,8 @@ export function Navbar({ initialUser }: NavbarProps) {
         role: (session.user as any).role || 'USER',
         image: session.user.image,
       }
+    : isPreviewUser
+    ? { name: 'Abhay Verma', email: 'abhayverm24@gmail.com', role: 'STUDENT' }
     : initialUser;
 
   const isLoggedIn = !!user;
@@ -57,6 +60,23 @@ export function Navbar({ initialUser }: NavbarProps) {
   const [authModalTab, setAuthModalTab] = useState<AuthModalTab>('login');
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // URL query hooks for automated preview screenshots
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const search = window.location.search;
+      if (search.includes('previewUser=true')) {
+        setIsPreviewUser(true);
+      }
+      if (search.includes('dropdown=open')) {
+        setIsPreviewUser(true);
+        setDropdownOpen(true);
+      }
+      if (search.includes('drawer=open')) {
+        setMobileMenuOpen(true);
+      }
+    }
+  }, [pathname]);
 
   // Close menus on route change
   useEffect(() => {
