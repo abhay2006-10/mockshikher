@@ -15,10 +15,13 @@ import {
   LogOutIcon,
   HomeIcon,
   GridIcon,
+  WhatsAppIcon,
+  InstagramIcon,
 } from './Icons';
 import AuthModal, { AuthModalTab } from '@/components/ui/AuthModal';
 import { NotificationBell, NotificationDrawer } from '@/components/common/NotificationCenter';
 import styles from './Navbar.module.css';
+import { WHATSAPP_CHANNEL_URL, INSTAGRAM_URL, INSTAGRAM_HANDLE } from '@/config/social';
 
 interface NavbarUser {
   name: string;

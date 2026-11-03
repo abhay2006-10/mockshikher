@@ -371,6 +371,20 @@
   color: var(--ink);
 }
 
+.channelHandle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #9D174D;
+  margin-top: -2px;
+}
+
+.channelSub {
+  font-size: 13px;
+  font-weight: 700;
+  color: #166534;
+  margin-top: -2px;
+}
+
 .channelDesc {
   font-size: 14px;
   color: var(--slate);
@@ -594,5 +608,79 @@
   }
   .helpSection {
     padding: 0 16px 64px !important;
+  }
+}
+
+
+/* ================== KEYFRAME ANIMATIONS (SCOPED) ================== */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 620;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes shine {
+  0% {
+    left: -60%;
+  }
+  60%, 100% {
+    left: 130%;
+  }
+}
+
+@keyframes ringwa {
+  0% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 12px rgba(22, 163, 74, 0);
+  }
+}
+
+@keyframes ringig {
+  0% {
+    box-shadow: 0 0 0 0 rgba(219, 39, 119, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 12px rgba(219, 39, 119, 0);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 25%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroHeading,
+  .heroSubtitle,
+  .ctaRow,
+  .underlineSvg path,
+  .ctaPrimary::after,
+  .iconBoxWa,
+  .iconBoxIg,
+  .reveal {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    stroke-dashoffset: 0 !important;
+    opacity: 1 !important;
   }
 }

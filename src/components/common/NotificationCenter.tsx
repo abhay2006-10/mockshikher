@@ -19,6 +19,7 @@ import {
   Info,
 } from 'lucide-react';
 import styles from './NotificationCenter.module.css';
+import { WHATSAPP_CHANNEL_URL, INSTAGRAM_URL } from '@/config/social';
 
 export interface AnnouncementItem {
   id: string;
@@ -431,7 +432,7 @@ export function NotificationDrawer() {
           <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Stay connected:</span>
           <div className={styles.footerSocialLinks}>
             <a
-              href="https://whatsapp.com/channel/0029Va5I0zx0VycNW93eqO2P"
+              href={WHATSAPP_CHANNEL_URL}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.footerSocialBtn}
@@ -440,7 +441,7 @@ export function NotificationDrawer() {
               💬 WhatsApp
             </a>
             <a
-              href="https://www.instagram.com/mockshikhar"
+              href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.footerSocialBtn}

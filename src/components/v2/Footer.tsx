@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { MountainLogo, WhatsAppIcon, InstagramIcon } from './Icons';
 import styles from './Footer.module.css';
+import { WHATSAPP_CHANNEL_URL, INSTAGRAM_URL, INSTAGRAM_HANDLE, SUPPORT_EMAIL } from '@/config/social';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -29,14 +30,14 @@ export function Footer() {
               Refund Policy
             </Link>
             <span className={styles.linkDot} aria-hidden="true">&bull;</span>
-            <a href="mailto:mockshikhar@gmail.com" className={styles.navLink}>
+            <a href={`mailto:${SUPPORT_EMAIL}`} className={styles.navLink}>
               Contact
             </a>
           </nav>
 
           <div className={styles.socialIcons}>
             <a
-              href="https://whatsapp.com/channel/0029Va5I0zx0VycNW93eqO2P"
+              href={WHATSAPP_CHANNEL_URL}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.socialBtn}
@@ -46,11 +47,11 @@ export function Footer() {
               <WhatsAppIcon size={18} />
             </a>
             <a
-              href="https://www.instagram.com/mockshikhar"
+              href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.socialBtn}
-              aria-label="Follow MockShikhar on Instagram"
+              aria-label={`Follow ${INSTAGRAM_HANDLE} on Instagram`}
               title="Follow on Instagram"
             >
               <InstagramIcon size={18} />

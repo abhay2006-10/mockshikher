@@ -155,8 +155,8 @@
    ========================================================================= */
 .outline {
   background-color: transparent;
-  color: #F5B301 !important;
-  border: 1.5px solid #F5B301;
+  color: var(--color-primary, #4338CA) !important;
+  border: 1.5px solid var(--color-primary, #4338CA);
 }
 
 .outline * {
@@ -164,9 +164,9 @@
 }
 
 .outline:hover:not(:disabled) {
-  background-color: rgba(245, 179, 1, 0.12);
-  color: #FCD34D !important;
-  border-color: #FCD34D;
+  background-color: #EEF2FF;
+  color: #3730A3 !important;
+  border-color: #3730A3;
   transform: translateY(-1px);
 }
 
@@ -180,7 +180,7 @@
    ========================================================================= */
 .ghost {
   background-color: transparent;
-  color: #E2E8F0 !important;
+  color: var(--ink, #0B1026) !important;
   border-color: transparent;
 }
 
@@ -189,8 +189,8 @@
 }
 
 .ghost:hover:not(:disabled) {
-  background-color: rgba(255, 255, 255, 0.08);
-  color: #FFFFFF !important;
+  background-color: #F1F3FB;
+  color: var(--ink, #0B1026) !important;
 }
 
 /* =========================================================================

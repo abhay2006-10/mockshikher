@@ -75,28 +75,28 @@ export default async function AdminPage() {
       value: totalQuestionsCount.toLocaleString(),
       sub: 'Across all mock tests in database',
       icon: <Layers size={20} />,
-      color: '#F5B301',
+      color: '#4338CA',
     },
     {
       label: 'Mock Tests',
       value: totalMocksCount.toLocaleString(),
       sub: `${publishedMocksCount} Published, ${draftMocksCount} Drafts`,
       icon: <BookOpen size={20} />,
-      color: '#38BDF8',
+      color: '#0284C7',
     },
     {
       label: 'Student Attempts',
       value: totalAttemptsCount.toLocaleString(),
       sub: 'Recorded in PostgreSQL',
       icon: <Activity size={20} />,
-      color: '#10B981',
+      color: '#047857',
     },
     {
       label: 'Active Exam Series',
       value: activeExamsCount.toLocaleString(),
       sub: 'Live on student site',
       icon: <ShieldCheck size={20} />,
-      color: '#A78BFA',
+      color: '#6D28D9',
     },
   ];
 
@@ -123,7 +123,7 @@ export default async function AdminPage() {
       href: '/admin/questions',
       label: 'Open Question Bank →',
       icon: <Layers size={26} />,
-      color: '#F5B301',
+      color: '#92400E',
     },
     {
       title: 'Bulk CSV / Excel Import',
@@ -170,7 +170,7 @@ export default async function AdminPage() {
               <span>{stat.label}</span>
               <span style={{ color: stat.color }}>{stat.icon}</span>
             </div>
-            <div className={styles.adminStatVal} style={{ color: stat.color }}>
+            <div className={styles.adminStatVal} style={{ color: "var(--ink, #0B1026)" }}>
               {stat.value}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
@@ -198,7 +198,7 @@ export default async function AdminPage() {
               gap: '0.75rem',
             }}
           >
-            <div style={{ color: action.color }}>{action.icon}</div>
+            <div style={{ color: 'var(--color-primary, #4338CA)' }}>{action.icon}</div>
             <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--ink, #0B1026)', margin: 0 }}>
               {action.title}
             </h4>
@@ -211,7 +211,7 @@ export default async function AdminPage() {
                 marginTop: 'auto',
                 fontSize: '0.875rem',
                 fontWeight: 700,
-                color: action.color,
+                color: 'var(--color-primary, #4338CA)',
                 textDecoration: 'none',
               }}
             >
@@ -225,14 +225,14 @@ export default async function AdminPage() {
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <History size={18} color="#F5B301" />
+            <History size={18} color="#4338CA" />
             <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--ink, #0B1026)', margin: 0 }}>
               Recent Audit Log Entries (Database)
             </h3>
           </div>
           <Link
             href="/admin/questions"
-            style={{ fontSize: '0.8rem', color: '#F5B301', textDecoration: 'none', fontWeight: 600 }}
+            style={{ fontSize: '0.8rem', color: 'var(--color-primary, #4338CA)', textDecoration: 'none', fontWeight: 700 }}
           >
             View Full Audit Trail &rarr;
           </Link>
@@ -277,9 +277,9 @@ export default async function AdminPage() {
                     <td data-label="Action">
                       <span
                         style={{
-                          background: 'rgba(245, 179, 1, 0.1)',
-                          border: '1px solid rgba(245, 179, 1, 0.3)',
-                          color: '#F5B301',
+                          background: '#FEF3C7',
+                          border: '1px solid #FDE68A',
+                          color: '#92400E',
                           padding: '0.2rem 0.5rem',
                           borderRadius: '4px',
                           fontSize: '0.75rem',
@@ -289,19 +289,19 @@ export default async function AdminPage() {
                         {log.action}
                       </span>
                     </td>
-                    <td data-label="Details" style={{ color: '#E2E8F0', fontSize: '0.85rem' }}>
+                    <td data-label="Details" style={{ color: '#0B1026', fontSize: '0.85rem' }}>
                       {log.details}
                     </td>
-                    <td data-label="Author" style={{ color: '#94A3B8', fontSize: '0.8rem' }}>
+                    <td data-label="Author" style={{ color: '#3B4160', fontSize: '0.8rem' }}>
                       {log.author}
                     </td>
-                    <td data-label="Timestamp" style={{ color: '#94A3B8', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                    <td data-label="Timestamp" style={{ color: '#3B4160', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
                       {new Date(log.createdAt).toLocaleString()}
                     </td>
                     <td data-label="Status">
                       <span
                         style={{
-                          color: log.status === 'SUCCESS' ? '#34D399' : '#F87171',
+                          color: log.status === 'SUCCESS' ? '#047857' : '#B91C1C',
                           fontWeight: 700,
                           fontSize: '0.8rem',
                         }}

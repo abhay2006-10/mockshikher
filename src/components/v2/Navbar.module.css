@@ -509,6 +509,37 @@
   padding: 4px 0;
 }
 
+.sheetSocialRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 4px;
+}
+
+.sheetSocialBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #F5F6FF;
+  border: 1px solid #E3E6F5;
+  color: #0B1026;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.sheetSocialBtn:hover {
+  background: #EEF1FF;
+  color: #4338CA;
+  border-color: #C7D2FE;
+}
+
 .sheetLegalLink {
   padding: 10px 12px;
   border-radius: 10px;

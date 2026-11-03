@@ -836,7 +836,7 @@ export default function AdminExamsPage() {
             border: '1px solid var(--color-border)',
           }}
         >
-          <Layers size={40} color="#F5B301" style={{ marginBottom: '1rem' }} />
+          <Layers size={40} color="#92400E" style={{ marginBottom: '1rem' }} />
           <h3 style={{ color: 'var(--ink, #0B1026)', marginBottom: '0.5rem' }}>No Exam Series Found</h3>
           <Button variant="primary" size="md" onClick={openAddExam}>
             Add New Exam Series
@@ -853,19 +853,19 @@ export default function AdminExamsPage() {
               flexWrap: 'wrap',
               gap: '0.75rem',
               padding: '0.85rem 1.25rem',
-              background: 'rgba(245, 179, 1, 0.08)',
-              border: '1px solid rgba(245, 179, 1, 0.25)',
+              background: '#FEF3C7',
+              border: '1px solid #FDE68A',
               borderRadius: '10px',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Pin size={18} color="#F5B301" />
-              <span style={{ fontSize: '0.85rem', color: '#FCD34D' }}>
+              <Pin size={18} color="#92400E" />
+              <span style={{ fontSize: '0.85rem', color: '#78350F' }}>
                 <strong>Display Priority:</strong> The order below directly controls how mock test bundles appear on the <strong>Homepage</strong> and <strong>/exams</strong>. Pin upcoming exams (HP Police Constable, Patwari) to #1 so students see them first.
               </span>
             </div>
             {isSavingOrder && (
-              <span style={{ fontSize: '0.8rem', color: '#38BDF8', fontWeight: 600 }}>
+              <span style={{ fontSize: '0.8rem', color: '#0369A1', fontWeight: 600 }}>
                 Saving new order...
               </span>
             )}
@@ -904,8 +904,9 @@ export default function AdminExamsPage() {
                               fontWeight: 800,
                               padding: '0.15rem 0.5rem',
                               borderRadius: '999px',
-                              background: index === 0 ? '#F5B301' : 'rgba(255, 255, 255, 0.08)',
-                              color: index === 0 ? '#0F172A' : '#94A3B8',
+                              background: index === 0 ? '#FEF3C7' : '#F1F3FB',
+                              color: index === 0 ? '#78350F' : '#3B4160',
+                              border: index === 0 ? '1px solid #FDE68A' : 'none',
                               letterSpacing: '0.5px',
                             }}
                           >
@@ -921,7 +922,7 @@ export default function AdminExamsPage() {
                               style={{
                                 background: 'rgba(255, 255, 255, 0.05)',
                                 border: '1px solid var(--color-border)',
-                                color: index === 0 ? '#475569' : '#F5B301',
+                                color: index === 0 ? '#475569' : '#92400E',
                                 cursor: index === 0 ? 'not-allowed' : 'pointer',
                                 padding: '0.2rem 0.35rem',
                                 borderRadius: '4px',
@@ -942,7 +943,7 @@ export default function AdminExamsPage() {
                               style={{
                                 background: 'rgba(255, 255, 255, 0.05)',
                                 border: '1px solid var(--color-border)',
-                                color: index === exams.length - 1 ? '#475569' : '#94A3B8',
+                                color: index === exams.length - 1 ? '#475569' : '#3B4160',
                                 cursor: index === exams.length - 1 ? 'not-allowed' : 'pointer',
                                 padding: '0.2rem 0.35rem',
                                 borderRadius: '4px',
@@ -962,9 +963,9 @@ export default function AdminExamsPage() {
                                 disabled={isSavingOrder}
                                 onClick={() => handlePinExamToTop(index)}
                                 style={{
-                                  background: 'rgba(245, 179, 1, 0.12)',
-                                  border: '1px solid rgba(245, 179, 1, 0.4)',
-                                  color: '#F5B301',
+                                  background: '#FEF3C7',
+                                  border: '1px solid #FDE68A',
+                                  color: '#92400E',
                                   cursor: 'pointer',
                                   padding: '0.2rem 0.4rem',
                                   borderRadius: '4px',
@@ -991,7 +992,7 @@ export default function AdminExamsPage() {
                         </div>
                       </td>
                       <td data-label="Category">
-                        <span style={{ fontSize: '0.85rem', color: '#94A3B8' }}>{exam.category}</span>
+                        <span style={{ fontSize: '0.85rem', color: '#3B4160' }}>{exam.category}</span>
                       </td>
                       <td data-label="Questions">
                         <span>{exam.totalQuestions} Q</span>
@@ -1000,10 +1001,10 @@ export default function AdminExamsPage() {
                         <span>{exam.durationMinutes} mins</span>
                       </td>
                       <td data-label="Price">
-                        <strong style={{ color: '#10B981' }}>₹{(exam.price === 199 || exam.price === 149 || !exam.price) ? 1 : exam.price}</strong>
+                        <strong style={{ color: '#047857' }}>₹{(exam.price === 199 || exam.price === 149 || !exam.price) ? 1 : exam.price}</strong>
                       </td>
                       <td data-label="Default Marks">
-                        <span style={{ fontSize: '0.8rem', color: '#38BDF8' }}>
+                        <span style={{ fontSize: '0.8rem', color: '#0369A1' }}>
                           +{exam.marksPerQuestion} / -{exam.negativeMarking}
                         </span>
                       </td>
@@ -1023,9 +1024,9 @@ export default function AdminExamsPage() {
                           type="button"
                           onClick={() => toggleExpandExam(exam)}
                           style={{
-                            background: isExpanded ? 'rgba(245, 179, 1, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                            border: `1px solid ${isExpanded ? '#F5B301' : 'var(--color-border)'}`,
-                            color: '#F5B301',
+                            background: isExpanded ? '#FEF3C7' : 'rgba(255, 255, 255, 0.05)',
+                            border: `1px solid ${isExpanded ? '#92400E' : 'var(--color-border)'}`,
+                            color: '#92400E',
                             padding: '0.35rem 0.65rem',
                             borderRadius: '6px',
                             cursor: 'pointer',
@@ -1070,7 +1071,7 @@ export default function AdminExamsPage() {
                     {isExpanded && (
                       <tr>
                         <td colSpan={10} style={{ padding: '0', background: 'rgba(15, 23, 42, 0.45)' }}>
-                          <div style={{ padding: '1.25rem', borderLeft: '3px solid #F5B301' }}>
+                          <div style={{ padding: '1.25rem', borderLeft: '3px solid #92400E' }}>
                             {/* Inner Sub-navigation Tabs */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                               <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -1078,9 +1079,9 @@ export default function AdminExamsPage() {
                                   type="button"
                                   onClick={() => setExamActiveTab((prev) => ({ ...prev, [exam.id]: 'mocks' }))}
                                   style={{
-                                    background: currentTab === 'mocks' ? 'rgba(245, 179, 1, 0.15)' : 'transparent',
-                                    border: `1px solid ${currentTab === 'mocks' ? '#F5B301' : 'var(--color-border)'}`,
-                                    color: currentTab === 'mocks' ? '#F5B301' : '#94A3B8',
+                                    background: currentTab === 'mocks' ? '#FEF3C7' : 'transparent',
+                                    border: `1px solid ${currentTab === 'mocks' ? '#92400E' : 'var(--color-border)'}`,
+                                    color: currentTab === 'mocks' ? '#92400E' : '#3B4160',
                                     padding: '0.35rem 0.85rem',
                                     borderRadius: '6px',
                                     cursor: 'pointer',
@@ -1094,9 +1095,9 @@ export default function AdminExamsPage() {
                                   type="button"
                                   onClick={() => setExamActiveTab((prev) => ({ ...prev, [exam.id]: 'subjects' }))}
                                   style={{
-                                    background: currentTab === 'subjects' ? 'rgba(245, 179, 1, 0.15)' : 'transparent',
-                                    border: `1px solid ${currentTab === 'subjects' ? '#F5B301' : 'var(--color-border)'}`,
-                                    color: currentTab === 'subjects' ? '#F5B301' : '#94A3B8',
+                                    background: currentTab === 'subjects' ? '#FEF3C7' : 'transparent',
+                                    border: `1px solid ${currentTab === 'subjects' ? '#92400E' : 'var(--color-border)'}`,
+                                    color: currentTab === 'subjects' ? '#92400E' : '#3B4160',
                                     padding: '0.35rem 0.85rem',
                                     borderRadius: '6px',
                                     cursor: 'pointer',
@@ -1200,15 +1201,15 @@ export default function AdminExamsPage() {
                                             </Badge>
                                           )}
                                           {test.isPublished ? (
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: '#34D399', fontSize: '0.75rem', fontWeight: 600 }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: '#047857', fontSize: '0.75rem', fontWeight: 600 }}>
                                               <Eye size={12} /> Published
                                             </span>
                                           ) : (
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: '#94A3B8', fontSize: '0.75rem', fontWeight: 600 }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: '#3B4160', fontSize: '0.75rem', fontWeight: 600 }}>
                                               <EyeOff size={12} /> Draft
                                             </span>
                                           )}
-                                          <span style={{ fontSize: '0.75rem', color: '#F5B301', fontWeight: 700 }}>
+                                          <span style={{ fontSize: '0.75rem', color: '#92400E', fontWeight: 700 }}>
                                             {test._count?.questions ?? 0} Questions
                                           </span>
                                         </div>
@@ -1288,7 +1289,7 @@ export default function AdminExamsPage() {
                             {currentTab === 'subjects' && (
                               <div>
                                 {loadingSubjects[exam.id] ? (
-                                  <div style={{ textAlign: 'center', padding: '1rem', color: '#94A3B8' }}>
+                                  <div style={{ textAlign: 'center', padding: '1rem', color: '#3B4160' }}>
                                     Loading subjects from database...
                                   </div>
                                 ) : subjectsList.length === 0 ? (
@@ -1318,11 +1319,11 @@ export default function AdminExamsPage() {
                                               {subject.name}
                                             </strong>
                                             {subject.nameHi && (
-                                              <span style={{ fontSize: '0.8rem', color: '#94A3B8', marginLeft: '0.5rem' }}>
+                                              <span style={{ fontSize: '0.8rem', color: '#3B4160', marginLeft: '0.5rem' }}>
                                                 ({subject.nameHi})
                                               </span>
                                             )}
-                                            <span style={{ fontSize: '0.75rem', color: '#38BDF8', marginLeft: '0.5rem' }}>
+                                            <span style={{ fontSize: '0.75rem', color: '#0369A1', marginLeft: '0.5rem' }}>
                                               &bull; {subject._count?.questions ?? 0} Questions
                                             </span>
                                           </div>
@@ -1386,7 +1387,7 @@ export default function AdminExamsPage() {
                                                 <button
                                                   type="button"
                                                   onClick={() => openEditTopic(t, subject)}
-                                                  style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 0 }}
+                                                  style={{ background: 'none', border: 'none', color: '#3B4160', cursor: 'pointer', padding: 0 }}
                                                   title="Edit Topic"
                                                 >
                                                   <Edit3 size={10} />
@@ -1738,7 +1739,7 @@ export default function AdminExamsPage() {
                         onChange={(e) => setAddMockFree(e.target.checked)}
                         style={{ width: '16px', height: '16px', accentColor: '#10B981' }}
                       />
-                      <span style={{ color: addMockFree ? '#34D399' : '#94A3B8', fontWeight: 600 }}>
+                      <span style={{ color: addMockFree ? '#047857' : '#3B4160', fontWeight: 600 }}>
                         {addMockFree ? 'Free Starter Test' : 'Paid Test (Bundle)'}
                       </span>
                     </label>
@@ -1755,7 +1756,7 @@ export default function AdminExamsPage() {
                         onChange={(e) => setAddMockPublished(e.target.checked)}
                         style={{ width: '16px', height: '16px', accentColor: '#10B981' }}
                       />
-                      <span style={{ color: addMockPublished ? '#34D399' : '#94A3B8', fontWeight: 600 }}>
+                      <span style={{ color: addMockPublished ? '#047857' : '#3B4160', fontWeight: 600 }}>
                         {addMockPublished ? 'Published' : 'Draft (Unpublished)'}
                       </span>
                     </label>
@@ -1763,7 +1764,7 @@ export default function AdminExamsPage() {
                 </div>
 
                 <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem' }}>
-                  <h4 style={{ fontSize: '0.85rem', color: '#F5B301', margin: '0 0 0.5rem 0', fontWeight: 700 }}>
+                  <h4 style={{ fontSize: '0.85rem', color: '#92400E', margin: '0 0 0.5rem 0', fontWeight: 700 }}>
                     Optional Overrides (Leave blank to inherit exam default):
                   </h4>
 
@@ -1860,7 +1861,7 @@ export default function AdminExamsPage() {
                         onChange={(e) => setEditTestFree(e.target.checked)}
                         style={{ width: '16px', height: '16px', accentColor: '#10B981' }}
                       />
-                      <span style={{ color: editTestFree ? '#34D399' : '#94A3B8', fontWeight: 600 }}>
+                      <span style={{ color: editTestFree ? '#047857' : '#3B4160', fontWeight: 600 }}>
                         {editTestFree ? 'Free Starter Test' : 'Paid Test (Bundle)'}
                       </span>
                     </label>
@@ -1877,7 +1878,7 @@ export default function AdminExamsPage() {
                         onChange={(e) => setEditTestPublished(e.target.checked)}
                         style={{ width: '16px', height: '16px', accentColor: '#10B981' }}
                       />
-                      <span style={{ color: editTestPublished ? '#34D399' : '#94A3B8', fontWeight: 600 }}>
+                      <span style={{ color: editTestPublished ? '#047857' : '#3B4160', fontWeight: 600 }}>
                         {editTestPublished ? 'Published to Students' : 'Draft (Unpublished)'}
                       </span>
                     </label>
@@ -1885,7 +1886,7 @@ export default function AdminExamsPage() {
                 </div>
 
                 <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem' }}>
-                  <h4 style={{ fontSize: '0.85rem', color: '#F5B301', margin: '0 0 0.5rem 0', fontWeight: 700 }}>
+                  <h4 style={{ fontSize: '0.85rem', color: '#92400E', margin: '0 0 0.5rem 0', fontWeight: 700 }}>
                     Optional Overrides (Leave blank to inherit exam defaults):
                   </h4>
 

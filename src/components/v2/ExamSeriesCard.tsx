@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowRight } from './Icons';
 import { Chip } from './Chip';
 import styles from './ExamSeriesCard.module.css';
+import { WHATSAPP_CHANNEL_URL } from '@/config/social';
 
 export interface ExamSeriesCardProps {
   isComingSoon?: boolean;
@@ -102,7 +103,7 @@ export function ExamSeriesCard({
             Mocks are being prepared. Join our WhatsApp channel to get notified at launch.
           </p>
           <a
-            href="https://whatsapp.com/channel/0029Vb4w23c6xCSHhW2ePq1f"
+            href={WHATSAPP_CHANNEL_URL}
             target="_blank"
             rel="noopener noreferrer"
             className={styles.notifyLink}
