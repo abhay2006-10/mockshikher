@@ -69,7 +69,9 @@ export function TestCard({
           {Number(test.negativeMarksPerQuestion) > 0 &&
           !test.name?.toLowerCase().includes('patwari') &&
           !test.name?.toLowerCase().includes('clerk') &&
-          !test.name?.toLowerCase().includes('process-server') ? (
+          !test.name?.toLowerCase().includes('process-server') &&
+          !test.name?.toLowerCase().includes('tet') &&
+          !test.name?.toLowerCase().includes('jbt') ? (
             <>
               <AlertCircle size={14} className={styles.negMarkIcon} />
               <span>-{test.negativeMarksPerQuestion} Neg.</span>

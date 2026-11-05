@@ -1001,7 +1001,7 @@ export default function AdminExamsPage() {
                         <span>{exam.durationMinutes} mins</span>
                       </td>
                       <td data-label="Price">
-                        <strong style={{ color: '#047857' }}>₹{(exam.price === 199 || exam.price === 149 || !exam.price) ? 1 : exam.price}</strong>
+                        <strong style={{ color: '#047857' }}>{exam.price ? '₹' + exam.price : 'Free'}</strong>
                       </td>
                       <td data-label="Default Marks">
                         <span style={{ fontSize: '0.8rem', color: '#0369A1' }}>

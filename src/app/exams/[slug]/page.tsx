@@ -60,8 +60,8 @@ export default function ExamDetailPage() {
   const [isCheckingPromo, setIsCheckingPromo] = useState(false);
 
   // Baseline price is ₹1 for all eligible exams (Limited Time Launch Offer)
-  const basePrice = 1;
-  const payablePrice = appliedPromo ? Math.max(1, appliedPromo.finalPrice) : basePrice;
+  const basePrice = 0;
+  const payablePrice = appliedPromo ? 0 : basePrice;
 
   const officialConfig = React.useMemo(() => getOfficialExamConfig(slug), [slug]);
   const baseExam = POPULAR_EXAMS.find((e) => e.slug === slug) || {
@@ -72,7 +72,7 @@ export default function ExamDetailPage() {
     totalQuestions: officialConfig.totalQuestions,
     durationMinutes: officialConfig.durationMinutes,
     difficulty: 'MEDIUM',
-    price: 1,
+    price: 0,
     originalPrice: 149,
     isPopular: true,
     category: officialConfig.category,
@@ -122,7 +122,7 @@ export default function ExamDetailPage() {
     durationMinutes: rawExam.durationMinutes || officialConfig.durationMinutes,
     negativeMarking: typeof rawExam.negativeMarking === 'number' ? rawExam.negativeMarking : officialConfig.negativeMarking,
     marksPerQuestion: rawExam.marksPerQuestion || officialConfig.marksPerQuestion,
-    price: (rawExam.price === 199 || rawExam.price === 149 || !rawExam.price) ? 1 : rawExam.price,
+    price: 0,
     originalPrice: 149,
   };
 

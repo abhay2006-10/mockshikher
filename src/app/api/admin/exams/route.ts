@@ -13,7 +13,7 @@ export async function GET() {
   try {
     await prisma.exam.updateMany({
       where: { price: { in: [149, 199] } },
-      data: { price: 1 },
+      data: { price: 0 },
     }).catch(() => {});
 
     const exams = await prisma.exam.findMany({
@@ -47,7 +47,7 @@ export async function GET() {
 
     const normalizedExams = exams.map((exam) => ({
       ...exam,
-      price: (exam.price === 199 || exam.price === 149 || !exam.price) ? 1 : exam.price,
+      price: 0,
     }));
 
     const orderedSlugs = await getCustomExamOrder();

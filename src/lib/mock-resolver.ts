@@ -226,7 +226,7 @@ export async function resolveOrCreateMockTest(options: ResolveMockOptions) {
         totalQuestions: officialConfig.totalQuestions,
         durationMinutes: officialConfig.durationMinutes,
         difficulty: 'MEDIUM',
-        price: 1,
+        price: 0,
         category: officialConfig.category,
         negativeMarking: officialConfig.negativeMarking,
         marksPerQuestion: officialConfig.marksPerQuestion,
