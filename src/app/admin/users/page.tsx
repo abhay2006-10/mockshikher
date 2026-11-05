@@ -381,9 +381,9 @@ export default function AdminStudentActivityPage() {
         <div className={styles.adminStatCard}>
           <div className={styles.adminStatHeader}>
             <span>Total Students</span>
-            <span style={{ color: '#F5B301' }}><Users size={20} /></span>
+            <span style={{ color: '#92400E' }}><Users size={20} /></span>
           </div>
-          <div className={styles.adminStatVal} style={{ color: '#F5B301' }}>
+          <div className={styles.adminStatVal} style={{ color: "var(--ink, #0B1026)" }}>
             {stats?.totalStudents?.toLocaleString() || 0}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
@@ -394,9 +394,9 @@ export default function AdminStudentActivityPage() {
         <div className={styles.adminStatCard}>
           <div className={styles.adminStatHeader}>
             <span>Enrolled Paid Students</span>
-            <span style={{ color: '#A78BFA' }}><CreditCard size={20} /></span>
+            <span style={{ color: '#6D28D9' }}><CreditCard size={20} /></span>
           </div>
-          <div className={styles.adminStatVal} style={{ color: '#A78BFA' }}>
+          <div className={styles.adminStatVal} style={{ color: "var(--ink, #0B1026)" }}>
             {stats?.paidStudents?.toLocaleString() || 0}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
@@ -409,7 +409,7 @@ export default function AdminStudentActivityPage() {
             <span>Active Test Takers</span>
             <span style={{ color: '#10B981' }}><Activity size={20} /></span>
           </div>
-          <div className={styles.adminStatVal} style={{ color: '#10B981' }}>
+          <div className={styles.adminStatVal} style={{ color: "var(--ink, #0B1026)" }}>
             {stats?.activeStudents?.toLocaleString() || 0}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
@@ -420,9 +420,9 @@ export default function AdminStudentActivityPage() {
         <div className={styles.adminStatCard}>
           <div className={styles.adminStatHeader}>
             <span>Platform Revenue</span>
-            <span style={{ color: '#38BDF8' }}><TrendingUp size={20} /></span>
+            <span style={{ color: '#0284C7' }}><TrendingUp size={20} /></span>
           </div>
-          <div className={styles.adminStatVal} style={{ color: '#38BDF8' }}>
+          <div className={styles.adminStatVal} style={{ color: "var(--ink, #0B1026)" }}>
             ₹{stats?.totalRevenue ? Number(stats.totalRevenue).toLocaleString('en-IN') : 0}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
@@ -435,7 +435,7 @@ export default function AdminStudentActivityPage() {
             <span>Mocks Submitted</span>
             <span style={{ color: '#F43F5E' }}><Award size={20} /></span>
           </div>
-          <div className={styles.adminStatVal} style={{ color: '#F43F5E' }}>
+          <div className={styles.adminStatVal} style={{ color: "var(--ink, #0B1026)" }}>
             {stats?.totalAttempts?.toLocaleString() || 0}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
@@ -672,12 +672,12 @@ export default function AdminStudentActivityPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
             <thead>
               <tr style={{ background: 'var(--color-bg-secondary)', borderBottom: '1px solid var(--color-border)' }}>
-                <th style={{ padding: '0.9rem 1.25rem', color: 'var(--color-text-tertiary)', fontWeight: 700 }}>Student Profile</th>
-                <th style={{ padding: '0.9rem 1.25rem', color: 'var(--color-text-tertiary)', fontWeight: 700 }}>Registered</th>
-                <th style={{ padding: '0.9rem 1.25rem', color: 'var(--color-text-tertiary)', fontWeight: 700 }}>Mocks Given</th>
-                <th style={{ padding: '0.9rem 1.25rem', color: 'var(--color-text-tertiary)', fontWeight: 700 }}>Purchased Bundles</th>
-                <th style={{ padding: '0.9rem 1.25rem', color: 'var(--color-text-tertiary)', fontWeight: 700 }}>Latest Activity</th>
-                <th style={{ padding: '0.9rem 1.25rem', color: 'var(--color-text-tertiary)', fontWeight: 700, textAlign: 'right' }}>Actions</th>
+                <th style={{ padding: '0.9rem 1.25rem', color: 'var(--ink, #0B1026)', fontWeight: 700 }}>Student Profile</th>
+                <th style={{ padding: '0.9rem 1.25rem', color: 'var(--ink, #0B1026)', fontWeight: 700 }}>Registered</th>
+                <th style={{ padding: '0.9rem 1.25rem', color: 'var(--ink, #0B1026)', fontWeight: 700 }}>Mocks Given</th>
+                <th style={{ padding: '0.9rem 1.25rem', color: 'var(--ink, #0B1026)', fontWeight: 700 }}>Purchased Bundles</th>
+                <th style={{ padding: '0.9rem 1.25rem', color: 'var(--ink, #0B1026)', fontWeight: 700 }}>Latest Activity</th>
+                <th style={{ padding: '0.9rem 1.25rem', color: 'var(--ink, #0B1026)', fontWeight: 700, textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -691,7 +691,7 @@ export default function AdminStudentActivityPage() {
               ) : users.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ padding: '3.5rem', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
-                    <Users size={32} style={{ margin: '0 auto 0.75rem auto', opacity: 0.4 }} />
+                    <Users size={32} style={{ margin: '0 auto 0.75rem auto', opacity: 1 }} />
                     <p style={{ margin: 0, fontWeight: 600 }}>No students match your filter or search query.</p>
                   </td>
                 </tr>
@@ -725,7 +725,7 @@ export default function AdminStudentActivityPage() {
                                 padding: '0.1rem 0.35rem',
                                 borderRadius: '4px',
                                 background: 'rgba(167, 139, 250, 0.2)',
-                                color: '#C4B5FD',
+                                color: '#6D28D9',
                                 fontSize: '0.65rem',
                                 fontWeight: 800,
                               }}
@@ -771,7 +771,7 @@ export default function AdminStudentActivityPage() {
                             fontSize: '0.75rem',
                             fontWeight: 700,
                             background: u._count.attempts > 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                            color: u._count.attempts > 0 ? '#34D399' : 'var(--color-text-tertiary)',
+                            color: u._count.attempts > 0 ? '#047857' : 'var(--color-text-tertiary)',
                           }}
                         >
                           <Activity size={12} />
@@ -794,13 +794,13 @@ export default function AdminStudentActivityPage() {
                                   fontSize: '0.75rem',
                                   fontWeight: 700,
                                   background: 'rgba(167, 139, 250, 0.18)',
-                                  color: '#C4B5FD',
+                                  color: '#6D28D9',
                                 }}
                               >
                                 <CreditCard size={12} />
                                 {u.purchases.length} {u.purchases.length === 1 ? 'pack' : 'packs'}
                               </span>
-                              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#38BDF8' }}>
+                              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0284C7' }}>
                                 (₹{totalSpent})
                               </span>
                             </div>
@@ -850,11 +850,11 @@ export default function AdminStudentActivityPage() {
                       <td style={{ padding: '1rem 1.25rem', fontSize: '0.8rem', minWidth: '220px' }}>
                         {activity ? (
                           <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600, color: activity.type === 'PURCHASE' ? '#C4B5FD' : 'var(--color-text-primary)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600, color: activity.type === 'PURCHASE' ? '#6D28D9' : 'var(--color-text-primary)' }}>
                               {activity.type === 'PURCHASE' ? (
-                                <Zap size={13} color="#F5B301" />
+                                <Zap size={13} color="#92400E" />
                               ) : (
-                                <BookOpen size={13} color="#34D399" />
+                                <BookOpen size={13} color="#047857" />
                               )}
                               <span>{activity.text}</span>
                             </div>
@@ -989,14 +989,14 @@ export default function AdminStudentActivityPage() {
 
               <div>
                 <span style={{ fontSize: '0.7rem', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>Unlocked Exam Bundles</span>
-                <p style={{ margin: '0.2rem 0 0 0', fontWeight: 700, color: '#A78BFA' }}>
+                <p style={{ margin: '0.2rem 0 0 0', fontWeight: 700, color: '#6D28D9' }}>
                   {selectedUser._count.purchases} {selectedUser._count.purchases === 1 ? 'Series' : 'Series'}
                 </p>
               </div>
 
               <div>
                 <span style={{ fontSize: '0.7rem', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>Mock Tests Given</span>
-                <p style={{ margin: '0.2rem 0 0 0', fontWeight: 700, color: '#34D399' }}>
+                <p style={{ margin: '0.2rem 0 0 0', fontWeight: 700, color: '#047857' }}>
                   {selectedUser._count.attempts} Completed
                 </p>
               </div>
@@ -1075,7 +1075,7 @@ export default function AdminStudentActivityPage() {
 
                   {selectedUser.purchases.length === 0 ? (
                     <div style={{ padding: '2rem', textAlign: 'center', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-lg)', color: 'var(--color-text-tertiary)' }}>
-                      <CreditCard size={32} style={{ margin: '0 auto 0.5rem auto', opacity: 0.4 }} />
+                      <CreditCard size={32} style={{ margin: '0 auto 0.5rem auto', opacity: 1 }} />
                       <p style={{ margin: 0, fontWeight: 600 }}>This student has not purchased any mock series yet.</p>
                       <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem' }}>You can manually grant access below if they paid offline or via UPI.</p>
                     </div>
@@ -1098,7 +1098,7 @@ export default function AdminStudentActivityPage() {
                         >
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <Zap size={16} color="#F5B301" />
+                              <Zap size={16} color="#92400E" />
                               <span style={{ fontWeight: 700, color: 'var(--color-text-primary)', fontSize: '0.95rem' }}>
                                 {pur.exam?.name}
                               </span>
@@ -1108,7 +1108,7 @@ export default function AdminStudentActivityPage() {
                                   padding: '0.1rem 0.4rem',
                                   borderRadius: '4px',
                                   background: 'rgba(16, 185, 129, 0.2)',
-                                  color: '#34D399',
+                                  color: '#047857',
                                   fontWeight: 800,
                                 }}
                               >
@@ -1130,7 +1130,7 @@ export default function AdminStudentActivityPage() {
                                 fontSize: '0.8rem',
                                 fontWeight: 800,
                                 background: 'rgba(16, 185, 129, 0.15)',
-                                color: '#34D399',
+                                color: '#047857',
                               }}
                             >
                               ₹{pur.payment?.amount || pur.exam?.price || 1} PAID
@@ -1140,7 +1140,7 @@ export default function AdminStudentActivityPage() {
                               style={{
                                 background: 'none',
                                 border: '1px solid rgba(239, 68, 68, 0.3)',
-                                color: '#F87171',
+                                color: '#B91C1C',
                                 padding: '0.25rem 0.6rem',
                                 borderRadius: 'var(--radius-sm)',
                                 fontSize: '0.75rem',
@@ -1177,14 +1177,14 @@ export default function AdminStudentActivityPage() {
                   </p>
 
                   {grantSuccessMsg && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 0.85rem', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10B981', borderRadius: 'var(--radius-md)', color: '#34D399', fontSize: '0.8rem', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 0.85rem', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10B981', borderRadius: 'var(--radius-md)', color: '#047857', fontSize: '0.8rem', marginBottom: '0.75rem' }}>
                       <CheckCircle2 size={16} />
                       <span>{grantSuccessMsg}</span>
                     </div>
                   )}
 
                   {grantErrorMsg && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 0.85rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #EF4444', borderRadius: 'var(--radius-md)', color: '#F87171', fontSize: '0.8rem', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 0.85rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #EF4444', borderRadius: 'var(--radius-md)', color: '#B91C1C', fontSize: '0.8rem', marginBottom: '0.75rem' }}>
                       <AlertCircle size={16} />
                       <span>{grantErrorMsg}</span>
                     </div>
@@ -1285,7 +1285,7 @@ export default function AdminStudentActivityPage() {
               <div>
                 {selectedUser.attempts.length === 0 ? (
                   <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
-                    <BookOpen size={36} style={{ margin: '0 auto 0.75rem auto', opacity: 0.5 }} />
+                    <BookOpen size={36} style={{ margin: '0 auto 0.75rem auto', opacity: 1 }} />
                     <p style={{ margin: 0, fontWeight: 600 }}>This student has not attempted any mock tests yet.</p>
                   </div>
                 ) : (
@@ -1316,7 +1316,7 @@ export default function AdminStudentActivityPage() {
                                 padding: '0.15rem 0.45rem',
                                 borderRadius: '4px',
                                 background: att.status === 'SUBMITTED' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 179, 1, 0.2)',
-                                color: att.status === 'SUBMITTED' ? '#34D399' : '#F5B301',
+                                color: att.status === 'SUBMITTED' ? '#047857' : '#92400E',
                                 fontWeight: 700,
                               }}
                             >
@@ -1331,13 +1331,13 @@ export default function AdminStudentActivityPage() {
                         <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontSize: '0.7rem', color: 'var(--color-text-tertiary)', textTransform: 'uppercase' }}>Score</div>
-                            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#F5B301' }}>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#92400E' }}>
                               {att.score ?? 0} <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>/ {att.totalMarks ?? 100}</span>
                             </div>
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontSize: '0.7rem', color: 'var(--color-text-tertiary)', textTransform: 'uppercase' }}>Accuracy</div>
-                            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#38BDF8' }}>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0284C7' }}>
                               {att.accuracy ?? 0}%
                             </div>
                           </div>
@@ -1354,7 +1354,7 @@ export default function AdminStudentActivityPage() {
               <div>
                 {!selectedUser.payments || selectedUser.payments.length === 0 ? (
                   <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
-                    <Clock size={36} style={{ margin: '0 auto 0.75rem auto', opacity: 0.5 }} />
+                    <Clock size={36} style={{ margin: '0 auto 0.75rem auto', opacity: 1 }} />
                     <p style={{ margin: 0, fontWeight: 600 }}>No transaction logs recorded for this account.</p>
                   </div>
                 ) : (
@@ -1382,7 +1382,7 @@ export default function AdminStudentActivityPage() {
                                 padding: '0.15rem 0.45rem',
                                 borderRadius: '4px',
                                 background: pmt.status === 'PAID' ? 'rgba(16, 185, 129, 0.2)' : pmt.status === 'FAILED' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 179, 1, 0.2)',
-                                color: pmt.status === 'PAID' ? '#34D399' : pmt.status === 'FAILED' ? '#F87171' : '#F5B301',
+                                color: pmt.status === 'PAID' ? '#047857' : pmt.status === 'FAILED' ? '#B91C1C' : '#92400E',
                                 fontWeight: 800,
                               }}
                             >

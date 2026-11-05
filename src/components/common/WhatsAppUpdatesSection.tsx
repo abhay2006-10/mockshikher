@@ -7,8 +7,7 @@ interface WhatsAppUpdatesSectionProps {
   sourceContext?: 'dashboard' | 'homepage';
 }
 
-const WHATSAPP_CHANNEL_URL = 'https://whatsapp.com/channel/0029Va5I0zx0VycNW93eqO2P';
-const INSTAGRAM_URL = 'https://www.instagram.com/mockshikhar?utm_source=ig_web_button_share_sheet&rpxt=ZDNlZDc0MzIxNw==';
+import { WHATSAPP_CHANNEL_URL, INSTAGRAM_URL } from '@/config/social';
 
 export default function WhatsAppUpdatesSection({
   className = '',

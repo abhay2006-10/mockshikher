@@ -143,14 +143,15 @@ export async function GET(
     const formattedTests = mockTests.map((test) => {
       const qCount = test._count.questions;
       const lastAttempt = userAttemptsMap.get(test.id);
-      const isTestUnlocked = test.isFree || isPurchased;
+      // All mock tests are 100% free
+      const isTestUnlocked = true;
 
       return {
         id: test.id,
         examId: test.examId,
         name: test.name,
         testNumber: test.testNumber,
-        isFree: test.isFree,
+        isFree: true,
         isUnlocked: isTestUnlocked,
         isPublished: test.isPublished,
         totalQuestions: qCount, // Real question count from database

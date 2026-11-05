@@ -138,10 +138,10 @@ export default function TestInstructionsPage() {
           <AlertCircle size={40} color="#F59E0B" />
           <h1 className={styles.title}>Premium Test Series Required</h1>
           <p className={styles.specSub}>
-            This mock test is locked. Purchase the test series for ₹1 to unlock all 10 full-length mocks permanently.
+            This mock test is locked. All mock tests in this series are 100% free for all students.
           </p>
           <Link href="/exams" className={styles.startTestBtn} style={{ textDecoration: 'none' }}>
-            <span>Unlock Test Series (₹1)</span>
+            <span>Explore Free Tests</span>
             <ArrowRight size={16} />
           </Link>
         </div>

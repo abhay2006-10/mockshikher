@@ -21,6 +21,7 @@ import {
   CalendarClock,
 } from 'lucide-react';
 import styles from '../admin.module.css';
+import { WHATSAPP_CHANNEL_URL, INSTAGRAM_URL } from '@/config/social';
 
 type AnnouncementType = 'INFO' | 'SUCCESS' | 'WARNING' | 'URGENT' | 'NEW_TEST' | 'OFFER';
 
@@ -359,7 +360,7 @@ export default function AdminAnnouncementsPage() {
               <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
                 <button
                   type="button"
-                  onClick={() => setForm((f) => ({ ...f, ctaLabel: 'Join WhatsApp Channel', ctaUrl: 'https://whatsapp.com/channel/0029Va5I0zx0VycNW93eqO2P' }))}
+                  onClick={() => setForm((f) => ({ ...f, ctaLabel: 'Join WhatsApp Channel', ctaUrl: WHATSAPP_CHANNEL_URL }))}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -379,7 +380,7 @@ export default function AdminAnnouncementsPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setForm((f) => ({ ...f, ctaLabel: 'Follow on Instagram', ctaUrl: 'https://www.instagram.com/mockshikhar' }))}
+                  onClick={() => setForm((f) => ({ ...f, ctaLabel: 'Follow on Instagram', ctaUrl: INSTAGRAM_URL }))}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -678,7 +679,7 @@ export default function AdminAnnouncementsPage() {
 
       {/* Announcements List */}
       {isLoading ? (
-        <div style={{ color: 'var(--color-text-tertiary)', textAlign: 'center', padding: '3rem', fontSize: '0.9rem' }}>
+        <div style={{ color: '#3B4160', textAlign: 'center', padding: '3rem', fontSize: '0.9rem' }}>
           Loading announcements...
         </div>
       ) : items.length === 0 ? (
@@ -711,7 +712,7 @@ export default function AdminAnnouncementsPage() {
                   border: item.isPinned ? '1.5px solid #FCD34D' : '1px solid #E3E6F5',
                   borderRadius: '16px',
                   padding: '1.25rem 1.5rem',
-                  opacity: item.isActive ? 1 : 0.65,
+                  opacity: 1,
                   boxShadow: item.isPinned ? '0 4px 16px rgba(245, 158, 11, 0.08)' : '0 1px 3px rgba(11, 16, 38, 0.04)',
                   transition: 'all 0.2s ease',
                 }}

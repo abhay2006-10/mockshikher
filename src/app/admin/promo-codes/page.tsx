@@ -284,7 +284,7 @@ export default function AdminPromoCodesPage() {
             <span>Total Promo Codes</span>
             <Tag size={18} color="#818CF8" />
           </div>
-          <div className={styles.adminStatVal} style={{ color: 'var(--ink, #0B1026)' }}>
+          <div className={styles.adminStatVal} style={{ color: "var(--ink, #0B1026)" }}>
             {stats?.totalCount ?? promoCodes.length}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
@@ -297,7 +297,7 @@ export default function AdminPromoCodesPage() {
             <span>Active Codes</span>
             <CheckCircle2 size={18} color="#34D399" />
           </div>
-          <div className={styles.adminStatVal} style={{ color: '#34D399' }}>
+          <div className={styles.adminStatVal} style={{ color: "var(--ink, #0B1026)" }}>
             {stats?.activeCount ?? promoCodes.filter((p) => p.isActive).length}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
@@ -310,7 +310,7 @@ export default function AdminPromoCodesPage() {
             <span>Total Times Used</span>
             <Percent size={18} color="#FBBF24" />
           </div>
-          <div className={styles.adminStatVal} style={{ color: '#FBBF24' }}>
+          <div className={styles.adminStatVal} style={{ color: "var(--ink, #0B1026)" }}>
             {stats?.totalUses ?? promoCodes.reduce((s, p) => s + p.usedCount, 0)}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>

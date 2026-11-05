@@ -53,29 +53,8 @@ export async function POST(
       );
     }
 
-    // Access control: Ensure user has a verified purchase for non-free tests
-    if (!mockTest.isFree && userRole !== 'ADMIN') {
-      const purchase = await prisma.purchase.findUnique({
-        where: {
-          userId_examId: {
-            userId: user.id,
-            examId: mockTest.examId,
-          },
-        },
-        select: { id: true },
-      });
-
-      if (!purchase) {
-        return NextResponse.json(
-          {
-            error: 'This mock test is locked. Please purchase the test series to unlock access.',
-            requiresPurchase: true,
-            examId: mockTest.examId,
-          },
-          { status: 403 }
-        );
-      }
-    }
+    // All mock tests and bundles are 100% free for all students
+    // No purchase check required.
 
     // Check question count: fast path uses mockTest.totalQuestions if present
     const questionCount =

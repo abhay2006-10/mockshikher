@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowRight } from './Icons';
 import { Chip } from './Chip';
 import styles from './ExamSeriesCard.module.css';
+import { WHATSAPP_CHANNEL_URL } from '@/config/social';
 
 export interface ExamSeriesCardProps {
   isComingSoon?: boolean;
@@ -70,14 +71,9 @@ export function ExamSeriesCard({
           </div>
 
           <div className={styles.priceRow}>
-            <span className={styles.currentPrice}>₹{price}</span>
-            {originalPrice > price && (
-              <>
-                <span className={styles.originalPrice}>₹{originalPrice}</span>
-                <span className={styles.discountBadge}>99% off</span>
-              </>
-            )}
-            <span className={styles.validity}>1 year access</span>
+            <span className={styles.currentPrice}>FREE</span>
+            <span className={styles.discountBadge}>100% Free</span>
+            <span className={styles.validity}>All Mocks Free</span>
           </div>
 
           <div className={styles.actions}>
@@ -86,7 +82,7 @@ export function ExamSeriesCard({
               onClick={handleFreeMockClick}
               className={styles.tryBtn}
             >
-              <span>Try free mock</span>
+              <span>Attempt Free Mock</span>
               <span className={styles.arrow} aria-hidden="true">
                 <ArrowRight size={15} />
               </span>
@@ -102,7 +98,7 @@ export function ExamSeriesCard({
             Mocks are being prepared. Join our WhatsApp channel to get notified at launch.
           </p>
           <a
-            href="https://whatsapp.com/channel/0029Vb4w23c6xCSHhW2ePq1f"
+            href={WHATSAPP_CHANNEL_URL}
             target="_blank"
             rel="noopener noreferrer"
             className={styles.notifyLink}

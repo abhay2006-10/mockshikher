@@ -340,15 +340,15 @@ export default function ExamDetailPage() {
         <span>Back to All Exams</span>
       </Link>
 
-      {/* Launch Offer Alert Bar */}
+      {/* Free Test Series Alert Bar */}
       <div className={styles.launchAlertBar}>
         <div className={styles.launchAlertContent}>
-          <span className={styles.launchFireTag}>🔥 LIMITED TIME LAUNCH OFFER</span>
+          <span className={styles.launchFireTag}>🎁 100% FREE PRACTICE SERIES</span>
           <span className={styles.launchAlertText}>
-            Special Launch Price: Get all mock tests in this series for just <strong>₹1</strong> <span className={styles.launchOldPriceInline}>(Regular ₹149)</span>! Offer valid for a limited time.
+            All full-length mock tests in this series are <strong>100% Free</strong> for all Himachal Pradesh aspirants. Practice today, succeed tomorrow!
           </span>
         </div>
-        <span className={styles.launchOfferPill}>99% OFF • ₹1 ONLY</span>
+        <span className={styles.launchOfferPill}>100% FREE • ALL MOCKS</span>
       </div>
 
       {/* Exam Hero Banner */}
@@ -400,7 +400,7 @@ export default function ExamDetailPage() {
               <ShieldCheck size={18} className={styles.statIcon} />
               <div>
                 <span className={styles.statValue}>{exam.totalMocks || sortedTests.length || 10} Total Mocks</span>
-                <span className={styles.statSub}>Mock 1 is Free</span>
+                <span className={styles.statSub}>All Mocks Free</span>
               </div>
             </div>
           </div>
@@ -408,17 +408,17 @@ export default function ExamDetailPage() {
 
         {/* Pricing Card */}
         <div className={styles.pricingCard}>
-          <div className={styles.pricingBadge}>🔥 Limited Time Launch Offer</div>
+          <div className={styles.pricingBadge}>🎁 100% Free Mock Bundle</div>
           <div className={styles.priceRow}>
-            <span className={styles.price}>₹{exam.price || 1}</span>
-            <span className={styles.origPrice}>₹{exam.originalPrice || 149}</span>
+            <span className={styles.price}>FREE</span>
+            <span className={styles.origPrice}>₹149</span>
             <span className={styles.discount}>
-              99% OFF
+              100% FREE
             </span>
           </div>
-          <p className={styles.pricingGuarantee}>Special Launch Offer • Valid for 1 full year</p>
+          <p className={styles.pricingGuarantee}>Full Test Series • Completely Free Access</p>
           <p style={{ fontSize: '0.85rem', color: '#10B981', fontWeight: 600, margin: '0.35rem 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span>⚡</span> Limited time launch offer for all students
+            <span>⚡</span> All tests unlocked for Himachal Pradesh aspirants
           </p>
 
           <div className={styles.includedList}>
@@ -440,22 +440,10 @@ export default function ExamDetailPage() {
             </div>
           </div>
 
-          {unlockedExam || isAdmin ? (
-            <div className={styles.unlockedBadgeBox}>
-              <CheckCircle2 size={18} />
-              <span>{isAdmin ? 'Admin Full Access Unlocked' : 'You own this full test series!'}</span>
-            </div>
-          ) : (
-            <Button
-              variant="accent"
-              size="lg"
-              fullWidth
-              leftIcon={<Zap size={18} />}
-              onClick={handleBuyClick}
-            >
-              Buy Test Series • ₹{exam.price || 1} (Launch Offer)
-            </Button>
-          )}
+          <div className={styles.unlockedBadgeBox}>
+            <CheckCircle2 size={18} />
+            <span>100% Free Series • All Tests Unlocked</span>
+          </div>
         </div>
       </header>
 
@@ -466,7 +454,7 @@ export default function ExamDetailPage() {
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>Available Full-Length Mock Tests</h2>
             <p className={styles.sectionSubtitle}>
-              Start with Mock 1 for free. Unlock the entire series to access all remaining tests.
+              All full-length mock tests are 100% free. Attempt anytime with real exam timer, score & bilingual solutions.
             </p>
           </div>
 
@@ -516,10 +504,10 @@ export default function ExamDetailPage() {
             {sortedTests.map((test) => (
               <TestCard
                 key={test.id}
-                test={test}
-                isUnlocked={unlockedExam || isAdmin}
+                test={{ ...test, isFree: true, isUnlocked: true }}
+                isUnlocked={true}
                 onUnlockClick={handleBuyClick}
-                examPrice={exam.price}
+                examPrice={0}
                 totalMocks={exam.totalMocks || sortedTests.length}
               />
             ))}

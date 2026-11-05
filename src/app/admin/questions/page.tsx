@@ -726,7 +726,7 @@ export default function AdminQuestionsPage() {
           )}
 
           {isLoadingQuestions ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: '#94A3B8' }}>
+            <div style={{ textAlign: 'center', padding: '3rem', color: '#3B4160' }}>
               Loading questions from PostgreSQL database...
             </div>
           ) : questions.length === 0 ? (
@@ -769,7 +769,7 @@ export default function AdminQuestionsPage() {
                     return (
                       <tr key={q.id}>
                         <td data-label="#">
-                          <strong style={{ color: '#F5B301' }}>Q{q.questionNumber}</strong>
+                          <strong style={{ color: '#0B1026' }}>Q{q.questionNumber}</strong>
                         </td>
                         <td data-label="Question Text" style={{ maxWidth: '340px' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
@@ -784,7 +784,7 @@ export default function AdminQuestionsPage() {
                           </div>
                         </td>
                         <td data-label="Options">
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', fontSize: '0.75rem', color: '#94A3B8' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', fontSize: '0.75rem', color: '#3B4160' }}>
                             {q.options.map((opt) => (
                               <span key={opt.label}>
                                 <strong style={{ color: opt.label === q.correctOption ? '#10B981' : '#fff' }}>
@@ -805,7 +805,7 @@ export default function AdminQuestionsPage() {
                             <span style={{ fontSize: '0.8rem', color: '#38BDF8', fontWeight: 600 }}>
                               {q.subjectName || 'General Awareness'}
                             </span>
-                            <span style={{ fontSize: '0.7rem', color: '#94A3B8' }}>
+                            <span style={{ fontSize: '0.7rem', color: '#3B4160' }}>
                               {q.topicName || 'General'}
                             </span>
                           </div>
@@ -976,7 +976,7 @@ export default function AdminQuestionsPage() {
               {qImage && (
                 <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <img src={qImage} alt="Preview" style={{ height: '48px', borderRadius: '4px', objectFit: 'cover' }} />
-                  <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{qImage}</span>
+                  <span style={{ fontSize: '0.75rem', color: '#3B4160' }}>{qImage}</span>
                   <button type="button" onClick={() => setQImage(null)} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer' }}>
                     <X size={14} />
                   </button>
@@ -1114,7 +1114,7 @@ export default function AdminQuestionsPage() {
           </p>
 
           {isLoadingReadiness ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: '#94A3B8' }}>
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#3B4160' }}>
               Checking database readiness status...
             </div>
           ) : (
@@ -1137,7 +1137,7 @@ export default function AdminQuestionsPage() {
                       <td data-label="Mock Test">
                         <strong style={{ color: 'var(--ink, #0B1026)' }}>{t.name}</strong>
                       </td>
-                      <td data-label="Exam Series" style={{ color: '#94A3B8' }}>
+                      <td data-label="Exam Series" style={{ color: '#3B4160' }}>
                         {t.examName}
                       </td>
                       <td data-label="Questions Count">
@@ -1163,7 +1163,7 @@ export default function AdminQuestionsPage() {
                         {t.isPublished ? (
                           <span style={{ color: '#34D399', fontWeight: 700, fontSize: '0.85rem' }}>Published</span>
                         ) : (
-                          <span style={{ color: '#94A3B8', fontWeight: 600, fontSize: '0.85rem' }}>Draft</span>
+                          <span style={{ color: '#3B4160', fontWeight: 600, fontSize: '0.85rem' }}>Draft</span>
                         )}
                       </td>
                       <td data-label="Action">
@@ -1199,7 +1199,7 @@ export default function AdminQuestionsPage() {
           </div>
 
           {isLoadingAudit ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: '#94A3B8' }}>
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#3B4160' }}>
               Fetching audit logs from PostgreSQL...
             </div>
           ) : auditLogs.length === 0 ? (
@@ -1239,10 +1239,10 @@ export default function AdminQuestionsPage() {
                       <td data-label="Details" style={{ color: '#E2E8F0', fontSize: '0.85rem' }}>
                         {log.details}
                       </td>
-                      <td data-label="Author" style={{ color: '#94A3B8', fontSize: '0.8rem' }}>
+                      <td data-label="Author" style={{ color: '#3B4160', fontSize: '0.8rem' }}>
                         {log.author}
                       </td>
-                      <td data-label="Timestamp" style={{ color: '#94A3B8', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                      <td data-label="Timestamp" style={{ color: '#3B4160', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
                         {new Date(log.timestamp).toLocaleString()}
                       </td>
                       <td data-label="Status">

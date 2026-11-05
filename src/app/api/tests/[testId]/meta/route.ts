@@ -72,7 +72,7 @@ export async function GET(
         id: mockTest.id,
         name: mockTest.name,
         testNumber: mockTest.testNumber,
-        isFree: mockTest.isFree,
+        isFree: true,
         totalQuestions,
         durationMinutes: mockTest.durationMinutes || 60,
         totalMarks: mockTest.totalMarks || totalQuestions,

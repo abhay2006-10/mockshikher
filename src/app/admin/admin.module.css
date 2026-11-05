@@ -70,7 +70,7 @@
   border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
-  color: #4B5168;
+  color: #0B1026;
   text-decoration: none;
   transition: all 0.18s ease;
 }
@@ -119,7 +119,7 @@
 
 .pageSubtitle {
   font-size: 14px;
-  color: #4B5168;
+  color: #3B4160;
   margin: 0;
 }
 
@@ -185,10 +185,10 @@
 }
 
 .adminTable th {
-  background: #F8F9FE;
+  background: #F6F7FC;
   padding: 0.85rem 1.25rem;
   font-weight: 700;
-  color: #4B5168;
+  color: #0B1026;
   border-bottom: 1.5px solid var(--border, #E3E6F5);
   font-size: 12px;
   text-transform: uppercase;
@@ -235,7 +235,7 @@
   background: transparent;
   border: none;
   border-bottom: 2.5px solid transparent;
-  color: #4B5168;
+  color: #3B4160;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -345,7 +345,7 @@
 
 .dropzoneSubtitle {
   font-size: 13.5px;
-  color: #4B5168;
+  color: #3B4160;
   max-width: 480px;
   margin: 0;
 }
@@ -709,4 +709,50 @@
   color: #FFFFFF !important;
   font-weight: 700;
   box-shadow: 0 1px 3px rgba(67, 56, 202, 0.25);
+}
+
+
+/* Crisp high-contrast placeholders & inputs */
+.adminContainer input::placeholder,
+.adminContainer textarea::placeholder,
+.adminContainer select::placeholder,
+.filterSelect::placeholder,
+.searchInput::placeholder {
+  color: #6B7090 !important;
+  opacity: 1 !important;
+}
+
+.adminContainer input:disabled,
+.adminContainer select:disabled,
+.adminContainer textarea:disabled,
+.adminContainer button:disabled {
+  background: #EEF0F8 !important;
+  color: #4B5168 !important;
+  cursor: not-allowed !important;
+  border-color: #D5D9EC !important;
+  opacity: 1 !important;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #FFFFFF;
+  border: 1.5px solid #D5D9EC;
+  color: #0B1026 !important;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.iconBtn:hover {
+  background: #F5F6FF;
+  border-color: #4338CA;
+  color: #4338CA !important;
+}
+
+.iconBtn svg {
+  color: inherit !important;
 }

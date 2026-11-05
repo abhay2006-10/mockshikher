@@ -20,6 +20,7 @@ import {
 import AuthModal, { AuthModalTab } from '@/components/ui/AuthModal';
 import type { MockExam } from '@/lib/mock-data';
 import styles from './page.module.css';
+import { WHATSAPP_CHANNEL_URL, INSTAGRAM_URL, INSTAGRAM_HANDLE, SUPPORT_EMAIL, SUPPORT_WHATSAPP_1, SUPPORT_WHATSAPP_2 } from '@/config/social';
 
 const FREE_MOCK_FALLBACK = '/test/hp-patwari-mock-1/instructions';
 const HOMEPAGE_CARD_LIMIT = 4;
@@ -287,16 +288,18 @@ export default function HomePageClient({
           <div className={styles.communityRight}>
             {/* WhatsApp */}
             <a
-              href="https://whatsapp.com/channel/0029Vb4w23c6xCSHhW2ePq1f"
+              href={WHATSAPP_CHANNEL_URL}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.channelCard}
+              aria-label="Join MockShikhar WhatsApp channel"
             >
               <span className={styles.iconBoxWa} aria-hidden="true">
                 <WhatsAppIcon size={26} />
               </span>
               <div className={styles.channelTextGroup}>
                 <span className={styles.channelTitle}>WhatsApp Channel</span>
+                <span className={styles.channelSub}>MockShikhar Updates</span>
                 <span className={styles.channelDesc}>
                   Exam alerts, syllabus updates and a daily quiz.
                 </span>
@@ -313,16 +316,18 @@ export default function HomePageClient({
 
             {/* Instagram */}
             <a
-              href="https://www.instagram.com/mockshikhar?utm_source=ig_web_button_share_sheet&rpxt=ZDNlZDc0MzIxNw=="
+              href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.channelCard}
+              aria-label={`Follow ${INSTAGRAM_HANDLE} on Instagram`}
             >
               <span className={styles.iconBoxIg} aria-hidden="true">
                 <InstagramIcon size={26} />
               </span>
               <div className={styles.channelTextGroup}>
                 <span className={styles.channelTitle}>Instagram</span>
+                <span className={styles.channelHandle}>{INSTAGRAM_HANDLE}</span>
                 <span className={styles.channelDesc}>
                   HP GK notes, current affairs and exam tips.
                 </span>
@@ -349,18 +354,18 @@ export default function HomePageClient({
 
         <div className={styles.helpGrid}>
           {/* Email */}
-          <a href="mailto:mockshikhar@gmail.com" className={styles.helpCard}>
+          <a href={`mailto:${SUPPORT_EMAIL}`} className={styles.helpCard}>
             <span className={`${styles.helpIconBox} ${styles.helpIconEmail}`} aria-hidden="true">
               <MailIcon size={20} />
             </span>
             <div className={styles.helpInfo}>
               <span className={styles.helpLabel}>Email</span>
-              <span className={styles.helpValue}>mockshikhar@gmail.com</span>
+              <span className={styles.helpValue}>{SUPPORT_EMAIL}</span>
             </div>
           </a>
 
           {/* Call / WA 1 */}
-          <a href="https://wa.me/917876725758" target="_blank" rel="noopener noreferrer" className={styles.helpCard}>
+          <a href={SUPPORT_WHATSAPP_1} target="_blank" rel="noopener noreferrer" className={styles.helpCard}>
             <span className={`${styles.helpIconBox} ${styles.helpIconPhone}`} aria-hidden="true">
               <PhoneIcon size={20} />
             </span>
@@ -371,7 +376,7 @@ export default function HomePageClient({
           </a>
 
           {/* Call / WA 2 */}
-          <a href="https://wa.me/918262910464" target="_blank" rel="noopener noreferrer" className={styles.helpCard}>
+          <a href={SUPPORT_WHATSAPP_2} target="_blank" rel="noopener noreferrer" className={styles.helpCard}>
             <span className={`${styles.helpIconBox} ${styles.helpIconPhone}`} aria-hidden="true">
               <PhoneIcon size={20} />
             </span>
@@ -383,7 +388,7 @@ export default function HomePageClient({
 
           {/* Instagram DM */}
           <a
-            href="https://www.instagram.com/mockshikhar?utm_source=ig_web_button_share_sheet&rpxt=ZDNlZDc0MzIxNw=="
+            href={INSTAGRAM_URL}
             target="_blank"
             rel="noopener noreferrer"
             className={styles.helpCard}

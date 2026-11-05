@@ -83,11 +83,13 @@ export function HeroParallaxScene() {
         className={styles.layer}
         style={{ transform: `translateX(${offsets.sun}px)` }}
       >
-        <svg viewBox="0 0 1440 440" preserveAspectRatio="xMidYMax slice" width="100%" height="100%">
-          <circle cx="1010" cy="150" r="150" fill="#FFF6E2" />
-          <circle cx="1010" cy="150" r="104" fill="#FFE9B8" />
-          <circle cx="1010" cy="150" r="70" fill="#FFD98A" />
-        </svg>
+        <div className={styles.up0}>
+          <svg viewBox="0 0 1440 440" preserveAspectRatio="xMidYMax slice" width="100%" height="100%">
+            <circle cx="1010" cy="150" r="150" fill="#FFF6E2" />
+            <circle cx="1010" cy="150" r="104" fill="#FFE9B8" />
+            <circle cx="1010" cy="150" r="70" fill="#FFD98A" />
+          </svg>
+        </div>
       </div>
 
       {/* Far Mountains Layer (with Snow Caps and Shadows) */}
@@ -95,23 +97,25 @@ export function HeroParallaxScene() {
         className={`${styles.layer} ${styles.farDrift}`}
         style={{ transform: `translateX(${offsets.far}px)` }}
       >
-        <svg viewBox="0 0 1440 440" preserveAspectRatio="xMidYMax slice" width="100%" height="100%">
-          {/* Main Ridge */}
-          <path
-            d="M0 340 L90 290 L160 310 L260 210 L330 255 L420 190 L520 280 L610 240 L700 160 L790 250 L880 215 L980 130 L1080 240 L1170 200 L1260 260 L1350 210 L1440 250 L1440 440 L0 440 Z"
-            fill="#DDE3FF"
-          />
-          {/* Shaded Mountain Faces */}
-          <path
-            d="M980 130 L1080 240 L1040 300 L995 300 Z M700 160 L790 250 L760 300 L712 300 Z M420 190 L520 280 L490 320 L430 320 Z M260 210 L330 255 L300 300 L268 300 Z M1350 210 L1440 250 L1440 300 L1360 300 Z"
-            fill="#CDD5FB"
-          />
-          {/* White Snow Caps */}
-          <path
-            d="M980 130 L945 160 L958 156 L968 166 L980 157 L992 167 L1007 160 Z M700 160 L671 186 L683 181 L692 190 L702 182 L713 191 L726 186 Z M420 190 L390 212 L401 208 L410 216 L420 209 L431 217 L444 212 Z"
-            fill="#FFFFFF"
-          />
-        </svg>
+        <div className={styles.up1}>
+          <svg viewBox="0 0 1440 440" preserveAspectRatio="xMidYMax slice" width="100%" height="100%">
+            {/* Main Ridge */}
+            <path
+              d="M0 340 L90 290 L160 310 L260 210 L330 255 L420 190 L520 280 L610 240 L700 160 L790 250 L880 215 L980 130 L1080 240 L1170 200 L1260 260 L1350 210 L1440 250 L1440 440 L0 440 Z"
+              fill="#DDE3FF"
+            />
+            {/* Shaded Mountain Faces */}
+            <path
+              d="M980 130 L1080 240 L1040 300 L995 300 Z M700 160 L790 250 L760 300 L712 300 Z M420 190 L520 280 L490 320 L430 320 Z M260 210 L330 255 L300 300 L268 300 Z M1350 210 L1440 250 L1440 300 L1360 300 Z"
+              fill="#CDD5FB"
+            />
+            {/* White Snow Caps */}
+            <path
+              d="M980 130 L945 160 L958 156 L968 166 L980 157 L992 167 L1007 160 Z M700 160 L671 186 L683 181 L692 190 L702 182 L713 191 L726 186 Z M420 190 L390 212 L401 208 L410 216 L420 209 L431 217 L444 212 Z"
+              fill="#FFFFFF"
+            />
+          </svg>
+        </div>
       </div>
 
       {/* Mid Mountains Layer */}
@@ -119,12 +123,14 @@ export function HeroParallaxScene() {
         className={`${styles.layer} ${styles.midDrift}`}
         style={{ transform: `translateX(${offsets.mid}px)` }}
       >
-        <svg viewBox="0 0 1440 440" preserveAspectRatio="xMidYMax slice" width="100%" height="100%">
-          <path
-            d="M0 360 Q120 290 220 320 T430 285 Q520 265 600 312 T800 292 Q900 252 1000 302 T1220 282 Q1330 272 1440 312 L1440 440 L0 440 Z"
-            fill="#BCC5F7"
-          />
-        </svg>
+        <div className={styles.up2}>
+          <svg viewBox="0 0 1440 440" preserveAspectRatio="xMidYMax slice" width="100%" height="100%">
+            <path
+              d="M0 360 Q120 290 220 320 T430 285 Q520 265 600 312 T800 292 Q900 252 1000 302 T1220 282 Q1330 272 1440 312 L1440 440 L0 440 Z"
+              fill="#BCC5F7"
+            />
+          </svg>
+        </div>
       </div>
 
       {/* Near Ridge Layer with Pine / Deodar Trees */}
@@ -132,14 +138,16 @@ export function HeroParallaxScene() {
         className={styles.layer}
         style={{ transform: `translateX(${offsets.near}px)` }}
       >
-        <svg viewBox="0 0 1440 440" preserveAspectRatio="xMidYMax slice" width="100%" height="100%">
-          <path
-            d="M0 395 Q160 345 300 372 T600 360 Q760 330 900 368 T1200 350 Q1330 345 1440 368 L1440 440 L0 440 Z"
-            fill="#98A4EF"
-          />
-          {/* Deodar trees on slopes */}
-          <path d={treePath} fill="#6D79D8" />
-        </svg>
+        <div className={styles.up3}>
+          <svg viewBox="0 0 1440 440" preserveAspectRatio="xMidYMax slice" width="100%" height="100%">
+            <path
+              d="M0 395 Q160 345 300 372 T600 360 Q760 330 900 368 T1200 350 Q1330 345 1440 368 L1440 440 L0 440 Z"
+              fill="#98A4EF"
+            />
+            {/* Deodar trees on slopes */}
+            <path d={treePath} fill="#6D79D8" />
+          </svg>
+        </div>
       </div>
 
       {/* Ground Wash Curve */}
@@ -154,4 +162,3 @@ export function HeroParallaxScene() {
     </div>
   );
 }
-

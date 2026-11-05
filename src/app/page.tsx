@@ -6,6 +6,7 @@ import { LANDING_EXAMS } from '@/lib/landing-exams';
 import { POPULAR_EXAMS, type MockExam } from '@/lib/mock-data';
 import { getCustomExamOrder, sortExamsByCustomOrder } from '@/lib/exam-order';
 import HomePageClient from './HomePageClient';
+import { INSTAGRAM_URL, SUPPORT_EMAIL } from '@/config/social';
 
 export const revalidate = 60;
 
@@ -130,12 +131,12 @@ export default async function HomePage() {
     image: 'https://mockshikhar.com/logo.svg',
     description:
       'Premier mock test series for Himachal Pradesh government exams (HP Patwari, HP Police, HP Judiciary Clerk & Process Server).',
-    sameAs: ['https://www.instagram.com/mockshikhar?utm_source=ig_web_button_share_sheet&rpxt=ZDNlZDc0MzIxNw=='],
+    sameAs: [INSTAGRAM_URL],
     contactPoint: {
       '@type': 'ContactPoint',
       telephone: '+91-7876725758, +91-8262910464',
       contactType: 'customer support',
-      email: 'mockshikhar@gmail.com',
+      email: SUPPORT_EMAIL,
       availableLanguage: ['English', 'Hindi'],
     },
   };

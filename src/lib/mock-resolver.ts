@@ -276,7 +276,7 @@ export async function resolveOrCreateMockTest(options: ResolveMockOptions) {
           examId: exam.id,
           testNumber,
           name: testName || `${exam.name} Full Mock ${testNumber}`,
-          isFree: testNumber === 1,
+          isFree: true, // 100% Free Mock Series
           isPublished: true,
           totalQuestions: 0,
           durationMinutes: exam.durationMinutes || 60,

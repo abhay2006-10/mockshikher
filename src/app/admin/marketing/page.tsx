@@ -169,7 +169,7 @@ export default function AdminMarketingPage() {
           gap: '1rem',
         }}
       >
-        <ShieldAlert size={28} color="#60a5fa" style={{ flexShrink: 0 }} />
+        <ShieldAlert size={28} color="#1D4ED8" style={{ flexShrink: 0 }} />
         <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
           <strong style={{ color: 'var(--ink, #0B1026)', display: 'block', marginBottom: '0.2rem' }}>
             Privacy & Anti-Spam Policy
@@ -184,7 +184,7 @@ export default function AdminMarketingPage() {
           <div className={styles.adminStatCard}>
             <div className={styles.adminStatHeader}>
               <span>Total Students</span>
-              <Users size={18} color="#94A3B8" />
+              <Users size={18} color="#0B1026" />
             </div>
             <div className={styles.adminStatVal} style={{ color: 'var(--ink, #0B1026)' }}>
               {stats.totalStudents}
