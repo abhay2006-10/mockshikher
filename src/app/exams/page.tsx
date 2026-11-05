@@ -153,7 +153,7 @@ async function getExamsPageData() {
               totalQuestions: db.totalQuestions || staticExam?.totalQuestions || 100,
               durationMinutes: db.durationMinutes || staticExam?.durationMinutes || 90,
               difficulty: (db.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || 'MEDIUM',
-              price: (db.price === 199 || db.price === 149 || !db.price) ? 1 : db.price,
+              price: 0,
               originalPrice: 149,
               isPopular: db.isPopular,
               category: db.category || 'General',

@@ -247,7 +247,7 @@ export async function GET(
         isFree: mockTest.isFree,
         examSlug: mockTest.exam?.slug || '',
         examName: mockTest.exam?.name || '',
-        examPrice: (mockTest.exam?.price === 199 || mockTest.exam?.price === 149 || !mockTest.exam?.price) ? 1 : mockTest.exam?.price,
+        examPrice: 0,
         totalQuestions: studentQuestions.length,
         durationMinutes: mockTest.durationMinutes || 60,
         totalMarks: mockTest.totalMarks || studentQuestions.reduce((sum, q) => sum + q.marks, 0),
@@ -255,9 +255,13 @@ export async function GET(
           mockTest.name?.toLowerCase().includes('patwari') ||
           mockTest.name?.toLowerCase().includes('clerk') ||
           mockTest.name?.toLowerCase().includes('process-server') ||
+          mockTest.name?.toLowerCase().includes('tet') ||
+          mockTest.name?.toLowerCase().includes('jbt') ||
           mockTest.exam?.slug?.includes('patwari') ||
           mockTest.exam?.slug?.includes('clerk') ||
           mockTest.exam?.slug?.includes('process-server') ||
+          mockTest.exam?.slug?.includes('tet') ||
+          mockTest.exam?.slug?.includes('jbt') ||
           mockTest.negativeMarksPerQuestion === 0 ||
           mockTest.exam?.negativeMarking === 0
             ? 0

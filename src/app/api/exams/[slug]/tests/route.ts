@@ -52,12 +52,12 @@ export async function GET(
     }
 
     // Auto-migrate legacy 199/149 price in DB to 1
-    if (exam.price === 199 || exam.price === 149) {
+    if (exam.price > 0) {
       await prisma.exam.update({
         where: { id: exam.id },
-        data: { price: 1 },
+        data: { price: 0 },
       }).catch(() => {});
-      exam.price = 1;
+      exam.price = 0;
     }
 
     // Query tests for this exam from PostgreSQL
@@ -162,6 +162,10 @@ export async function GET(
           exam.slug.includes('patwari') ||
           exam.slug.includes('clerk') ||
           exam.slug.includes('process-server') ||
+          exam.slug.includes('tet') ||
+          exam.slug.includes('jbt') ||
+          test.name?.toLowerCase().includes('tet') ||
+          test.name?.toLowerCase().includes('jbt') ||
           exam.negativeMarking === 0 ||
           test.negativeMarksPerQuestion === 0
             ? 0
@@ -196,7 +200,7 @@ export async function GET(
         slug: exam.slug,
         description: exam.description || officialConfig.description,
         category: exam.category || officialConfig.category,
-        price: (exam.price === 199 || exam.price === 149 || !exam.price) ? 1 : exam.price,
+        price: (exam.price > 0 || !exam.price) ? 1 : exam.price,
         originalPrice: 149,
         durationMinutes: exam.durationMinutes || officialConfig.durationMinutes,
         totalQuestions: exam.totalQuestions || officialConfig.totalQuestions,

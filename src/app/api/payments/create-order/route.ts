@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       examPrice = 1;
       await prisma.exam.update({
         where: { id: dbExam.id },
-        data: { price: 1 },
+        data: { price: 0 },
       }).catch(() => {});
     }
     const basePrice = Math.max(1, examPrice);
