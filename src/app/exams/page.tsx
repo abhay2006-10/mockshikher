@@ -16,9 +16,13 @@ export const metadata: Metadata = {
 async function getExamsPageData() {
   try {
     // Migrate any legacy price rows in PostgreSQL to 1
+    await prisma.mockTest.updateMany({
+      where: { isFree: false },
+      data: { isFree: true },
+    }).catch(() => {});
     await prisma.exam.updateMany({
-      where: { price: { in: [149, 199] } },
-      data: { price: 1 },
+      where: { price: { gt: 0 } },
+      data: { price: 0 },
     }).catch(() => {});
 
     const [dbExams, archivedExams] = await Promise.all([
@@ -108,12 +112,12 @@ async function getExamsPageData() {
         totalQuestions: db.totalQuestions,
         durationMinutes: db.durationMinutes,
         difficulty: (db.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || 'MEDIUM',
-        price: (db.price === 199 || db.price === 149 || !db.price) ? 1 : db.price,
+        price: 0,
         originalPrice: 149,
         isPopular: db.isPopular,
         category: db.category || config.category,
         totalMocks: publishedTests.length,
-        freeMocks: publishedTests.filter((t) => t.isFree).length,
+        freeMocks: publishedTests.length,
         subjects,
       };
 

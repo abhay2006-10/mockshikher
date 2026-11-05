@@ -191,7 +191,7 @@ export async function POST(req: NextRequest) {
                 examId: exam.id,
                 testNumber: testNum,
                 name: `${exam.name} Full Mock ${testNum}`,
-                isFree: testNum === 1,
+                isFree: true,
                 isPublished: false,
                 totalQuestions: 0,
                 durationMinutes: exam.durationMinutes,

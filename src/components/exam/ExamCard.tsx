@@ -60,11 +60,10 @@ export function ExamCard({
 
         <div className={styles.priceLine}>
           <div className={styles.priceWrap}>
-            <span className={styles.currentPrice}>₹{(exam.price === 199 || exam.price === 149 || !exam.price) ? 1 : exam.price}</span>
-            <span className={styles.originalPrice}>₹{exam.originalPrice || 149}</span>
-            <span className={styles.discountBadge}>99% OFF</span>
+            <span className={styles.currentPrice}>FREE</span>
+            <span className={styles.discountBadge}>100% Free</span>
           </div>
-          <span className={styles.validityText}>1 Year Validity</span>
+          <span className={styles.validityText}>All Mocks Free</span>
         </div>
 
         <div className={styles.buttonRow}>

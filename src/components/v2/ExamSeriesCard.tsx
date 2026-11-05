@@ -71,14 +71,9 @@ export function ExamSeriesCard({
           </div>
 
           <div className={styles.priceRow}>
-            <span className={styles.currentPrice}>₹{price}</span>
-            {originalPrice > price && (
-              <>
-                <span className={styles.originalPrice}>₹{originalPrice}</span>
-                <span className={styles.discountBadge}>99% off</span>
-              </>
-            )}
-            <span className={styles.validity}>1 year access</span>
+            <span className={styles.currentPrice}>FREE</span>
+            <span className={styles.discountBadge}>100% Free</span>
+            <span className={styles.validity}>All Mocks Free</span>
           </div>
 
           <div className={styles.actions}>
@@ -87,7 +82,7 @@ export function ExamSeriesCard({
               onClick={handleFreeMockClick}
               className={styles.tryBtn}
             >
-              <span>Try free mock</span>
+              <span>Attempt Free Mock</span>
               <span className={styles.arrow} aria-hidden="true">
                 <ArrowRight size={15} />
               </span>

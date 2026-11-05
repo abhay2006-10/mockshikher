@@ -27,13 +27,13 @@ export function TestCard({
   examPrice,
   totalMocks,
 }: TestCardProps) {
-  const isAccessible = test.isFree || isUnlocked;
+  const isAccessible = true; // All mock tests are 100% free
 
   return (
     <div className={`${styles.card} ${!isAccessible ? styles.lockedCard : ''}`}>
       <div className={styles.header}>
         <div className={styles.badgeRow}>
-          {test.isFree ? (
+          {(test.isFree !== false) ? (
             <Badge variant="success" size="sm">
               FREE
             </Badge>
@@ -115,7 +115,7 @@ export function TestCard({
             ) : (
               <Link href={`/test/${test.id}/instructions`} className={styles.startLink}>
                 <Button
-                  variant={test.isFree ? 'accent' : 'primary'}
+                  variant={(test.isFree !== false) ? 'accent' : 'primary'}
                   size="md"
                   leftIcon={hasAttempted ? <RotateCcw size={16} /> : <Play size={16} />}
                   fullWidth

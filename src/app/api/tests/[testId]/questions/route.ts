@@ -73,7 +73,8 @@ export async function GET(
     const session = await auth();
     // @ts-expect-error user role in token
     let isAdmin = session?.user?.role === 'ADMIN';
-    let isPurchased = mockTest.isFree || isAdmin;
+    // All mock tests are 100% free
+    let isPurchased = true;
 
     if (session?.user?.id && !isPurchased) {
       const [dbUser, purchase] = await Promise.all([
@@ -119,7 +120,7 @@ export async function GET(
       );
     }
 
-    if (!mockTest.isFree && !isPurchased) {
+    if (false && !mockTest.isFree && !isPurchased) {
       if (!session?.user?.id) {
         return NextResponse.json(
           {

@@ -470,6 +470,31 @@ export function Navbar({ initialUser }: NavbarProps) {
                     <span>Log out</span>
                   </span>
                 </button>
+
+                <div className={styles.sheetDivider} />
+
+                <div className={styles.sheetSocialRow}>
+                  <a
+                    href={WHATSAPP_CHANNEL_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.sheetSocialBtn}
+                    aria-label="Join MockShikhar on WhatsApp Channel"
+                  >
+                    <WhatsAppIcon size={16} />
+                    <span>WhatsApp</span>
+                  </a>
+                  <a
+                    href={INSTAGRAM_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.sheetSocialBtn}
+                    aria-label="Follow MockShikhar on Instagram"
+                  >
+                    <InstagramIcon size={16} />
+                    <span>Instagram</span>
+                  </a>
+                </div>
               </>
             ) : (
               <>
@@ -488,6 +513,31 @@ export function Navbar({ initialUser }: NavbarProps) {
                   >
                     Sign up free
                   </button>
+                </div>
+
+                <div className={styles.sheetDivider} />
+
+                <div className={styles.sheetSocialRow}>
+                  <a
+                    href={WHATSAPP_CHANNEL_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.sheetSocialBtn}
+                    aria-label="Join MockShikhar on WhatsApp Channel"
+                  >
+                    <WhatsAppIcon size={16} />
+                    <span>WhatsApp</span>
+                  </a>
+                  <a
+                    href={INSTAGRAM_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.sheetSocialBtn}
+                    aria-label="Follow MockShikhar on Instagram"
+                  >
+                    <InstagramIcon size={16} />
+                    <span>Instagram</span>
+                  </a>
                 </div>
 
                 <div className={styles.sheetDivider} />
