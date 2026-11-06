@@ -833,6 +833,72 @@ export const OFFICIAL_EXAMS_SYLLABUS: Record<string, OfficialExamConfig> = {
     ],
   },
 
+    // ==========================================
+  // INDIAN ARMY AGNIVEER GD
+  // ==========================================
+  'army-agniveer-gd': {
+    slug: 'army-agniveer-gd',
+    name: 'Indian Army Agniveer GD 2026',
+    nameHi: 'भारतीय सेना अग्निवीर (General Duty) परीक्षा 2026',
+    category: 'Defence Exams',
+    conductingBody: 'Indian Army (Join Indian Army)',
+    totalQuestions: 50,
+    durationMinutes: 60,
+    totalMarks: 100,
+    marksPerQuestion: 2.0,
+    negativeMarking: 0.5,
+    tags: ['General Knowledge (15 Q)', 'General Science (15 Q)', 'Mathematics (15 Q)', 'Logical Reasoning (5 Q)'],
+    description:
+      'Official Indian Army Agniveer General Duty (GD) Online Common Entrance Exam (CEE) test series. 50 questions (100 marks) in 60 minutes with official 0.50 negative marking.',
+    sections: [
+      {
+        id: 'sec-gk',
+        name: 'General Knowledge',
+        nameHi: 'सामान्य ज्ञान (General Knowledge)',
+        questionCount: 15,
+        marks: 30,
+        topics: [
+          { name: 'Indian History, Culture, Geography & Sports', nameHi: 'भारतीय इतिहास, संस्कृति, भूगोल एवं खेलकूद' },
+          { name: 'Indian Armed Forces, Ranks, Honours & Awards', nameHi: 'भारतीय सेना, पद, सम्मान एवं पुरस्कार' },
+          { name: 'Current Affairs & National Symbols', nameHi: 'समसामयिक घटनाक्रम एवं राष्ट्रीय प्रतीक' },
+        ],
+      },
+      {
+        id: 'sec-gs',
+        name: 'General Science',
+        nameHi: 'सामान्य विज्ञान (General Science)',
+        questionCount: 15,
+        marks: 30,
+        topics: [
+          { name: 'Physics, Chemistry & Basic Biology', nameHi: 'भौतिकी, रसायन एवं बुनियादी जीवविज्ञान' },
+          { name: 'Everyday Scientific Facts & Human Body', nameHi: 'दैनिक विज्ञान एवं मानव शरीर' },
+        ],
+      },
+      {
+        id: 'sec-math',
+        name: 'Mathematics',
+        nameHi: 'गणित (Mathematics)',
+        questionCount: 15,
+        marks: 30,
+        topics: [
+          { name: 'Number System, HCF & LCM, Decimals & Fractions', nameHi: 'संख्या पद्धति, म.स. व ल.स., दशमलव व भिन्न' },
+          { name: 'Percentage, Ratio & Proportion, Profit & Loss, Simple Interest', nameHi: 'प्रतिशत, अनुपात, लाभ-हानि व साधारण ब्याज' },
+          { name: 'Work & Time, Speed & Distance, Basic Mensuration', nameHi: 'कार्य-समय, चाल-दूरी एवं क्षेत्रमिति' },
+        ],
+      },
+      {
+        id: 'sec-reason',
+        name: 'Logical Reasoning',
+        nameHi: 'तर्कशक्ति (Logical Reasoning)',
+        questionCount: 5,
+        marks: 10,
+        topics: [
+          { name: 'Number Series, Coding-Decoding, Blood Relations & Directions', nameHi: 'श्रृंखला, कोडिंग-डिकोडिंग, रक्त संबंध व दिशा परीक्षण' },
+        ],
+      },
+    ],
+  },
+
   // ==========================================
   // HPAS (HPPSC Combined Competitive Exam)
   // ==========================================
@@ -981,6 +1047,11 @@ export function getOfficialExamConfig(rawSlug?: string): OfficialExamConfig {
   // Exact match
   if (OFFICIAL_EXAMS_SYLLABUS[clean]) {
     return OFFICIAL_EXAMS_SYLLABUS[clean];
+  }
+
+  // Army Agniveer GD
+  if (clean.includes('agniveer') || clean.includes('army-gd') || clean.includes('army-agniveer')) {
+    return OFFICIAL_EXAMS_SYLLABUS['army-agniveer-gd'];
   }
 
   // HPAS / HPPSC Combined Competitive Examination
