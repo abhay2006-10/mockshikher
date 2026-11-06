@@ -8,7 +8,8 @@ import { rateLimit } from '@/lib/rate-limit';
 const THIRTY_DAYS_SECONDS = 30 * 24 * 60 * 60; // 30 days
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'mockshikhar_super_secret_jwt_key_2026_dev',
+  // No hardcoded fallback: NextAuth refuses to run in production without AUTH_SECRET.
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   trustHost: true,
   session: {
     strategy: 'jwt',
@@ -93,10 +94,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider === 'google') {
         const email = user.email?.toLowerCase().trim();
         if (!email) return false;
+        // Only trust emails Google itself has verified before linking accounts.
+        if (profile && (profile as { email_verified?: boolean }).email_verified === false) {
+          return false;
+        }
 
         const existingUser = await prisma.user.findUnique({
           where: { email },
@@ -129,11 +134,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             });
           }
 
-          // Mark verified automatically for Google users
+          // Mark verified automatically for Google users.
+          // Pre-hijack protection: an unverified account may have been registered
+          // by someone else using this email. Google has now proven ownership, so
+          // wipe any password set by the unverified registrant before linking.
           if (!existingUser.emailVerified) {
             await prisma.user.update({
               where: { id: existingUser.id },
-              data: { emailVerified: new Date() },
+              data: { emailVerified: new Date(), passwordHash: null },
             });
           }
 

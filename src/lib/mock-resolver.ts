@@ -6,6 +6,12 @@ interface ResolveMockOptions {
   examSlug?: string;
   testNumber?: number;
   testName?: string;
+  /**
+   * Allow creating missing Exam / MockTest rows. Only admin routes should set
+   * this; public routes are read-only so anonymous requests to made-up IDs
+   * cannot insert junk rows into the database.
+   */
+  allowCreate?: boolean;
 }
 
 /**
@@ -187,6 +193,10 @@ export async function resolveOrCreateMockTest(options: ResolveMockOptions) {
     where: { slug: examSlug },
   });
 
+  if (!exam && !options.allowCreate) {
+    return null;
+  }
+
   if (!exam) {
     // Default exam details
     const examNames: Record<string, string> = {
@@ -269,6 +279,8 @@ export async function resolveOrCreateMockTest(options: ResolveMockOptions) {
     });
     if (existingById) {
       mockTest = existingById;
+    } else if (!options.allowCreate) {
+      return null;
     } else {
       mockTest = await prisma.mockTest.create({
         data: {

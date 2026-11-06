@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
 import { sendVerificationCodeEmail } from '@/lib/email';
 
-const PEPPER = process.env.AUTH_SECRET || 'mockshikhar_verification_salt_2026';
+import { getAuthPepper } from '@/lib/secrets';
 const CODE_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds
 const MAX_WRONG_ATTEMPTS = 5;
@@ -11,7 +11,7 @@ const MAX_WRONG_ATTEMPTS = 5;
 function hashCode(email: string, code: string): string {
   return crypto
     .createHash('sha256')
-    .update(`${email}:${code.trim()}:${PEPPER}`)
+    .update(`${email}:${code.trim()}:${getAuthPepper()}`)
     .digest('hex');
 }
 
