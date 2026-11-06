@@ -134,8 +134,8 @@ export async function POST(req: NextRequest) {
       topicName,
       topicNameHi,
       difficulty = 'MEDIUM',
-      marks = 1.0,
-      negativeMarks = 0.25,
+      marks,
+      negativeMarks,
       explanation,
       explanationHi,
       questionImage,
@@ -164,7 +164,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const numMarks = Number(marks);
+    // Blank marks / negative marks = use the mock test's own pattern (filled in below).
+    const hasMarks = marks !== undefined && marks !== null && marks !== '';
+    const hasNegMarks = negativeMarks !== undefined && negativeMarks !== null && negativeMarks !== '';
+
+    let numMarks = hasMarks ? Number(marks) : 1;
     if (isNaN(numMarks) || numMarks <= 0) {
       return NextResponse.json(
         { error: 'Marks must be greater than 0.' },
@@ -172,7 +176,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const numNegMarks = Number(negativeMarks);
+    let numNegMarks = hasNegMarks ? Number(negativeMarks) : 0;
     if (isNaN(numNegMarks) || numNegMarks < 0 || numNegMarks > 5) {
       return NextResponse.json(
         { error: 'Negative marking must be between 0 and 5.' },
@@ -188,6 +192,14 @@ export async function POST(req: NextRequest) {
     });
     if (!mockTest) {
       return NextResponse.json({ error: 'Mock test could not be resolved.' }, { status: 404 });
+    }
+
+    if (!hasMarks) {
+      numMarks = Number(mockTest.marksPerQuestion ?? mockTest.exam?.marksPerQuestion ?? 1) || 1;
+    }
+    if (!hasNegMarks) {
+      const testNeg = Number(mockTest.negativeMarksPerQuestion ?? mockTest.exam?.negativeMarking ?? 0);
+      numNegMarks = isNaN(testNeg) || testNeg < 0 ? 0 : testNeg;
     }
 
     // 2. Resolve or create subject

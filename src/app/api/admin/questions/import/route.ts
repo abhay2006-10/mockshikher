@@ -291,8 +291,17 @@ export async function POST(req: NextRequest) {
               subject.topics.push(topic);
             }
 
-            const qMarks = Number(row.marks) || 1.0;
-            const qNegMarks = Number(row.negative_marks) !== undefined ? Number(row.negative_marks) : 0.25;
+            // Blank cells use this mock test's own pattern (not a fixed 1 / 0.25).
+            const isBlank = (v: unknown) => v === undefined || v === null || String(v).trim() === '';
+            const rawMarks = Number(row.marks);
+            const qMarks = !isBlank(row.marks) && rawMarks > 0
+              ? rawMarks
+              : Number(mockTest.marksPerQuestion) || 1.0;
+            const rawNeg = Number(row.negative_marks);
+            const testNeg = Number(mockTest.negativeMarksPerQuestion);
+            const qNegMarks = !isBlank(row.negative_marks) && !isNaN(rawNeg) && rawNeg >= 0
+              ? rawNeg
+              : !isNaN(testNeg) && testNeg >= 0 ? testNeg : 0;
             const qCorrect = (row.correct_answer || 'A').toUpperCase().trim() as 'A' | 'B' | 'C' | 'D';
             const qDifficulty = (row.difficulty || 'MEDIUM').toUpperCase().trim() as any;
 
