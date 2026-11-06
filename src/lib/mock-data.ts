@@ -65,6 +65,31 @@ export interface MockExam {
 
 export const POPULAR_EXAMS: MockExam[] = [
   {
+    id: 'exam-hpas',
+    name: 'HPAS / HPPSC Combined Competitive Exam 2026',
+    slug: 'hpas',
+    description:
+      'Official HPPSC HPAS (Himachal Pradesh Administrative Services) Preliminary Examination test series. 10 full-length tests of 100 questions (200 marks) in 120 minutes with official 0.67 negative marking.',
+    totalQuestions: 100,
+    durationMinutes: 120,
+    difficulty: 'HARD',
+    price: 0,
+    originalPrice: 199,
+    isPopular: true,
+    category: 'Administrative Services',
+    totalMocks: 10,
+    freeMocks: 10,
+    subjects: [
+      { id: 'sub-hpas-hpgk', name: 'HP GK, Culture & Heritage', nameHi: 'हिमाचल सामान्य ज्ञान, कला व संस्कृति', questionCount: 20 },
+      { id: 'sub-hpas-survey', name: 'HP Economic Survey & Budget', nameHi: 'हि.प्र. आर्थिक सर्वेक्षण एवं बजट', questionCount: 20 },
+      { id: 'sub-hpas-polity', name: 'Indian Polity & Governance', nameHi: 'भारतीय राजव्यवस्था एवं संविधान', questionCount: 15 },
+      { id: 'sub-hpas-hist', name: 'History of India & National Movement', nameHi: 'भारतीय इतिहास एवं राष्ट्रीय आंदोलन', questionCount: 15 },
+      { id: 'sub-hpas-geo-env', name: 'Geography & Environment', nameHi: 'भूगोल एवं पर्यावरण/पारिस्थितिकी', questionCount: 15 },
+      { id: 'sub-hpas-ca-sci', name: 'Current Affairs & General Science', nameHi: 'समसामयिकी एवं सामान्य विज्ञान', questionCount: 15 },
+    ],
+  },
+
+  {
     id: 'exam-hp-patwari',
     name: 'HP Patwari Examination',
     slug: 'hp-patwari',
