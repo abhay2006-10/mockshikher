@@ -1,3 +1,4 @@
+import { ensureMockPackSeeded, KNOWN_PACK_SLUGS } from '@/lib/mock-packs-loader';
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { LANDING_EXAMS } from '@/lib/landing-exams';
@@ -25,6 +26,8 @@ async function getExamsPageData() {
       data: { price: 0 },
     }).catch(() => {});
 
+    await Promise.all(KNOWN_PACK_SLUGS.map((slug) => ensureMockPackSeeded(slug).catch(() => false)));
+    await Promise.all(KNOWN_PACK_SLUGS.map((slug) => ensureMockPackSeeded(slug).catch(() => false)));
     const [dbExams, archivedExams] = await Promise.all([
       prisma.exam.findMany({
         where: { isArchived: false },

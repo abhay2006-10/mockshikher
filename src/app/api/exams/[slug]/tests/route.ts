@@ -33,6 +33,11 @@ export async function GET(
       }
     }
 
+    const cleanSlug = slug.toLowerCase().trim();
+    if (KNOWN_PACK_SLUGS.includes(cleanSlug)) {
+      await ensureMockPackSeeded(cleanSlug).catch((err) => console.error('[Auto-Seed] Error:', err));
+    }
+
     const exam = await prisma.exam.findUnique({
       where: { slug },
       include: {

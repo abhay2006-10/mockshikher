@@ -1,3 +1,4 @@
+import { ensureMockPackSeeded, KNOWN_PACK_SLUGS } from '@/lib/mock-packs-loader';
 // Server component — fetches real exam data from DB
 // No 'use client' here
 
@@ -16,6 +17,7 @@ export const revalidate = 60;
  */
 async function getLandingPageData() {
   try {
+    await Promise.all(KNOWN_PACK_SLUGS.map((slug) => ensureMockPackSeeded(slug).catch(() => false)));
     const [publishedExamCount, dbExams, archivedExams] = await Promise.all([
       prisma.exam.count({
         where: { isArchived: false },
