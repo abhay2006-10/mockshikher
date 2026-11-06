@@ -10,7 +10,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: 'All HP Government Exam Mock Tests — Mockshikhar',
   description:
-    'Browse full-length bilingual mock tests for Himachal Pradesh government exams. Every exam includes 1 free sample mock.',
+    'Browse full-length bilingual mock tests for Himachal Pradesh government exams. All mock tests are 100% free.',
 };
 
 async function getExamsPageData() {

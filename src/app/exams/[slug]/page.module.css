@@ -45,7 +45,7 @@
 
 .launchFireTag {
   background: rgba(245, 158, 11, 0.25);
-  color: #FCD34D;
+  color: #92400E;
   font-size: 0.72rem;
   font-weight: 800;
   padding: 0.2rem 0.6rem;
@@ -56,7 +56,7 @@
 
 .launchAlertText {
   font-size: 0.88rem;
-  color: #F8FAFC;
+  color: #78350F;
 }
 
 .launchOldPriceInline {
@@ -151,13 +151,13 @@
 /* Pricing Card */
 .pricingCard {
   background: var(--color-bg-card);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--color-border, #E2E8F0);
   border-radius: var(--radius-xl);
   padding: var(--space-6);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 24px -12px rgba(15, 23, 42, 0.18);
 }
 
 .pricingBadge {
@@ -195,7 +195,7 @@
 .discount {
   font-size: var(--text-xs);
   font-weight: 700;
-  color: #34D399 !important;
+  color: #047857 !important;
   background: rgba(16, 185, 129, 0.15);
   border: 1px solid rgba(16, 185, 129, 0.3);
   padding: 0.15rem 0.5rem;
@@ -222,7 +222,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: var(--text-xs);
-  color: #E2E8F0 !important;
+  color: var(--color-text-primary, #0B1026) !important;
   font-weight: 500;
 }
 
@@ -237,7 +237,7 @@
   justify-content: center;
   gap: 0.5rem;
   background: rgba(16, 185, 129, 0.15);
-  color: #34D399;
+  color: #047857;
   border: 1px solid rgba(16, 185, 129, 0.35);
   padding: 0.65rem;
   border-radius: var(--radius-md);
@@ -358,6 +358,7 @@
 
 .questionWeight {
   font-weight: 700;
+  white-space: nowrap;
   color: var(--color-primary-700);
 }
 
@@ -518,7 +519,7 @@
 
 .sectionMarksBadge {
   background: rgba(16, 185, 129, 0.15);
-  color: #34D399;
+  color: #047857;
   border: 1px solid rgba(16, 185, 129, 0.3);
   font-size: 0.68rem;
   font-weight: 700;

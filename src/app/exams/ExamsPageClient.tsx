@@ -78,7 +78,7 @@ export default function ExamsPageClient({ initialExams, categories }: ExamsPageC
       {/* Page Header */}
       <header className={styles.pageHeader}>
         <h1 className={styles.title}>All HP Government Exam Mock Tests</h1>
-        <p className={styles.subtitle}>Every exam includes 1 free sample mock</p>
+        <p className={styles.subtitle}>All mock tests are 100% free — bilingual, full-length</p>
       </header>
 
       {/* Search & Category Filter Controls */}

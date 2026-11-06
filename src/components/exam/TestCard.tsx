@@ -102,7 +102,7 @@ export function TestCard({
           <div className={styles.btnGroup}>
             {test.totalQuestions === 0 ? (
               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.8rem', color: '#f87171', fontWeight: 500 }}>
+                <span style={{ fontSize: '0.8rem', color: '#B91C1C', fontWeight: 500 }}>
                   No questions have been added to this test yet
                 </span>
                 <Button
