@@ -834,6 +834,73 @@ export const OFFICIAL_EXAMS_SYLLABUS: Record<string, OfficialExamConfig> = {
   },
 
   // ==========================================
+  // HPAS (HPPSC Combined Competitive Exam)
+  // ==========================================
+  'hpas': {
+    slug: 'hpas',
+    name: 'HPAS / HPPSC Combined Competitive Exam 2026',
+    nameHi: 'हिमाचल प्रदेश प्रशासनिक सेवा (HPAS / HPPSC Prelims 2026)',
+    category: 'Administrative Services',
+    conductingBody: 'HPPSC (Himachal Pradesh Public Service Commission)',
+    totalQuestions: 100,
+    durationMinutes: 120,
+    totalMarks: 200,
+    marksPerQuestion: 2.0,
+    negativeMarking: 0.67,
+    tags: ['HP GK, Survey & Budget (30 Q)', 'Polity & History (30 Q)', 'Geo, Economy & Env (25 Q)', 'Current Affairs & Science (15 Q)'],
+    description:
+      'Official HPPSC HPAS (Himachal Pradesh Administrative Services) Preliminary Examination test series. 100 questions (200 marks) in 120 minutes with official 1/3rd (0.67) negative marking covering HP GK, HP Economic Survey 2025-26, HP Budget 2026-27, Indian Polity, History, Geography, Economy, Environment, and Current Affairs.',
+    sections: [
+      {
+        id: 'sec-hpgk-eco',
+        name: 'HP GK, Economic Survey 2025-26 & HP Budget 2026-27',
+        nameHi: 'हिमाचल प्रदेश सामान्य ज्ञान, आर्थिक सर्वेक्षण 2025-26 व बजट 2026-27',
+        questionCount: 30,
+        marks: 60,
+        topics: [
+          { name: 'HP History, Geography, Culture, Heritage & Administrative Setup', nameHi: 'हिमाचल का इतिहास, भूगोल, संस्कृति, विरासत व प्रशासनिक ढांचा' },
+          { name: 'Himachal Pradesh Economic Survey 2025-26 & Growth Indicators', nameHi: 'हिमाचल प्रदेश आर्थिक सर्वेक्षण 2025-26 व विकास संकेतक' },
+          { name: 'Himachal Pradesh State Budget 2026-27, Schemes & Allocations', nameHi: 'हिमाचल प्रदेश बजट 2026-27, योजनाएं व आवंटन' },
+        ],
+      },
+      {
+        id: 'sec-pol-hist',
+        name: 'Indian Polity, Governance & Indian History',
+        nameHi: 'भारतीय राजव्यवस्था, संविधान, शासन प्रणाली एवं इतिहास',
+        questionCount: 30,
+        marks: 60,
+        topics: [
+          { name: 'Constitution of India, Fundamental Rights, Parliament & Federalism', nameHi: 'भारतीय संविधान, मूल अधिकार, संसद व संघवाद' },
+          { name: 'Ancient, Medieval & Modern Indian History & National Freedom Struggle', nameHi: 'प्राचीन, मध्यकालीन व आधुनिक भारत का इतिहास एवं स्वतंत्रता संग्राम' },
+        ],
+      },
+      {
+        id: 'sec-geo-eco-env',
+        name: 'Geography, Economy & Environment / Ecology',
+        nameHi: 'भूगोल, भारतीय अर्थव्यवस्था एवं पर्यावरण-पारिस्थितिकी',
+        questionCount: 25,
+        marks: 50,
+        topics: [
+          { name: 'Physical, Social & Economic Geography of India and the World', nameHi: 'भारत एवं विश्व का भौतिक, सामाजिक व आर्थिक भूगोल' },
+          { name: 'Indian Economy, Union Budget 2026-27, Fiscal Policy & Inflation', nameHi: 'भारतीय अर्थव्यवस्था, केंद्रीय बजट 2026-27 व राजकोषीय नीति' },
+          { name: 'Environment, Biodiversity, Climate Change & Sustainable Development', nameHi: 'पर्यावरण, जैव विविधता, जलवायु परिवर्तन व सतत विकास' },
+        ],
+      },
+      {
+        id: 'sec-ca-sci',
+        name: 'Current Affairs 2026 & General Science',
+        nameHi: 'समसामयिक घटनाक्रम 2026 एवं सामान्य विज्ञान व प्रौद्योगिकी',
+        questionCount: 15,
+        marks: 30,
+        topics: [
+          { name: 'National & International Current Events, Summits, Treaties & Indices', nameHi: 'राष्ट्रीय एवं अंतरराष्ट्रीय समसामयिकी, सम्मेलन व सूचकांक' },
+          { name: 'General Science, Technology, Space & Everyday Scientific Applications', nameHi: 'सामान्य विज्ञान, रक्षा-अंतरिक्ष प्रौद्योगिकी व दैनिक विज्ञान' },
+        ],
+      },
+    ],
+  },
+
+  // ==========================================
   // SSC GD CONSTABLE
   // ==========================================
   'ssc-gd-constable': {
@@ -914,6 +981,11 @@ export function getOfficialExamConfig(rawSlug?: string): OfficialExamConfig {
   // Exact match
   if (OFFICIAL_EXAMS_SYLLABUS[clean]) {
     return OFFICIAL_EXAMS_SYLLABUS[clean];
+  }
+
+  // HPAS / HPPSC Combined Competitive Examination
+  if (clean === 'hpas' || clean.includes('hpas') || clean.includes('administrative') || clean.includes('has')) {
+    return OFFICIAL_EXAMS_SYLLABUS['hpas'];
   }
 
   // TGT Non-Medical (MUST be checked before Medical because "non-medical" contains "medical")
