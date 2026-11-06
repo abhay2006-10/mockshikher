@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { getOfficialExamConfig } from '@/lib/exam-syllabus';
+import { ensureMockPackSeeded, KNOWN_PACK_SLUGS } from '@/lib/mock-packs-loader';
 
 export const dynamic = 'force-dynamic';
 

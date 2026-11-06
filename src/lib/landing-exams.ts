@@ -17,6 +17,18 @@ export interface LandingExamConfig {
 
 export const LANDING_EXAMS: LandingExamConfig[] = [
   {
+    slug: 'hpas',
+    name: 'HPAS / HPPSC Prelims 2026',
+    description: 'Official HPPSC HPAS preliminary test series with 10 full-length mocks, 200 marks, 120 minutes and 0.67 negative marking.',
+    category: 'Administrative Services',
+  },
+  {
+    slug: 'army-agniveer-gd',
+    name: 'Indian Army Agniveer GD 2026',
+    description: 'Official pattern Indian Army Agniveer General Duty CEE with 50 questions, 100 marks, 60 minutes and 0.50 negative marking.',
+    category: 'Defence Exams',
+  },
+  {
     slug: 'hp-patwari',
     name: 'HP Patwari Examination',
     description: 'Targeted series for HP Revenue Department Patwari recruitment with arithmetic, GK and language sections.',

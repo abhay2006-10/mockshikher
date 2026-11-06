@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import { resolveOrCreateMockTest } from '@/lib/mock-resolver';
+import { resolveOrCreateMockTest, normalizeExamSlug } from '@/lib/mock-resolver';
+import { ensureMockPackSeeded, KNOWN_PACK_SLUGS } from '@/lib/mock-packs-loader';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +62,15 @@ export async function GET(
 
     // Resolve or find the MockTest using shared resolver
     const tMockStart = performance.now();
-    const mockTest = await resolveOrCreateMockTest({ mockTestId: testId });
+    let mockTest = await resolveOrCreateMockTest({ mockTestId: testId });
+    if (!mockTest) {
+      const match = testId.match(/^([a-z-]+)-mock-\d+$/i);
+      const possibleSlug = match ? normalizeExamSlug(match[1]) : '';
+      if (KNOWN_PACK_SLUGS.includes(possibleSlug)) {
+        await ensureMockPackSeeded(possibleSlug);
+        mockTest = await resolveOrCreateMockTest({ mockTestId: testId });
+      }
+    }
 
     if (!mockTest) {
       return NextResponse.json({ error: 'Test not found.' }, { status: 404 });

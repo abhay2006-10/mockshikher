@@ -87,6 +87,10 @@ export const EXAM_SLUG_ALIASES: Record<string, string> = {
   'ssc-gd-constable': 'ssc-gd-constable',
 
   // HPAS (Himachal Pradesh Administrative Services)
+  'army-agniveer-gd': 'army-agniveer-gd',
+  'agniveer-gd': 'army-agniveer-gd',
+  'army-gd': 'army-agniveer-gd',
+  'agniveer': 'army-agniveer-gd',
   'hpas': 'hpas',
   'hp-hpas': 'hpas',
   'hppsc-hpas': 'hpas',
@@ -127,6 +131,7 @@ export function normalizeExamSlug(rawSlug?: string, targetExamSlug?: string): st
   // Specific domain pattern fallbacks
   if (clean.includes('patwari')) return 'hp-patwari';
   if (clean.includes('allied')) return 'hp-allied-services';
+  if (clean.includes('agniveer') || clean.includes('army-gd') || clean.includes('army-agniveer')) return 'army-agniveer-gd';
   if (clean === 'hpas' || clean.includes('hpas') || clean.includes('administrative') || clean.includes('has')) return 'hpas';
   if (clean.includes('process-server')) return 'hp-judiciary-process-server';
   if (clean.includes('clerk') || clean.includes('high-court')) return 'hp-judiciary-clerk';
@@ -215,6 +220,7 @@ export async function resolveOrCreateMockTest(options: ResolveMockOptions) {
       'hp-police-constable': 'HP Police Constable 2026',
       'hp-patwari': 'HP Patwari Examination',
       'hp-allied-services': 'HP Allied Services Examination',
+      'army-agniveer-gd': 'Indian Army Agniveer GD 2026',
       'hpas': 'HPAS / HPPSC Combined Competitive Exam 2026',
       'hp-judiciary-clerk': 'HP Judiciary Clerk',
       'hp-judiciary-process-server': 'HP Judiciary Process Server',

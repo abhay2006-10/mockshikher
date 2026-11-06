@@ -65,6 +65,29 @@ export interface MockExam {
 
 export const POPULAR_EXAMS: MockExam[] = [
   {
+    id: 'exam-army-agniveer-gd',
+    name: 'Indian Army Agniveer GD 2026',
+    slug: 'army-agniveer-gd',
+    description:
+      'Official Indian Army Agniveer General Duty (GD) Online Common Entrance Exam (CEE) test series. 10 full-length tests of 50 questions (100 marks) in 60 minutes with official 0.50 negative marking.',
+    totalQuestions: 50,
+    durationMinutes: 60,
+    difficulty: 'MEDIUM',
+    price: 0,
+    originalPrice: 149,
+    isPopular: true,
+    category: 'Defence Exams',
+    totalMocks: 10,
+    freeMocks: 10,
+    subjects: [
+      { id: 'sub-ag-gk', name: 'General Knowledge', nameHi: 'सामान्य ज्ञान', questionCount: 15 },
+      { id: 'sub-ag-gs', name: 'General Science', nameHi: 'सामान्य विज्ञान', questionCount: 15 },
+      { id: 'sub-ag-ma', name: 'Mathematics', nameHi: 'गणित', questionCount: 15 },
+      { id: 'sub-ag-re', name: 'Logical Reasoning', nameHi: 'तर्कशक्ति (रीजनिंग)', questionCount: 5 },
+    ],
+  },
+
+  {
     id: 'exam-hpas',
     name: 'HPAS / HPPSC Combined Competitive Exam 2026',
     slug: 'hpas',
