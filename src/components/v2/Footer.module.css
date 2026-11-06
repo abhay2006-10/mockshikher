@@ -36,6 +36,16 @@
   letter-spacing: -0.02em;
 }
 
+.brandMark {
+  height: 30px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.brandAccent {
+  color: #FCD34D;
+}
+
 .navLinks {
   display: inline-flex;
   align-items: center;
