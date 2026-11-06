@@ -223,6 +223,9 @@ export async function ensureMockPackSeeded(slug: string): Promise<boolean> {
         where: { mockTestId: mockTest.id },
       });
 
+      const questionsToInsert = [];
+      const optionsToInsert = [];
+
       for (const q of mockData.questions) {
         let subject = subjectMap.get(q.subject.toLowerCase().trim());
         if (!subject) {
@@ -257,31 +260,40 @@ export async function ensureMockPackSeeded(slug: string): Promise<boolean> {
           topicCache.set(topicKey, topic);
         }
 
-        await prisma.question.create({
-          data: {
-            mockTestId: mockTest.id,
-            subjectId: subject.id,
-            topicId: topic.id,
-            questionNumber: q.qNum,
-            questionText: q.textEn,
-            questionTextHi: q.textHi,
-            correctOption: q.correct,
-            marks: mockData.marksPerQuestion,
-            negativeMarks: mockData.negativeMarksPerQuestion,
-            difficulty: q.difficulty,
-            explanation: q.expEn,
-            explanationHi: q.expHi,
-            options: {
-              create: [
-                { optionLabel: 'A', optionText: q.optAEn, optionTextHi: q.optAHi },
-                { optionLabel: 'B', optionText: q.optBEn, optionTextHi: q.optBHi },
-                { optionLabel: 'C', optionText: q.optCEn, optionTextHi: q.optCHi },
-                { optionLabel: 'D', optionText: q.optDEn, optionTextHi: q.optDHi },
-              ],
-            },
-          },
+        const qId = `${mockTest.id}-q-${q.qNum}`;
+        questionsToInsert.push({
+          id: qId,
+          mockTestId: mockTest.id,
+          subjectId: subject.id,
+          topicId: topic.id,
+          questionNumber: q.qNum,
+          questionText: q.textEn,
+          questionTextHi: q.textHi,
+          correctOption: q.correct,
+          marks: mockData.marksPerQuestion,
+          negativeMarks: mockData.negativeMarksPerQuestion,
+          difficulty: q.difficulty,
+          explanation: q.expEn,
+          explanationHi: q.expHi,
         });
+
+        optionsToInsert.push(
+          { id: `${qId}-opt-A`, questionId: qId, optionLabel: 'A' as const, optionText: q.optAEn, optionTextHi: q.optAHi },
+          { id: `${qId}-opt-B`, questionId: qId, optionLabel: 'B' as const, optionText: q.optBEn, optionTextHi: q.optBHi },
+          { id: `${qId}-opt-C`, questionId: qId, optionLabel: 'C' as const, optionText: q.optCEn, optionTextHi: q.optCHi },
+          { id: `${qId}-opt-D`, questionId: qId, optionLabel: 'D' as const, optionText: q.optDEn, optionTextHi: q.optDHi }
+        );
       }
+
+      await prisma.question.createMany({
+        data: questionsToInsert,
+        skipDuplicates: true,
+      });
+
+      await prisma.questionOption.createMany({
+        data: optionsToInsert,
+        skipDuplicates: true,
+      });
     }
 
     console.log(`[Auto-Seed] Successfully seeded "${cleanSlug}" with ${pack.mocks.length} mocks.`);
@@ -291,3 +303,4 @@ export async function ensureMockPackSeeded(slug: string): Promise<boolean> {
     return false;
   }
 }
+

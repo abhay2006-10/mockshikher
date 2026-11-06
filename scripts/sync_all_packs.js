@@ -17,7 +17,7 @@ async function syncPack(fileName) {
   const pack = JSON.parse(raw);
   const cleanSlug = pack.examSlug.toLowerCase().trim();
 
-  console.log(`\n=== Syncing Mock Pack: ${pack.examName} (${cleanSlug}) ===`);
+  console.log(`\n=== Fast Sync: ${pack.examName} (${cleanSlug}) ===`);
 
   // 1. Upsert Exam
   const exam = await prisma.exam.upsert({
@@ -56,9 +56,7 @@ async function syncPack(fileName) {
     },
   });
 
-  console.log(`Exam Ready: ${exam.name}`);
-
-  // 2. Upsert Subjects
+  // 2. Upsert Subjects in batch
   const subjectMap = new Map();
   for (const sub of pack.subjects) {
     const dbSub = await prisma.subject.upsert({
@@ -82,9 +80,18 @@ async function syncPack(fileName) {
     subjectMap.set(sub.name.toLowerCase().trim(), dbSub);
   }
 
+  // Pre-load all existing topics for this exam's subjects
+  const existingTopics = await prisma.topic.findMany({
+    where: {
+      subject: { examId: exam.id }
+    }
+  });
   const topicCache = new Map();
+  existingTopics.forEach(t => {
+    topicCache.set(`${t.subjectId}_${t.name.toLowerCase().trim()}`, t);
+  });
 
-  // 3. Process Mocks
+  // 3. Process each Mock Test
   for (const mockData of pack.mocks) {
     const mockTestId = `${cleanSlug}-mock-${mockData.testNumber}`;
     const mockTest = await prisma.mockTest.upsert({
@@ -124,14 +131,16 @@ async function syncPack(fileName) {
     });
 
     if (qCount >= mockData.questions.length) {
-      console.log(`  - Mock ${mockData.testNumber}: already has ${qCount} questions, skipped.`);
+      console.log(`  - Mock ${mockData.testNumber}: ${qCount} questions already present (skipped)`);
       continue;
     }
 
+    // Prepare questions and options for high-speed bulk insertion
     await prisma.question.deleteMany({
       where: { mockTestId: mockTest.id },
     });
 
+    // Ensure all topics exist first
     for (const q of mockData.questions) {
       let subject = subjectMap.get(q.subject.toLowerCase().trim());
       if (!subject) {
@@ -147,9 +156,8 @@ async function syncPack(fileName) {
       }
 
       const topicKey = `${subject.id}_${q.topic.toLowerCase().trim()}`;
-      let topic = topicCache.get(topicKey);
-      if (!topic) {
-        topic = await prisma.topic.upsert({
+      if (!topicCache.has(topicKey)) {
+        const newTopic = await prisma.topic.upsert({
           where: {
             subjectId_name: {
               subjectId: subject.id,
@@ -163,43 +171,61 @@ async function syncPack(fileName) {
             nameHi: q.topic,
           },
         });
-        topicCache.set(topicKey, topic);
+        topicCache.set(topicKey, newTopic);
       }
-
-      await prisma.question.create({
-        data: {
-          mockTestId: mockTest.id,
-          subjectId: subject.id,
-          topicId: topic.id,
-          questionNumber: q.qNum,
-          questionText: q.textEn,
-          questionTextHi: q.textHi,
-          correctOption: q.correct,
-          marks: mockData.marksPerQuestion,
-          negativeMarks: mockData.negativeMarksPerQuestion,
-          difficulty: q.difficulty,
-          explanation: q.expEn,
-          explanationHi: q.expHi,
-          options: {
-            create: [
-              { optionLabel: 'A', optionText: q.optAEn, optionTextHi: q.optAHi },
-              { optionLabel: 'B', optionText: q.optBEn, optionTextHi: q.optBHi },
-              { optionLabel: 'C', optionText: q.optCEn, optionTextHi: q.optCHi },
-              { optionLabel: 'D', optionText: q.optDEn, optionTextHi: q.optDHi },
-            ],
-          },
-        },
-      });
     }
 
-    console.log(`  - Mock ${mockData.testNumber}: successfully imported ${mockData.questions.length} questions.`);
+    const questionsToInsert = [];
+    const optionsToInsert = [];
+
+    for (const q of mockData.questions) {
+      const subject = subjectMap.get(q.subject.toLowerCase().trim());
+      const topic = topicCache.get(`${subject.id}_${q.topic.toLowerCase().trim()}`);
+      const qId = `${mockTest.id}-q-${q.qNum}`;
+
+      questionsToInsert.push({
+        id: qId,
+        mockTestId: mockTest.id,
+        subjectId: subject.id,
+        topicId: topic.id,
+        questionNumber: q.qNum,
+        questionText: q.textEn,
+        questionTextHi: q.textHi,
+        correctOption: q.correct,
+        marks: mockData.marksPerQuestion,
+        negativeMarks: mockData.negativeMarksPerQuestion,
+        difficulty: q.difficulty,
+        explanation: q.expEn,
+        explanationHi: q.expHi,
+      });
+
+      optionsToInsert.push(
+        { id: `${qId}-opt-A`, questionId: qId, optionLabel: 'A', optionText: q.optAEn, optionTextHi: q.optAHi },
+        { id: `${qId}-opt-B`, questionId: qId, optionLabel: 'B', optionText: q.optBEn, optionTextHi: q.optBHi },
+        { id: `${qId}-opt-C`, questionId: qId, optionLabel: 'C', optionText: q.optCEn, optionTextHi: q.optCHi },
+        { id: `${qId}-opt-D`, questionId: qId, optionLabel: 'D', optionText: q.optDEn, optionTextHi: q.optDHi }
+      );
+    }
+
+    // High-speed bulk insert in 2 queries
+    await prisma.question.createMany({
+      data: questionsToInsert,
+      skipDuplicates: true,
+    });
+
+    await prisma.questionOption.createMany({
+      data: optionsToInsert,
+      skipDuplicates: true,
+    });
+
+    console.log(`  - Mock ${mockData.testNumber}: bulk imported ${questionsToInsert.length} questions in seconds.`);
   }
 
-  console.log(`Finished syncing "${cleanSlug}".`);
+  console.log(`Done syncing "${cleanSlug}".`);
 }
 
 async function main() {
-  console.log('=== Syncing All Mock Packs to Database ===');
+  console.log('=== High-Speed Bulk Sync of Mock Packs ===');
   const files = fs.readdirSync(PACKS_DIR).filter(f => f.endsWith('.json')).sort();
   for (const f of files) {
     try {
@@ -214,7 +240,6 @@ async function main() {
 main()
   .catch((e) => {
     console.error('Sync failed:', e);
-    // Don't fail build if DB connection is not present during build
     process.exit(0);
   })
   .finally(() => prisma.$disconnect());

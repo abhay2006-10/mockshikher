@@ -354,28 +354,7 @@ export const POPULAR_EXAMS: MockExam[] = [
       { id: 'sub-al-gs', name: 'Indian History, Polity & Economy', nameHi: 'भारतीय इतिहास, राजव्यवस्था व भूगोल', questionCount: 80 },
     ],
   },
-  {
-    id: 'exam-ssc-gd',
-    name: 'SSC GD Constable',
-    slug: 'ssc-gd-constable',
-    description:
-      'National level Central Armed Police Forces (CAPFs), SSF, Rifleman examination mock papers strictly following SSC pattern.',
-    totalQuestions: 80,
-    durationMinutes: 60,
-    difficulty: 'HARD',
-    price: 0,
-    originalPrice: 149,
-    isPopular: true,
-    category: 'Central Defense',
-    totalMocks: 15,
-    freeMocks: 15,
-    subjects: [
-      { id: 'sub-gd-re', name: 'General Intelligence & Reasoning', nameHi: 'तर्कशक्ति', questionCount: 20 },
-      { id: 'sub-gd-gk', name: 'General Knowledge & GA', nameHi: 'सामान्य ज्ञान', questionCount: 20 },
-      { id: 'sub-gd-ma', name: 'Elementary Mathematics', nameHi: 'प्रारंभिक गणित', questionCount: 20 },
-      { id: 'sub-gd-en', name: 'English / Hindi', nameHi: 'अंग्रेजी / हिन्दी', questionCount: 20 },
-    ],
-  },
+
 ];
 
 export const HP_TET_JBT_MOCKS: MockTest[] = [

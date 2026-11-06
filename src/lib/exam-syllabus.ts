@@ -1105,7 +1105,7 @@ export function getOfficialExamConfig(rawSlug?: string): OfficialExamConfig {
   }
   // SSC GD
   if (clean.includes('ssc') && clean.includes('gd')) {
-    return OFFICIAL_EXAMS_SYLLABUS['ssc-gd-constable'];
+    return OFFICIAL_EXAMS_SYLLABUS['army-agniveer-gd'];
   }
 
   // Fallback to HP Patwari if unrecognized

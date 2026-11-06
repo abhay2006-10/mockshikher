@@ -83,8 +83,8 @@ export const EXAM_SLUG_ALIASES: Record<string, string> = {
   'forest-guard': 'hp-forest-guard',
 
   // SSC GD Constable
-  'ssc-gd': 'ssc-gd-constable',
-  'ssc-gd-constable': 'ssc-gd-constable',
+  'ssc-gd': 'army-agniveer-gd',
+  'ssc-gd-constable': 'army-agniveer-gd',
 
   // HPAS (Himachal Pradesh Administrative Services)
   'army-agniveer-gd': 'army-agniveer-gd',
@@ -141,7 +141,7 @@ export function normalizeExamSlug(rawSlug?: string, targetExamSlug?: string): st
   if (clean.includes('non-medical') && clean.includes('tet')) return 'hp-tet-tgt-non-medical';
   if (clean.includes('arts') && clean.includes('tet')) return 'hp-tet-tgt-arts';
   if (clean.includes('jbt')) return 'hp-tet-jbt';
-  if (clean.includes('ssc') && clean.includes('gd')) return 'ssc-gd-constable';
+  if (clean.includes('ssc') && clean.includes('gd')) return 'army-agniveer-gd';
 
   // Return the cleaned slug as-is; NEVER default to hp-police-constable
   return clean;
@@ -226,7 +226,7 @@ export async function resolveOrCreateMockTest(options: ResolveMockOptions) {
       'hp-judiciary-process-server': 'HP Judiciary Process Server',
       'hp-high-court-clerk': 'HP Judiciary Clerk',
       'hp-forest-guard': 'HP Forest Guard',
-      'ssc-gd-constable': 'SSC GD Constable',
+      'ssc-gd-constable': 'Indian Army Agniveer GD 2026',
     };
 
     const formattedName =
