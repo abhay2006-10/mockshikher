@@ -11,7 +11,8 @@ export async function GET(
   context: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { slug } = await context.params;
+    let { slug } = await context.params;
+    if (slug === 'agniveer-army-gd' || slug === 'ssc-gd-constable') slug = 'army-agniveer-gd';
     const session = await auth();
     // @ts-expect-error user role in token
     let isAdmin = session?.user?.role === 'ADMIN';

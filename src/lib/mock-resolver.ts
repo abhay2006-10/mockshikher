@@ -88,6 +88,7 @@ export const EXAM_SLUG_ALIASES: Record<string, string> = {
 
   // HPAS (Himachal Pradesh Administrative Services)
   'army-agniveer-gd': 'army-agniveer-gd',
+  'agniveer-army-gd': 'army-agniveer-gd',
   'agniveer-gd': 'army-agniveer-gd',
   'army-gd': 'army-agniveer-gd',
   'agniveer': 'army-agniveer-gd',

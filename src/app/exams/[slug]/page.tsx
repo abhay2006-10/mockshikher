@@ -31,7 +31,8 @@ import styles from './page.module.css';
 export default function ExamDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const slug = params?.slug as string;
+  const rawSlug = params?.slug as string;
+  const slug = rawSlug === 'agniveer-army-gd' || rawSlug === 'ssc-gd-constable' ? 'army-agniveer-gd' : rawSlug;
   const { data: session, status } = useSession();
   const isLoggedIn = status === 'authenticated';
   // @ts-expect-error role in session

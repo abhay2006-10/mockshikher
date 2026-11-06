@@ -27,7 +27,7 @@ async function getExamsPageData() {
     }).catch(() => {});
 
     await Promise.all(KNOWN_PACK_SLUGS.map((slug) => ensureMockPackSeeded(slug).catch(() => false)));
-    await Promise.all(KNOWN_PACK_SLUGS.map((slug) => ensureMockPackSeeded(slug).catch(() => false)));
+    await prisma.exam.updateMany({ where: { slug: { in: ['agniveer-army-gd', 'ssc-gd-constable'] } }, data: { isArchived: true } }).catch(() => {});
     const [dbExams, archivedExams] = await Promise.all([
       prisma.exam.findMany({
         where: { isArchived: false },
