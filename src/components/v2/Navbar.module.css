@@ -36,6 +36,16 @@
   color: var(--primary-dark);
 }
 
+.brandMark {
+  height: 36px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.brandAccent {
+  color: var(--amber-strong);
+}
+
 /* Desktop Navlinks */
 .navLinks {
   display: flex;

@@ -184,7 +184,11 @@ export async function POST(req: NextRequest) {
     const mockTest = await resolveOrCreateMockTest({
       mockTestId: mockTestId || 'hp-police-mock-1',
       examSlug: examSlug || 'hp-police-constable',
+      allowCreate: true,
     });
+    if (!mockTest) {
+      return NextResponse.json({ error: 'Mock test could not be resolved.' }, { status: 404 });
+    }
 
     // 2. Resolve or create subject
     const finalSubjectName = subjectName?.trim() || 'General Awareness & HP GK';

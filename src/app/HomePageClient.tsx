@@ -360,7 +360,9 @@ export default function HomePageClient({
             </span>
             <div className={styles.helpInfo}>
               <span className={styles.helpLabel}>Email</span>
-              <span className={styles.helpValue}>{SUPPORT_EMAIL}</span>
+              <span className={styles.helpValue}>
+                {SUPPORT_EMAIL.split('@')[0]}@<wbr />{SUPPORT_EMAIL.split('@')[1]}
+              </span>
             </div>
           </a>
 

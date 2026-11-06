@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
 
-const PEPPER = process.env.AUTH_SECRET || 'mockshikhar_verification_salt_2026';
+import { getAuthPepper } from '@/lib/secrets';
 const MAX_WRONG_ATTEMPTS = 5;
 
 export async function POST(req: NextRequest) {
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
     const candidateHash = crypto
       .createHash('sha256')
-      .update(`${normalizedEmail}:${cleanCode}:${PEPPER}`)
+      .update(`${normalizedEmail}:${cleanCode}:${getAuthPepper()}`)
       .digest('hex');
 
     if (candidateHash !== storedHash) {

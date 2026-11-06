@@ -470,12 +470,16 @@
 }
 
 .helpGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  /* Flex (not equal grid columns) so each card is at least as wide as its
+     content: the email gets the room it needs and never wraps mid-word. */
+  display: flex;
+  flex-wrap: wrap;
   gap: 16px;
 }
 
 .helpCard {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -541,7 +545,14 @@
   font-size: 15px;
   font-weight: 700;
   color: var(--ink);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+}
+
+/* Very narrow phones: allow a break, but only at the <wbr> after the @ */
+@media (max-width: 360px) {
+  .helpValue {
+    white-space: normal;
+  }
 }
 
 /* ================== MOBILE RESPONSIVE RULES ================== */

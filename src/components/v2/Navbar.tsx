@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import {
-  MountainLogo,
   ChevronDown,
   MenuIcon,
   UserIcon,
@@ -152,8 +152,8 @@ export function Navbar({ initialUser }: NavbarProps) {
         <div className={styles.inner}>
           {/* Brand */}
           <Link href="/" className={styles.brand} aria-label="MockShikhar Home">
-            <MountainLogo size={34} />
-            <span>MockShikhar</span>
+            <Image src="/logo-mark.png" alt="" width={56} height={36} priority className={styles.brandMark} />
+            <span>Mock<span className={styles.brandAccent}>Shikhar</span></span>
           </Link>
 
           {/* Desktop Navlinks */}

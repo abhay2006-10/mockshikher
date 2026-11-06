@@ -417,7 +417,7 @@ export default function ExamDetailPage() {
             </span>
           </div>
           <p className={styles.pricingGuarantee}>Full Test Series • Completely Free Access</p>
-          <p style={{ fontSize: '0.85rem', color: '#10B981', fontWeight: 600, margin: '0.35rem 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <p style={{ fontSize: '0.85rem', color: '#047857', fontWeight: 600, margin: '0.35rem 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
             <span>⚡</span> All tests unlocked for Himachal Pradesh aspirants
           </p>
 
@@ -476,8 +476,8 @@ export default function ExamDetailPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <ShieldCheck size={20} color="#F5B301" />
                 <div>
-                  <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block' }}>Admin Control Mode</strong>
-                  <span style={{ fontSize: '0.75rem', color: '#CBD5E1' }}>
+                  <strong style={{ color: '#1E293B', fontSize: '0.9rem', display: 'block' }}>Admin Control Mode</strong>
+                  <span style={{ fontSize: '0.75rem', color: '#475569' }}>
                     Upload mock tests, add questions via CSV/Excel, or manage series
                   </span>
                 </div>
@@ -664,10 +664,10 @@ export default function ExamDetailPage() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <CheckCircle2 size={16} color="#10B981" />
-                  <span style={{ fontWeight: 700, fontFamily: 'monospace', color: '#10B981' }}>
+                  <span style={{ fontWeight: 700, fontFamily: 'monospace', color: '#047857' }}>
                     {appliedPromo.code}
                   </span>
-                  <span style={{ fontSize: '0.8rem', color: '#10B981' }}>
+                  <span style={{ fontSize: '0.8rem', color: '#047857' }}>
                     (₹{appliedPromo.discount} Discount Applied)
                   </span>
                 </div>

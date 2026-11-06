@@ -290,7 +290,10 @@ export async function PATCH(
       return NextResponse.json({ error: 'Question not found' }, { status: 404 });
     }
 
-    const targetMock = await resolveOrCreateMockTest({ mockTestId: targetMockTestId });
+    const targetMock = await resolveOrCreateMockTest({ mockTestId: targetMockTestId, allowCreate: true });
+    if (!targetMock) {
+      return NextResponse.json({ error: 'Target mock test could not be resolved.' }, { status: 404 });
+    }
 
     const newQCount = await prisma.question.count({ where: { mockTestId: targetMock.id } });
 

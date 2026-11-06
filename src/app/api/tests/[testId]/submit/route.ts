@@ -1,23 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CorrectOption } from '@prisma/client';
+import { evaluateAnswers, SCORING_QUESTION_SELECT } from '@/lib/attempt-scoring';
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { resolveOrCreateMockTest } from '@/lib/mock-resolver';
 
 export const dynamic = 'force-dynamic';
-
-function parseCorrectOption(val: unknown): CorrectOption | null {
-  if (val === 'A' || val === 'B' || val === 'C' || val === 'D') return val as CorrectOption;
-  if (val === 0) return 'A' as CorrectOption;
-  if (val === 1) return 'B' as CorrectOption;
-  if (val === 2) return 'C' as CorrectOption;
-  if (val === 3) return 'D' as CorrectOption;
-  if (typeof val === 'string') {
-    const upper = val.toUpperCase().trim();
-    if (upper === 'A' || upper === 'B' || upper === 'C' || upper === 'D') return upper as CorrectOption;
-  }
-  return null;
-}
 
 interface InFlightSubmissionResult {
   status: number;
@@ -231,15 +218,7 @@ export async function POST(
     // Fetch questions belonging to this resolved mock test ID
     const dbQuestions = await prisma.question.findMany({
       where: { mockTestId: mockTest.id },
-      select: {
-        id: true,
-        questionNumber: true,
-        questionText: true,
-        correctOption: true,
-        marks: true,
-        negativeMarks: true,
-        subjectId: true,
-      },
+      select: SCORING_QUESTION_SELECT,
       orderBy: { questionNumber: 'asc' },
     });
     const tLookupMs = parseFloat((performance.now() - tLookupStart).toFixed(2));
@@ -386,70 +365,8 @@ export async function POST(
     const isPastDeadline = now.getTime() > deadline.getTime() + 15000; // 15 sec buffer for network
     const finalStatus = isAutoSubmit || isPastDeadline ? 'AUTO_SUBMITTED' : 'SUBMITTED';
 
-    let correctCount = 0;
-    let wrongCount = 0;
-    let unansweredCount = 0;
-    let rawScore = 0;
-    let totalPossibleMarks = 0;
-
-    const defaultMarks = mockTest.marksPerQuestion ?? mockTest.exam?.marksPerQuestion ?? 1;
-    const defaultNegMarks = mockTest.negativeMarksPerQuestion ?? mockTest.exam?.negativeMarking ?? 0.25;
-
-    const evaluatedAnswers = dbQuestions.map((q) => {
-      const userAnsObj = answers[q.id];
-      const rawSelected = userAnsObj?.selectedOption;
-      const selectedOption = parseCorrectOption(rawSelected);
-      const isAnswered = selectedOption !== null;
-      const isCorrect = isAnswered && selectedOption === q.correctOption;
-
-      const effMarks =
-        q.marks !== undefined && q.marks !== null && !isNaN(q.marks) && q.marks > 0
-          ? q.marks
-          : defaultMarks;
-
-      const effNegMarks =
-        q.negativeMarks !== undefined && q.negativeMarks !== null && !isNaN(q.negativeMarks) && q.negativeMarks >= 0
-          ? q.negativeMarks
-          : defaultNegMarks;
-
-      totalPossibleMarks += effMarks;
-
-      if (!isAnswered) {
-        unansweredCount++;
-      } else if (isCorrect) {
-        correctCount++;
-        rawScore += effMarks;
-      } else {
-        wrongCount++;
-        rawScore -= effNegMarks;
-      }
-
-      return {
-        questionId: q.id,
-        selectedOption,
-        isMarkedForReview:
-          userAnsObj?.status === 'MARKED_FOR_REVIEW' ||
-          userAnsObj?.status === 'ANSWERED_AND_MARKED',
-        status: userAnsObj?.status || (isAnswered ? 'ANSWERED' : 'NOT_ANSWERED'),
-        timeSpentSeconds: userAnsObj?.timeSpent || 0,
-        questionTextSnapshot: q.questionText,
-        correctOptionSnapshot: q.correctOption,
-        marksSnapshot: effMarks,
-        negativeMarksSnapshot: effNegMarks,
-        isCorrect,
-        isAnswered,
-      };
-    });
-
-    const finalScore = Math.max(0, parseFloat(rawScore.toFixed(2)));
-    const percentage =
-      totalPossibleMarks > 0
-        ? parseFloat(((finalScore / totalPossibleMarks) * 100).toFixed(1))
-        : 0;
-    const accuracy =
-      correctCount + wrongCount > 0
-        ? parseFloat(((correctCount / (correctCount + wrongCount)) * 100).toFixed(1))
-        : 0;
+    const { correctCount, wrongCount, unansweredCount, finalScore, totalPossibleMarks, percentage, accuracy, evaluatedAnswers } =
+      evaluateAnswers(dbQuestions, answers, mockTest);
 
     const tEvalMs = parseFloat((performance.now() - tEvalStart).toFixed(2));
 

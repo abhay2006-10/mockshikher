@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { MountainLogo, WhatsAppIcon, InstagramIcon } from './Icons';
+import Image from 'next/image';
+import { WhatsAppIcon, InstagramIcon } from './Icons';
 import styles from './Footer.module.css';
 import { WHATSAPP_CHANNEL_URL, INSTAGRAM_URL, INSTAGRAM_HANDLE, SUPPORT_EMAIL } from '@/config/social';
 
@@ -13,8 +14,8 @@ export function Footer() {
         {/* Row 1: Brand (Left) · Legal & Contact Links (Center) · Social Icon Buttons (Right) */}
         <div className={styles.mainRow}>
           <Link href="/" className={styles.brand} aria-label="MockShikhar Home">
-            <MountainLogo size={24} />
-            <span className={styles.brandName}>MockShikhar</span>
+            <Image src="/logo-mark.png" alt="" width={47} height={30} className={styles.brandMark} />
+            <span className={styles.brandName}>Mock<span className={styles.brandAccent}>Shikhar</span></span>
           </Link>
 
           <nav className={styles.navLinks} aria-label="Footer Navigation">

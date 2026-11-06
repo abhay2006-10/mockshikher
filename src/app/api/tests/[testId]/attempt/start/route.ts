@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { resolveOrCreateMockTest } from '@/lib/mock-resolver';
+import { finalizeExpiredAttempts } from '@/lib/attempt-scoring';
 
 export const dynamic = 'force-dynamic';
 
@@ -102,19 +103,9 @@ export async function POST(
         const diffMs = deadline.getTime() - now.getTime();
 
         if (diffMs <= 0) {
-          // Deadline expired while away - auto-submit any expired in-progress attempts for this user and test
-          await prisma.testAttempt.updateMany({
-            where: {
-              userId: user.id,
-              mockTestId: mockTest.id,
-              status: 'IN_PROGRESS',
-              deadline: { lte: now },
-            },
-            data: {
-              status: 'AUTO_SUBMITTED',
-              submittedAt: now,
-            },
-          });
+          // Deadline expired while away - score and auto-submit expired attempts
+          // using the draft answers saved during the attempt.
+          await finalizeExpiredAttempts(user.id, mockTest, now);
           // Do not return expired early; fall through to create a fresh attempt with full timer below!
         } else {
           // Active within deadline! Return remaining server time

@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
 import { sendPasswordResetOtpEmail } from '@/lib/email';
 
-const PEPPER = process.env.AUTH_SECRET || 'mockshikhar_verification_salt_2026';
+import { getAuthPepper } from '@/lib/secrets';
 const CODE_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds
 
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const hashed = crypto
       .createHash('sha256')
-      .update(`${normalizedEmail}:${code}:${PEPPER}`)
+      .update(`${normalizedEmail}:${code}:${getAuthPepper()}`)
       .digest('hex');
 
     const tokenPayload = `${hashed}:0:${now}`;
