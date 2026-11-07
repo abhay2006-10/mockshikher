@@ -79,7 +79,7 @@ export function getBundledMockPack(slug: string): MockPackData | null {
   return null;
 }
 
-export const KNOWN_PACK_SLUGS = ['hp-tet-jbt', 'hpas', 'army-agniveer-gd'];
+export const KNOWN_PACK_SLUGS = ['hp-tet-jbt', 'hpas', 'army-agniveer-gd', 'hp-forest-guard'];
 
 /**
  * Ensures that the mock tests and questions for the given exam slug are present in PostgreSQL.

@@ -80,6 +80,10 @@ export const EXAM_SLUG_ALIASES: Record<string, string> = {
   // HP Forest Guard
   'hp-forest': 'hp-forest-guard',
   'hp-forest-guard': 'hp-forest-guard',
+  'hp-assistant-forest-guard': 'hp-forest-guard',
+  'assistant-forest-guard': 'hp-forest-guard',
+  'van-rakshak': 'hp-forest-guard',
+  'van-guard': 'hp-forest-guard',
   'forest-guard': 'hp-forest-guard',
 
   // SSC GD Constable

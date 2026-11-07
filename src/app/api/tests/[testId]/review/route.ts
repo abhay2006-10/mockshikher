@@ -76,6 +76,7 @@ export async function GET(
         1;
       const effectiveNegMarks =
         userAns?.negativeMarksSnapshot ??
+        (mockTest.negativeMarksPerQuestion === 0 ? 0 : null) ??
         q.negativeMarks ??
         mockTest.negativeMarksPerQuestion ??
         mockTest.exam?.negativeMarking ??

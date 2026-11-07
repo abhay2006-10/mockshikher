@@ -66,6 +66,8 @@ export function evaluateAnswers(
 
   const defaultMarks = mockTest.marksPerQuestion ?? mockTest.exam?.marksPerQuestion ?? 1;
   const defaultNegMarks = mockTest.negativeMarksPerQuestion ?? mockTest.exam?.negativeMarking ?? 0.25;
+  const testHasNoNegative = Number(mockTest.negativeMarksPerQuestion) === 0
+    && mockTest.negativeMarksPerQuestion !== null && mockTest.negativeMarksPerQuestion !== undefined;
 
   const evaluatedAnswers = dbQuestions.map((q) => {
     const userAnsObj = answers[q.id];
@@ -78,8 +80,11 @@ export function evaluateAnswers(
         ? q.marks
         : defaultMarks;
 
-    const effNegMarks =
-      q.negativeMarks !== undefined && q.negativeMarks !== null && !isNaN(q.negativeMarks) && q.negativeMarks >= 0
+    // Test says "no negative marking" (0) → never deduct, even if an old question row
+    // still carries the 0.25 default. Keeps scoring in line with what the test screen shows.
+    const effNegMarks = testHasNoNegative
+      ? 0
+      : q.negativeMarks !== undefined && q.negativeMarks !== null && !isNaN(q.negativeMarks) && q.negativeMarks >= 0
         ? q.negativeMarks
         : defaultNegMarks;
 

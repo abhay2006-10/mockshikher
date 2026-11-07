@@ -78,10 +78,9 @@ export const LANDING_EXAMS: LandingExamConfig[] = [
   },
   {
     slug: 'hp-forest-guard',
-    name: 'HP Forest Guard',
-    description: 'Practice series focused on Environment, HP Geography, Forest laws, General Science and Elementary Mathematics.',
+    name: 'HP Forest Guard / Assistant Forest Guard 2026',
+    description: 'Official pattern test series with 10 full-length mocks, 100 questions, 100 marks, 90 minutes and no negative marking.',
     category: 'Forestry',
-    isComingSoon: true,
   },
   {
     slug: 'hp-panchayat-secretary',
